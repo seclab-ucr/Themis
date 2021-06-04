@@ -1,6 +1,6 @@
 # Themis: Ambiguity-Aware Network Intrusion Detection based on Symbolic Model Comparison
 
-_The paper is still in submission to a conference, so please keep the source code confidential._
+_The paper is still in submission to a conference, so please keep the source code confidential. Thanks._
 
 ## Description
 
@@ -23,14 +23,14 @@ The structure of the repo is as follows:
 
 ```
 /
-├── attacks/                                    Attack scripts
-│   ├── composite/                              Attacks using multiple discrepancies
-│   └── single/                                 Attacks using a single discrepancy 
-├── effectiveness/                              Scripts used for effectiveness evaluation
-├── pcaps/                                      Packet dump (pcap) files generated from attack scripts
-├── perf/                                       Scripts used for performance evaluation
-├── robust-zeek/                                Our robust version of Zeek (ambiguities integrated) (based on Zeek 4.0)
-├── scripts/                                    Auxiliary scripts
+├── attacks/                     Attack scripts
+│   ├── composite/               Attacks using multiple discrepancies
+│   └── single/                  Attacks using a single discrepancy 
+├── effectiveness/               Scripts used for effectiveness evaluation
+├── pcaps/                       Packet dump (pcap) files generated from attack scripts
+├── perf/                        Scripts used for performance evaluation
+├── robust-zeek/                 Our robust version of Zeek (ambiguities integrated) (based on Zeek 4.0)
+├── scripts/                     Auxiliary scripts
 ├── ...
 ```
 
