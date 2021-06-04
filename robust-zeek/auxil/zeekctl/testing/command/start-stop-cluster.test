@@ -1,0 +1,73 @@
+# Test that the start command can start all stopped nodes, or just a specified
+# node.  Test that the stop command can stop all running nodes, or just a
+# specified node.  Test that the start and stop commands return exit status
+# of zero when all nodes started or stopped successfully.
+#
+# @TEST-EXEC: bash %INPUT
+# @TEST-EXEC: btest-diff start-all.out
+# @TEST-EXEC: TEST_DIFF_CANONIFIER=$SCRIPTS/diff-status-output btest-diff status1.out
+# @TEST-EXEC: btest-diff stop-one.out
+# @TEST-EXEC: TEST_DIFF_CANONIFIER=$SCRIPTS/diff-status-output btest-diff status2.out
+# @TEST-EXEC: btest-diff stop-remaining.out
+# @TEST-EXEC: btest-diff status3.out
+# @TEST-EXEC: btest-diff start-one.out
+# @TEST-EXEC: TEST_DIFF_CANONIFIER=$SCRIPTS/diff-status-output btest-diff status4.out
+# @TEST-EXEC: btest-diff start-remaining.out
+# @TEST-EXEC: TEST_DIFF_CANONIFIER=$SCRIPTS/diff-status-output btest-diff status5.out
+# @TEST-EXEC: btest-diff stop-all.out
+# @TEST-EXEC: btest-diff status6.out
+# @TEST-EXEC: btest-diff start-logger.out
+# @TEST-EXEC: btest-diff stop-logger.out
+
+. zeekctl-test-setup
+
+while read line; do installfile $line; done << EOF
+etc/zeekctl.cfg__no_email
+etc/node.cfg__cluster
+bin/zeek__test
+EOF
+
+zeekctl install
+
+# start all nodes
+zeekctl start > start-all.out
+
+zeekctl status > status1.out
+
+# stop one node
+zeekctl stop worker-1 > stop-one.out
+
+! zeekctl status > status2.out
+
+# stop all remaining running nodes
+zeekctl stop > stop-remaining.out
+
+! zeekctl status > status3.out
+
+# start one node
+zeekctl start manager > start-one.out
+
+! zeekctl status > status4.out
+
+# start all remaining stopped nodes
+zeekctl start > start-remaining.out
+
+zeekctl status > status5.out
+
+# stop all nodes
+zeekctl stop > stop-all.out
+
+! zeekctl status > status6.out
+
+# Setup a cluster with a logger node.
+while read line; do installfile $line; done << EOF
+etc/node.cfg__logger
+EOF
+
+zeekctl install
+
+# start all nodes (verify that nodes start in correct order)
+zeekctl start > start-logger.out
+
+# stop all nodes (verify that nodes stop in correct order)
+zeekctl stop > stop-logger.out

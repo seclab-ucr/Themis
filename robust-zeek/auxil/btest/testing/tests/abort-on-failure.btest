@@ -1,0 +1,14 @@
+# %TEST-EXEC-FAIL: btest -FD test1 test2 test3 >output 2>&1
+# %TEST-EXEC: btest-diff output
+
+# %TEST-START-FILE test1
+@TEST-EXEC: exit 0
+# %TEST-END-FILE
+
+# %TEST-START-FILE test2
+@TEST-EXEC: exit 1
+# %TEST-END-FILE
+
+# %TEST-START-FILE test3
+@TEST-EXEC: exit 0
+# %TEST-END-FILE

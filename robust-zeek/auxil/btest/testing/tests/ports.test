@@ -1,0 +1,10 @@
+
+# %TEST-EXEC: btest -t %INPUT
+# %TEST-EXEC: test 3 -eq `wc -l .tmp/ports/output | awk '{print $1}'`
+
+@TEST-PORT: MYPORT1
+@TEST-PORT: MYPORT2
+@TEST-PORT: MYPORT3
+@TEST-EXEC: echo $MYPORT1 >>output
+@TEST-EXEC: echo $MYPORT2 >>output
+@TEST-EXEC: echo $MYPORT3 >>output

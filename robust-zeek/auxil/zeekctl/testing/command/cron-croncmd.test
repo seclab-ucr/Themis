@@ -1,0 +1,24 @@
+# Test that the zeekctl cron command runs a command specified by the
+# croncmd zeekctl option.
+#
+# @TEST-EXEC: bash %INPUT
+
+. zeekctl-test-setup
+
+while read line; do installfile $line; done << EOF
+etc/zeekctl.cfg__no_email
+EOF
+
+outfile=$ZEEKCTL_INSTALL_PREFIX/testcommand.out
+
+echo "croncmd=date -u >> ${outfile}" >> $ZEEKCTL_INSTALL_PREFIX/etc/zeekctl.cfg
+
+zeekctl install
+
+# verify that the output file does not exist
+test ! -e ${outfile}
+
+zeekctl cron
+
+# verify that the croncmd ran successfully
+grep -q UTC ${outfile}

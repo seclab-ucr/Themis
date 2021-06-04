@@ -1,0 +1,35 @@
+# Test that the capstats command can get stats on all unique host/interface
+# pairs in a cluster, or on just the specified node, and also over a
+# specified time interval.
+#
+# @TEST-EXEC: bash %INPUT
+# @TEST-EXEC: btest-diff all.out
+# @TEST-EXEC: btest-diff onenode.out
+# @TEST-EXEC: btest-diff interval.out
+# @TEST-EXEC: btest-diff onenode-interval.out
+# @TEST-EXEC: btest-diff node-interval.out
+
+. zeekctl-test-setup
+
+while read line; do installfile $line; done << EOF
+etc/node.cfg__cluster
+bin/capstats__test
+EOF
+
+zeekctl install
+
+# get capstats on all nodes
+zeekctl capstats > all.out
+
+# get capstats on one node
+zeekctl capstats worker-2 > onenode.out
+
+# get the capstats over a specified time interval
+zeekctl capstats 4 > interval.out
+
+# get capstats on one node over a specified time interval
+zeekctl capstats worker-2 3 > onenode-interval.out
+
+# get capstats on one node (when specifying more than one node) over a
+# specified time interval
+zeekctl capstats manager worker-2 3 > node-interval.out

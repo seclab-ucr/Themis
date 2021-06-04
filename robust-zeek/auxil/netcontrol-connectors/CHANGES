@@ -1,0 +1,75 @@
+
+0.6 | 2020-11-26 17:59:05 +0000
+
+  * Release 0.6.
+
+0.5-2 | 2020-11-26 17:58:52 +0000
+
+  * Change Python invocations to explicit `python3` (Jon Siwek, Corelight)
+
+0.5 | 2020-01-28 12:06:18 -0800
+
+  * Release 0.5.
+
+  * Python 3, and broker API change updates for acld.py (Johanna Amann)
+
+  * a bit of bro->zeek (Johanna Amann)
+
+  * Update command-line example to python3. (Johanna Amann)
+
+    This also fixes a non-matching topic names - which made the current
+    state not work in an a tad surprising way.
+
+0.4 | 2019-06-12 15:03:55 -0700
+
+  * Release 0.4.
+
+0.3-7 | 2019-06-12 12:02:19 -0700
+
+  * Update README for new directory name (Daniel Thayer)
+
+0.3-5 | 2019-05-28 14:05:51 -0700
+
+  * GH-6: update openflow controller to more recent Broker API (Jon Siwek, Corelight)
+
+0.3-4 | 2019-05-28 13:57:55 -0700
+
+  * GH-7: Use tuples instead of lists to represent broker vectors (Jon Siwek, Corelight)
+
+0.3-3 | 2019-05-20 18:59:12 -0700
+
+  * Rename Bro to Zeek (Daniel Thayer)
+
+  * Update git clone command in README (Jon Siwek, Corelight)
+
+0.3 | 2018-05-21 18:47:21 +0000
+
+  * Release 0.3.
+
+0.2-11 | 2018-05-15 15:25:33 +0000
+
+  * Remove duplicate lines. (Craig Leres)
+
+  * You can now specify more than one "--acld_host" option to round robin
+    across multiple ACLD servers to use different ACLD servers and
+    ports.
+
+  * Add a FreeBSD rc.d script. (Craig Leres)
+
+  * Parse acld whitelist result as exists. (Johanna Amann)
+
+  * Port python scripts to new Broker API, and update examples and
+    documentation. (Corelight)
+
+0.2 | 2016-09-07 10:51:41 +0200
+
+  * Release 0.2.
+
+  * Fix two small code issues reported by Jingyao Ma. (Johanna Amann)
+
+  * Change readme to reflect that we now require the --enable-broker flag again. (Johanna Amann)
+
+0.1 | 2016-08-10 10:11:52 -0700
+
+  * Release 0.1.
+

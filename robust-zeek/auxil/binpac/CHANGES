@@ -1,0 +1,483 @@
+
+0.57.0 | 2020-12-04 11:14:57 -0800
+
+  * Release 0.57.0
+
+0.56.0-10 | 2020-12-04 11:25:26 +0000
+
+  * GH-14: Use larger temporary storage for evaluating case-expressions
+
+    For example:
+
+        inum: uint32 = case (ed & 0x0f) of {
+            0x00    -> n_8;  # n_8 is a uint8
+            0x01    -> n_16; # n_16 is a uint16
+            0x02    -> n_32; # n_32 is a uint32
+            default -> 0;
+        };
+
+    Previously, the temporary storage used for evaluating the
+    case-expression was based on whatever type the first case yields, which
+    is a uint8 in the above example.  That behavior can lead to a narrowing
+    conversion whenever the 0x01 or 0x02 cases occur.
+
+    The new behavior is to base the temporary storage's type on the largest
+    numeric type that the case-expression can yield, which is uint32 in the
+    above example. (Jon Siwek, Corelight)
+
+0.56.0-8 | 2020-12-02 11:05:22 -0800
+
+  * Update minimum required CMake to 3.5 (Jon Siwek, Corelight)
+
+0.56.0-2 | 2020-08-01 09:15:51 -0700
+
+  * Move RE_Matcher to zeek namespace (Tim Wojtulewicz, Corelight)
+
+0.56.0 | 2020-07-23 10:11:13 -0700
+
+  * Release 0.56.0
+
+0.55-17 | 2020-07-02 19:22:00 -0700
+
+  * Allow namespaced names as typenames for function return values (Tim Wojtulewicz, Corelight)
+
+0.55-8 | 2020-04-16 13:51:03 -0700
+
+  * Remove use of Variable-Length-Arrays. (Jon Siwek, Corelight)
+
+0.55-6 | 2020-03-24 13:39:27 -0700
+
+  * Fix incorrect boundary checks in flowbuffer frame length parsing
+
+    Incremental flowbuffer parsing sought to first parse the "minimum header
+    length" required to get the full frame length, possibly from a record
+    field, but generating the logic to parse that field could greedily
+    bundle in additional boundary-checks for all subsequent fields of
+    known-size.
+
+    E.g. for flowunit parsing of this:
+
+        type HDR = record {
+            version:    uint8;
+            reserved:   uint8;
+            len:        uint16;
+        } &byteorder=bigendian;
+
+        type FOO_PDU(is_orig: bool) = record {
+            hdr:        HDR;
+            plen:       uint8;
+            ptype:      uint8;
+            something:  bytestring &restofdata;
+        } &byteorder=bigendian, &length=hdr.len;
+
+    The flowbuffer was correctly seeking to buffer 4 bytes and parse the
+    "hdr.len" field, but the generated parsing logic for "hdr.len" included
+    a boundary check all the way up to include "plen" and "ptype".
+
+    This causes out-of-bounds exceptions to be thrown for inputs that should
+    actually be possible to incrementally parse via flowbuffer. (Jon Siwek, Corelight)
+
+0.55 | 2020-02-05 21:28:26 -0800
+
+  * Release 0.55
+
+0.54-15 | 2020-01-03 09:57:44 -0700
+
+  * Disable LeakSanitizer
+
+    https://github.com/zeek/zeek/issues/699 (Jon Siwek, Corelight)
+
+0.54-12 | 2019-11-15 17:45:29 -0800
+
+  * Fix Zeek build for multi-config CMake generators (e.g. Xcode) (Jon Siwek, Corelight)
+
+0.54-11 | 2019-11-06 22:26:54 -0800
+
+  * Fix shared library versioning to agree with OpenBSD expectations (Jon Siwek, Corelight)
+
+    OpenBSD shared library names are like "libfoo.so.major.minor" and
+    binpac was previously letting the post-release number into the name
+    like "libbinpac.so.0.54-7", which isn't compatible with that scheme.
+
+    Related to https://github.com/zeek/zeek/issues/649
+
+0.54-7 | 2019-10-28 17:59:21 -0700
+
+  * Move CMake project() after cmake_minimum_required() (Jon Siwek, Corelight)
+
+0.54 | 2019-07-03 02:41:46 +0000
+
+  * Release 0.54.
+
+0.51-27 | 2019-07-03 02:41:10 +0000
+
+  * Fix signed integer overflow in array bounds checks. (Jon Siwek,
+    Corelight)
+
+    Array lengths use signed integer storage, so multiplication of
+    that by the element size for purpose of bounds checking against
+    available data may produce a signed integer overlow, which is
+    undefined behavior.
+
+0.51-25 | 2019-07-01 10:33:44 -0700
+
+  * Fix a printf format specifier (Jon Siwek, Corelight)
+
+0.51-22 | 2019-05-20 19:36:17 -0700
+
+  * Rename Bro to Zeek (Daniel Thayer)
+
+0.51-19 | 2019-05-20 13:21:24 -0700
+
+  * Fix C++11 compatibility issue for older compilers (Jon Siwek, Corelight)
+
+0.51-18 | 2019-05-20 09:00:39 -0700
+
+  * Improve storage type used for case-type index
+
+    The type used to store the index for a case-type now tracks the
+    type of the index expression rather than always using an "int".
+
+    The case fields also now have some checking done at code-gen-time to
+    ensure the constants used for cases does not exceed the numeric limit
+    of the type used in the case's index expression.  Then, assuming, it
+    looks safe, the C++ case labels are generated with casts to the type
+    of the Binpac case's index expression to ensure compilers accept it
+    (since all Binpac numbers use "int" for storage/printing internally). (Jon Siwek, Corelight)
+
+  * Add FlowBuffer policy mechanisms
+
+    This allows for tunability of the following behaviors:
+
+    * Minimum flowbuffer capacity to use when parsing a new unit
+
+    * Threshold at which flowbuffer capacity is contracted back to the
+      minimum after parsing a complete unit and before parsing the next
+
+    * Maximum flowbuffer capacity to allow when parsing a given unit
+
+    Failed flowbuffer allocations due to reaching maximum capacity or any
+    other reason now throw ExceptionFlowBufferAlloc. (Jon Siwek, Corelight)
+
+0.51-11 | 2019-03-18 13:51:03 -0700
+
+  * Build binpac shared lib instead of static by default (Jon Siwek, Corelight)
+
+0.51-9 | 2019-02-15 15:25:03 -0600
+
+  * Bump minimum CMake version to 2.8.12 (Jon Siwek, Corelight)
+
+  * Set install dirs using GNUInstallDirs module in CMake (Derek Ditch)
+
+0.51-4 | 2018-12-10 11:46:09 -0600
+
+  * Replace u_char usages with unsigned char (Jon Siwek, Corelight)
+
+    Improve Alpine (musl) support by not relying on the (technically)
+    non-standard u_char typedef.
+
+0.51-2 | 2018-12-07 16:23:35 -0600
+
+  * Update github/download link (Jon Siwek, Corelight)
+
+  * Update submodules to use github.com/zeek (Jon Siwek, Corelight)
+
+0.51 | 2018-08-31 15:23:53 -0500
+
+  * Improve `make dist` (Jon Siwek, Corelight)
+
+0.48-35 | 2018-08-28 10:23:24 -0500
+
+  * Fix array bounds checking
+
+    For arrays that are fields within a record, the bounds check was based
+    on a pointer to the start of the record rather than the start of the
+    array field. (Jon Siwek, Corelight)
+
+0.48-31 | 2018-08-01 11:22:52 -0500
+
+  * Update BinPAC_EXE CMake variable to be a full path (Jon Siwek, Corelight)
+
+0.48-27 | 2018-07-24 16:33:58 -0500
+
+  * Install headers to alternate path as part of Bro sub-project
+    (Jon Siwek, Corelight)
+
+0.48-25 | 2018-07-24 01:46:05 +0000
+
+  * Remove "installation skip" code paths. (Jon Siwek, Corelight)
+
+  * Don't install binpac.h.in. (Jon Siwek, Corelight)
+
+  * Fix compiler warning. (Robin Sommer, Corelight)
+
+0.48-20 | 2018-05-22 14:59:09 -0500
+
+  * BIT-1829: throw exceptions for negative array length expressions
+   (Corelight)
+
+  * BIT-1829: throw exceptions for excessive array sizes (Corelight)
+
+  * Migrate fmt() usage to strfmt() (Corelight)
+
+  * Improve parsing of known-length, static-size arrays (Corelight)
+
+  * GH-4: fix premature loop termination when parsing known-length arrays
+    (Tomas Bortoli for initial patch proposal and Corelight for adapting it)
+
+  * BIT-1829: fix &length suppressing boundary checks for array elements
+    (Corelight)
+
+0.48-13 | 2018-05-15 15:38:23 +0000
+
+  * Updating submodule.
+
+0.48-10 | 2018-04-25 11:04:50 -0500
+
+  * BIT-1914: emit deprecation warning for &check usages (Corelight)
+
+  * BIT-1914: move &check implementation to new &enforce attribute
+
+    &check returns to being a no-op to avoid unintentionally
+    breaking existing code. (Corelight)
+
+  * BIT-1914: Implement &check (Antoine)
+
+0.48-6 | 2018-04-24 13:01:53 -0500
+
+  * Fix an uninitialized member warning (Corelight)
+
+0.48-5 | 2018-04-19 11:46:02 -0500
+
+  * Allow arbitrary, single-character &linebreaker expressions (giralt)
+
+0.48 | 2018-02-13 09:27:42 -0800
+
+  * Release 0.48
+
+  * Fix integer overflow in binpac generated code
+	  (Philippe Antoince/Catena cyber).
+
+0.47 | 2017-05-26 08:26:05 -0500
+
+  * Release 0.47.
+
+0.46-1 | 2016-11-30 10:18:23 -0800
+
+  * Allow more than one &require attribute on a field. (François Pennaneach)
+
+0.46 | 2016-10-27 14:41:38 -0700
+
+  * Release 0.46.
+
+0.45 | 2016-08-02 11:09:42 -0700
+
+  * Release 0.45.
+
+0.44-24 | 2016-08-02 11:08:13 -0700
+
+  * Fix memory leak in pac_parse.yy. (Bryon Gloden)
+
+0.44-21 | 2016-06-14 17:41:28 -0700
+
+  * Bug fix for pac_swap function with int32 type of argument.
+    (Bartolo Otrit)
+
+0.44-18 | 2016-05-23 08:25:49 -0700
+
+  * Fixing Coverity warning. (Robin Sommer)
+
+0.44-17 | 2016-05-06 16:52:37 -0700
+
+  * Add a comment in the generated C++ code for fall through in
+    switch. Coverity raised an error about this. (Vlad Grigorescu)
+
+0.44-11 | 2016-03-04 12:36:57 -0800
+
+  * Update for new CMake OpenSSL script. (Johanna Amann)
+
+0.44-7 | 2016-01-19 10:05:37 -0800
+
+  * Fixed compiler complaining about recursive function. (Seth Hall)
+
+0.44-3 | 2015-09-11 12:24:21 -0700
+
+  * Add README.rst symlink. Addresses BIT-1413 (Vlad Grigorescu)
+
+0.44 | 2015-04-27 08:25:17 -0700
+
+	* Release 0.44.
+
+0.43-8 | 2015-04-21 20:11:06 -0700
+
+  * Adding missing include. (Robin Sommer)
+
+0.43-7 | 2015-04-21 13:45:20 -0700
+
+  * BIT-1343: Extend %include to work with relative paths. (Jon Siwek)
+
+0.43-5 | 2015-04-09 12:09:04 -0700
+
+  * BIT-1361: Improve boundary checks of records that use &length.
+    (Jon Siwek)
+
+0.43 | 2015-01-23 09:56:59 -0600
+
+  * Fix potential out-of-bounds memory reads in generated code.
+    CVE-2014-9586.  (John Villamil and Chris Rohlf - Yahoo Paranoids,
+    Jon Siwek)
+
+0.42-9 | 2014-11-03 10:05:17 -0600
+
+  * Separate declaration of binpac::init from definition. (Jon Siwek)
+
+0.42-6 | 2014-10-31 17:42:21 -0700
+
+  * Adding a new binpac::init() function that must be called by the
+    host before anything else. Internally, this function compiles all
+    regular expressions, avoiding to do that inside the regexp
+    constructor. (Robin Sommer)
+
+0.42 | 2014-04-08 15:24:11 -0700
+
+  * Release 0.42.
+
+0.41-5 | 2014-04-08 15:23:48 -0700
+
+  * Request format macros from inttypes.h explicitly. This helps
+    ensure the availability of PRI* macros from .pac files, which
+    cannot create this definition themselves since the inclusion of
+    binpac.h is hardcoded to be placed very early in the generated
+    code and already includes inttypes.h itself. (Jon Siwek)
+
+0.41 | 2013-10-14 09:24:54 -0700
+
+  * Updating copyright notice. (Robin Sommer)
+
+0.4-5 | 2013-10-02 10:33:05 -0700
+
+  * Fix uninitialized (or unused) fields. (Jon Siwek)
+
+  * Generate initialization code for external types. Numeric/pointer
+    types can be initialized to 0. (Jon Siwek)
+
+  * Optimize negative string length check. (Jon Siwek)
+
+  * Fix for setting REPO in Makefile. (Robin Sommer)
+
+0.4 | 2013-09-23 20:56:19 -0700
+
+  * Update 'make dist' target. (Jon Siwek)
+
+  * Change submodules to fixed URL. (Jon Siwek)
+
+  * Add virtual dtor to RefCount base class. (Jon Siwek)
+
+0.34-24 | 2013-09-12 15:49:51 -0500
+
+  * Add missing break to switch statement case. (Jon Siwek)
+
+  * Remove unreachable code. (Jon Siwek)
+
+  * Add missing va_end()'s to match va_start()'s. (Jon Siwek)
+
+  * Fix two use-after-free bugs. (Jon Siwek)
+
+  * Fix double-free. (Jon Siwek)
+
+  * Remove some answers from the Q&A section of README (Daniel Thayer)
+
+  * Add BinPAC documentation from the old Bro wiki (Daniel Thayer)
+
+0.34-11 | 2013-07-24 18:35:28 -0700
+
+  * Adding an interface to manually control the buffering for
+    generated parsers. (Robin Sommer)
+
+    This consists of two parts:
+
+        1. The generated Flow classes expose their flow buffers via a new
+           method flow_buffer().
+
+        2. Flow buffers get two new methods:
+
+            // Interface for delayed parsing. Sometimes BinPAC doesn't get the
+            // buffering right and then one can use these to feed parts
+            // individually and assemble them internally. After calling
+            // FinishBuffer(), one can send the uppper-layer flow an FlowEOF()
+            // to trigger parsing.
+            void BufferData(const_byteptr data, const_byteptr end);
+            void FinishBuffer(); (Robin Sommer)
+
+0.34-8 | 2013-04-27 15:04:23 -0700
+
+  * Fix an exception slicing issue in binpac generated cleanup code.
+    (Jon Siwek)
+
+  * s/bro-ids.org/bro.org/g (Robin Sommer)
+
+0.34-3 | 2012-11-13 17:24:24 -0800
+
+  * Add scoping to usages of binpac::Exception classes in generated
+    code. This allows analyzers to define their own types of the same
+    name without mistakingly overshadowing the usages of
+    binpac::Exception and its derived types in the generated parser
+    code. (Jon Siwek)
+
+0.34 | 2012-08-01 13:54:39 -0500
+
+  * Fix configure script to exit with non-zero status on error (Jon
+    Siwek)
+
+0.33 | 2012-07-24 09:05:37 -0700
+
+  * Silence warning for generated code when compiling with clang.
+    (Robin Sommer)
+
+0.32 | 2012-06-11 17:25:04 -0700
+
+  * Change binpac.h integral typedefs and reimplement 64-bit
+    pac_swap(). Addresses #761. (Jon Siwek)
+
+  * Adding int64 and uint64 types to binpac. (Seth Hall)
+
+  * Raise minimum required CMake version to 2.6.3 (Jon Siwek)
+
+0.31 | 2012-01-09 16:11:01 -0800
+
+  * Submodule README conformity changes. (Jon Siwek)
+
+  * Fix parallel make portability. (Jon Siwek)
+
+0.3 | 2011-10-25 17:41:31 -0700
+
+  * Change distclean to only remove build dir. (Jon Siwek)
+
+  * Make dist now cleans the copied source. (Jon Siwek)
+
+  * Distribution cleanup. (Jon Siwek and Robin Sommer)
+
+  * Arrays now suport the &transient attribute.
+
+    If set, parsed elements won't actually be added to the array, and
+    read access to the array aren't permitted. This is helpful to save
+    memory in the case of large arrays for which elements don't need
+    (or can't) be buffered. (Robin Sommer)
+
+  * Install binaries with an RPATH. (Jon Siwek)
+
+  * Workaround for FreeBSD CMake port missing debug flags. (Jon Siwek)
+
+
+0.2 | 2011-04-18 12:50:21 -0700
+
+  * Converting build process to CMake (Jon Siwek).
+
+  * Fixing crash with undefined case expressions. (Robin Sommer)
+
+    Found by Emmanuele Zambon.
+
+  * A command line -q flag to quiet the output, plus a fix for a small
+    compiler warning. (Seth Hall)
+
+  * Initial import of Bro's binpac subdirectory from SVN r7088. (Jon Siwek)

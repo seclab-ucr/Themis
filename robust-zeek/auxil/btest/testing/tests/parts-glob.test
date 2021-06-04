@@ -1,0 +1,22 @@
+# %TEST-EXEC: btest t/test
+# %TEST-EXEC: btest t.test
+# %TEST-EXEC: btest-diff output
+
+# %TEST-START-FILE btest.cfg
+[btest]
+TestDirs    = t
+TmpDir      = .tmp
+BaselineDir = Baseline
+# %TEST-END-FILE
+
+# %TEST-START-FILE t/test
+@TEST-EXEC: echo "Hello, world!." >>../../output
+# %TEST-END-FILE
+
+# %TEST-START-FILE t/test#2
+@TEST-EXEC: echo "Hello, world! Again." >>../../output
+# %TEST-END-FILE
+
+# %TEST-START-FILE t/test#3
+@TEST-EXEC: echo "Hello, world! Again. Again." >>../../output
+# %TEST-END-FILE

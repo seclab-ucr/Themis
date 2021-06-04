@@ -1,0 +1,53 @@
+# %TEST-EXEC-FAIL: btest t1 t2 t3 >>out2 2>&1
+# %TEST-EXEC-FAIL: btest t4 t5 t6 >>out2 2>&1
+# %TEST-EXEC-FAIL: btest t7 t8 t9 >>out2 2>&1
+# %TEST-EXEC: btest-diff out1
+# %TEST-EXEC: btest-diff out2
+
+%TEST-START-FILE t1
+@TEST-EXEC: echo 1.1 >>../../out1
+@TEST-EXEC: exit 100
+@TEST-EXEC: echo 1.2 >>../../out1
+%TEST-END-FILE
+
+%TEST-START-FILE t2
+@TEST-EXEC: echo 2.1 >>../../out1
+@TEST-EXEC: exit 200
+@TEST-EXEC: echo 2.2 >>../../out1
+%TEST-END-FILE
+
+%TEST-START-FILE t3
+@TEST-EXEC: echo 3.1 >>../../out1
+%TEST-END-FILE
+
+%TEST-START-FILE t4
+@TEST-EXEC: echo 4.1 >>../../out1
+@TEST-EXEC: exit 0
+@TEST-EXEC: echo 4.2 >>../../out1
+%TEST-END-FILE
+
+%TEST-START-FILE t5
+@TEST-EXEC: echo 5.1 >>../../out1
+@TEST-EXEC: exit 1
+@TEST-EXEC: echo 5.2 >>../../out1
+%TEST-END-FILE
+
+%TEST-START-FILE t6
+@TEST-EXEC: echo 6.1 >>../../out1
+%TEST-END-FILE
+
+%TEST-START-FILE t7
+@TEST-EXEC: echo 7.1 >>../../out1
+@TEST-EXEC-FAIL: exit 1
+@TEST-EXEC: echo 7.2 >>../../out1
+%TEST-END-FILE
+
+%TEST-START-FILE t8
+@TEST-EXEC: echo 8.1 >>../../out1
+@TEST-EXEC-FAIL: exit 0
+@TEST-EXEC: echo 8.2 >>../../out1
+%TEST-END-FILE
+
+%TEST-START-FILE t9
+@TEST-EXEC: echo 9.1 >>../../out1
+%TEST-END-FILE

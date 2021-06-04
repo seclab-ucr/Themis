@@ -1,0 +1,105 @@
+
+0.7.0 | 2020-12-14 20:46:15 -0800
+
+  * Release 0.7.0
+
+  * Add 'dist' target to Makefile (Jon Siwek, Corelight)
+
+0.6.3-7 | 2020-12-02 12:03:49 -0800 (Jon Siwek, Corelight)
+
+  * Update Cirrus CI config/Dockerfiles
+
+    Keeping in sync with Zeek's currently supported platforms
+
+0.6.3-5 | 2020-12-02 11:07:12 -0800
+
+  * Update minimum required CMake to 3.5 (Jon Siwek, Corelight)
+
+0.6.3-3 | 2020-08-25 17:01:32 -0700
+
+  * Fix closing timestamp in rotation format function example (Jon Siwek, Corelight)
+
+0.6.3-2 | 2020-08-19 11:35:47 -0700
+
+  * Add GH Action for CI email notifications (Jon Siwek, Corelight)
+
+  * Add example of how to use with ZeekControl (Jon Siwek, Corelight)
+
+0.6.3 | 2020-07-28 16:03:04 -0700
+
+  * Release 0.6.3.
+
+0.6.2-4 | 2020-07-28 16:00:12 -0700
+
+  * Add SIGTERM handler to kill/wait any child-compression process (Jon Siwek, Corelight)
+
+  * Prevent command injection through filenames when running compression command (Arne Welzel, Corelight)
+
+  * Allow empty file extension argument in --compress (Jon Siwek, Corelight)
+
+0.6.2 | 2020-07-27 10:10:41 -0700
+
+  * Release 0.6.2.
+
+0.6.1-3 | 2020-07-27 10:09:42 -0700
+
+  * service: Use a more contained setup (Arne Welzel, Corelight)
+
+    - do not run as root
+    - don't allow privilege escalation
+    - only allow read-write to /usr/local/zeek/logs
+
+  * service: Make Description identify the unit instead of describing it (Arne Welzel, Corelight)
+
+    The official docs have this gem:
+
+        This is used by systemd (and other UIs) as the label for the unit,
+        so this string should identify the unit rather than describe it,
+        despite the name.
+
+    ...and the logs look a bit nicer afterwards:
+
+        Jul 25 12:25:17 tinkyx280 systemd[1]: Started Zeek Archiver atomically rotates/compresses Zeek logs.
+        Jul 25 12:26:32 tinkyx280 systemd[1]: Started Zeek Archiver
+
+0.6.1 | 2020-07-21 12:26:33 -0700
+
+  * Release 0.6.1.
+
+0.6.0-2 | 2020-07-21 12:26:11 -0700
+
+  * Improve documentation (Jon Siwek, Corelight)
+
+0.6.0-1 | 2020-07-20 15:43:48 -0700
+
+  * Extend README with implementation rationale (Jon Siwek, Corelight)
+
+0.6.0 | 2020-07-16 17:09:08 -0700
+
+  * Release 0.6.0
+
+  * Add tests (Jon Siwek, Corelight)
+
+0.5.0-6 | 2020-07-16 15:53:57 -0700
+
+  * Add CI config (Jon Siwek, Corelight)
+
+0.5.0-5 | 2020-07-16 13:23:40 -0700
+
+  * Update README dependency info (Jon Siwek, Corelight)
+
+0.5.0-4 | 2020-07-16 12:39:54 -0700
+
+  * Tell CMake to generate compile_commands.json (Jon Siwek, Corelight)
+
+0.5.0-3 | 2020-07-16 12:30:51 -0700
+
+  * Fix race condition in make_dir() (Jon Siwek, Corelight)
+
+0.5.0-2 | 2020-07-16 11:31:20 -0700
+
+  * Add CHANGES file (Jon Siwek, Corelight)
+
+0.5.0-1 | 2020-07-16 11:25:17 -0700
+
+  * Starting CHANGES.

@@ -1,0 +1,71 @@
+# Test that the archive-log script archives and compresses a specified
+# log file (including a connection summary report) according to the
+# CompressCmd and CompressExtension zeekctl options.
+#
+# @TEST-EXEC: bash %INPUT
+
+. zeekctl-test-setup
+
+while read line; do installfile $line; done << EOF
+bin/compress__test --new
+EOF
+
+cat >> $ZEEKCTL_INSTALL_PREFIX/etc/zeekctl.cfg << EOF
+compresscmd=@PREFIX@/bin/compress -i
+compressextension=zeekctlcompress
+sendmail=
+EOF
+
+replaceprefix etc/zeekctl.cfg
+
+archivelog=$ZEEKCTL_INSTALL_PREFIX/share/zeekctl/scripts/archive-log
+logdir=$ZEEKCTL_INSTALL_PREFIX/logs/2013-12-30
+connlog=${logdir}/conn.22:24:20-22:30:00.log.zeekctlcompress
+testlog=${logdir}/zeekctltest.22:24:20-22:30:00.log.zeekctlcompress
+connsummarylog=${logdir}/conn-summary.22:24:20-22:30:00.log.zeekctlcompress
+origconnlog=conn.2013-12-30-22-24-20.log
+origtestlog=zeekctltest.2013-12-30-22-24-20.log
+
+zeekctl install
+
+# Create Zeek's working directory, chdir to that dir, and create rotated logs
+mkdir $ZEEKCTL_INSTALL_PREFIX/spool/zeek
+cd $ZEEKCTL_INSTALL_PREFIX/spool/zeek
+cat > ${origconnlog} << _EOF_
+# This is a ZEEKCTL TEST
+_EOF_
+cat > ${origtestlog} << _EOF_
+# This is a ZEEKCTL TEST
+_EOF_
+
+###############################################
+# Test archive-log for the conn.log file
+
+${archivelog} ${origconnlog} conn 13-12-30_22.24.20 13-12-30_22.30.00 0 ascii
+
+# verify that the logs were archived
+test ! -f ${origconnlog}
+test -f ${connlog}
+test -f ${connsummarylog}
+
+# verify that the logs were compressed according to the zeekctl options
+grep -q "compressed" ${connlog}
+grep -q "compress option" ${connlog}
+grep -q ">== Total ===" ${connsummarylog}
+grep -q "compress option" ${connsummarylog}
+
+###############################################
+# Test archive-log for a different log file
+
+# verify that the zeekctltest.log was not archived yet
+test ! -f ${testlog}
+
+${archivelog} ${origtestlog} zeekctltest 13-12-30_22.24.20 13-12-30_22.30.00 0 ascii
+
+# verify that zeekctltest.log was archived
+test ! -f ${origtestlog}
+test -f ${testlog}
+
+# verify that zeekctltest.log was compressed according to the zeekctl options
+grep -q "compressed" ${testlog}
+grep -q "compress option" ${testlog}

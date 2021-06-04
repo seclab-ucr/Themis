@@ -1,0 +1,5 @@
+# %TEST-EXEC: btest -t %INPUT
+# %TEST-EXEC: test -f .tmp/tmps/output
+
+@TEST-EXEC: echo "Hello, World!" >output
+

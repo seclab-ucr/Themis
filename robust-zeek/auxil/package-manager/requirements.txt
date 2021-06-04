@@ -1,0 +1,8 @@
+# Requirements for general zkg usage
+GitPython
+semantic_version
+btest
+# Requirements for development (e.g. building docs)
+Sphinx
+sphinxcontrib-napoleon
+sphinx_rtd_theme

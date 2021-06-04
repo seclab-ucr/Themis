@@ -1,0 +1,485 @@
+
+%%{ // C segment
+#include "zeek/util.h"
+#include "zeek/threading/Manager.h"
+#include "zeek/broker/Manager.h"
+
+zeek::RecordTypePtr ProcStats;
+zeek::RecordTypePtr NetStats;
+zeek::RecordTypePtr MatcherStats;
+zeek::RecordTypePtr ReassemblerStats;
+zeek::RecordTypePtr DNSStats;
+zeek::RecordTypePtr ConnStats;
+zeek::RecordTypePtr GapStats;
+zeek::RecordTypePtr EventStats;
+zeek::RecordTypePtr ThreadStats;
+zeek::RecordTypePtr TimerStats;
+zeek::RecordTypePtr FileAnalysisStats;
+zeek::RecordTypePtr BrokerStats;
+zeek::RecordTypePtr ReporterStats;
+%%}
+
+## Returns packet capture statistics. Statistics include the number of
+## packets *(i)* received by Zeek, *(ii)* dropped, and *(iii)* seen on the
+## link (not always available).
+##
+## Returns: A record of packet statistics.
+##
+## .. zeek:see:: get_conn_stats
+##              get_dns_stats
+##              get_event_stats
+##              get_file_analysis_stats
+##              get_gap_stats
+##              get_matcher_stats
+##              get_proc_stats
+##              get_reassembler_stats
+##              get_thread_stats
+##              get_timer_stats
+##              get_broker_stats
+##              get_reporter_stats
+function get_net_stats%(%): NetStats
+	%{
+	uint64_t recv = 0;
+	uint64_t drop = 0;
+	uint64_t link = 0;
+	uint64_t bytes_recv = 0;
+
+	if ( zeek::iosource::PktSrc* ps = zeek::iosource_mgr->GetPktSrc() )
+		{
+		struct zeek::iosource::PktSrc::Stats stat;
+		ps->Statistics(&stat);
+		recv += stat.received;
+		drop += stat.dropped;
+		link += stat.link;
+		bytes_recv += stat.bytes_received;
+		}
+
+	auto r = zeek::make_intrusive<zeek::RecordVal>(NetStats);
+	int n = 0;
+
+	r->Assign(n++, zeek::val_mgr->Count(recv));
+	r->Assign(n++, zeek::val_mgr->Count(drop));
+	r->Assign(n++, zeek::val_mgr->Count(link));
+	r->Assign(n++, zeek::val_mgr->Count(bytes_recv));
+
+	return r;
+	%}
+
+## Returns Zeek traffic statistics.
+##
+## Returns: A record with connection and packet statistics.
+##
+## .. zeek:see:: get_dns_stats
+##              get_event_stats
+##              get_file_analysis_stats
+##              get_gap_stats
+##              get_matcher_stats
+##              get_net_stats
+##              get_proc_stats
+##              get_reassembler_stats
+##              get_thread_stats
+##              get_timer_stats
+##              get_broker_stats
+##              get_reporter_stats
+function get_conn_stats%(%): ConnStats
+	%{
+	auto r = zeek::make_intrusive<zeek::RecordVal>(ConnStats);
+	int n = 0;
+
+	r->Assign(n++, zeek::val_mgr->Count(Connection::TotalConnections()));
+	r->Assign(n++, zeek::val_mgr->Count(Connection::CurrentConnections()));
+	r->Assign(n++, zeek::val_mgr->Count(sessions->CurrentConnections()));
+
+	SessionStats s;
+	if ( sessions )
+		sessions->GetStats(s);
+
+#define ADD_STAT(x) \
+	r->Assign(n++, zeek::val_mgr->Count(unsigned(sessions ? x : 0)));
+
+	ADD_STAT(s.num_packets);
+	ADD_STAT(s.num_fragments);
+	ADD_STAT(s.max_fragments);
+	ADD_STAT(s.num_TCP_conns);
+	ADD_STAT(s.max_TCP_conns);
+	ADD_STAT(s.cumulative_TCP_conns);
+	ADD_STAT(s.num_UDP_conns);
+	ADD_STAT(s.max_UDP_conns);
+	ADD_STAT(s.cumulative_UDP_conns);
+	ADD_STAT(s.num_ICMP_conns);
+	ADD_STAT(s.max_ICMP_conns);
+	ADD_STAT(s.cumulative_ICMP_conns);
+
+	r->Assign(n++, zeek::val_mgr->Count(zeek::detail::killed_by_inactivity));
+
+	return r;
+	%}
+
+## Returns Zeek process statistics.
+##
+## Returns: A record with process statistics.
+##
+## .. zeek:see:: get_conn_stats
+##              get_dns_stats
+##              get_event_stats
+##              get_file_analysis_stats
+##              get_gap_stats
+##              get_matcher_stats
+##              get_net_stats
+##              get_reassembler_stats
+##              get_thread_stats
+##              get_timer_stats
+##              get_broker_stats
+##              get_reporter_stats
+function get_proc_stats%(%): ProcStats
+	%{
+	struct rusage ru;
+	if ( getrusage(RUSAGE_SELF, &ru) < 0 )
+		reporter->InternalError("getrusage() failed in get_proc_stats()");
+
+	auto r = zeek::make_intrusive<zeek::RecordVal>(ProcStats);
+	int n = 0;
+
+	double elapsed_time = zeek::util::current_time() - zeek::run_state::zeek_start_time;
+	double user_time =
+		double(ru.ru_utime.tv_sec) + double(ru.ru_utime.tv_usec) / 1e6;
+	double system_time =
+		double(ru.ru_stime.tv_sec) + double(ru.ru_stime.tv_usec) / 1e6;
+
+#ifdef DEBUG
+	r->Assign(n++, zeek::val_mgr->Count(1));
+#else
+	r->Assign(n++, zeek::val_mgr->Count(0));
+#endif
+
+	r->Assign(n++, zeek::make_intrusive<zeek::TimeVal>(zeek::run_state::zeek_start_time));
+
+	r->Assign(n++, zeek::make_intrusive<zeek::IntervalVal>(elapsed_time, Seconds));
+	r->Assign(n++, zeek::make_intrusive<zeek::IntervalVal>(user_time, Seconds));
+	r->Assign(n++, zeek::make_intrusive<zeek::IntervalVal>(system_time, Seconds));
+
+	uint64_t total_mem;
+	zeek::util::get_memory_usage(&total_mem, NULL);
+	r->Assign(n++, zeek::val_mgr->Count(unsigned(total_mem)));
+
+	r->Assign(n++, zeek::val_mgr->Count(unsigned(ru.ru_minflt)));
+	r->Assign(n++, zeek::val_mgr->Count(unsigned(ru.ru_majflt)));
+	r->Assign(n++, zeek::val_mgr->Count(unsigned(ru.ru_nswap)));
+	r->Assign(n++, zeek::val_mgr->Count(unsigned(ru.ru_inblock)));
+	r->Assign(n++, zeek::val_mgr->Count(unsigned(ru.ru_oublock)));
+	r->Assign(n++, zeek::val_mgr->Count(unsigned(ru.ru_nivcsw)));
+
+	return r;
+	%}
+
+## Returns statistics about the event engine.
+##
+## Returns: A record with event engine statistics.
+##
+## .. zeek:see:: get_conn_stats
+##              get_dns_stats
+##              get_file_analysis_stats
+##              get_gap_stats
+##              get_matcher_stats
+##              get_net_stats
+##              get_proc_stats
+##              get_reassembler_stats
+##              get_thread_stats
+##              get_timer_stats
+##              get_broker_stats
+##              get_reporter_stats
+function get_event_stats%(%): EventStats
+	%{
+	auto r = zeek::make_intrusive<zeek::RecordVal>(EventStats);
+	int n = 0;
+
+	r->Assign(n++, zeek::val_mgr->Count(event_mgr.num_events_queued));
+	r->Assign(n++, zeek::val_mgr->Count(event_mgr.num_events_dispatched));
+
+	return r;
+	%}
+
+## Returns statistics about reassembler usage.
+##
+## Returns: A record with reassembler statistics.
+##
+## .. zeek:see:: get_conn_stats
+##              get_dns_stats
+##              get_event_stats
+##              get_file_analysis_stats
+##              get_gap_stats
+##              get_matcher_stats
+##              get_net_stats
+##              get_proc_stats
+##              get_thread_stats
+##              get_timer_stats
+##              get_broker_stats
+##              get_reporter_stats
+function get_reassembler_stats%(%): ReassemblerStats
+	%{
+	auto r = zeek::make_intrusive<zeek::RecordVal>(ReassemblerStats);
+	int n = 0;
+
+	r->Assign(n++, zeek::val_mgr->Count(Reassembler::MemoryAllocation(zeek::REASSEM_FILE)));
+	r->Assign(n++, zeek::val_mgr->Count(Reassembler::MemoryAllocation(zeek::REASSEM_FRAG)));
+	r->Assign(n++, zeek::val_mgr->Count(Reassembler::MemoryAllocation(zeek::REASSEM_TCP)));
+	r->Assign(n++, zeek::val_mgr->Count(Reassembler::MemoryAllocation(zeek::REASSEM_UNKNOWN)));
+
+	return r;
+	%}
+
+## Returns statistics about DNS lookup activity.
+##
+## Returns: A record with DNS lookup statistics.
+##
+## .. zeek:see:: get_conn_stats
+##              get_event_stats
+##              get_file_analysis_stats
+##              get_gap_stats
+##              get_matcher_stats
+##              get_net_stats
+##              get_proc_stats
+##              get_reassembler_stats
+##              get_thread_stats
+##              get_timer_stats
+##              get_broker_stats
+##              get_reporter_stats
+function get_dns_stats%(%): DNSStats
+	%{
+	auto r = zeek::make_intrusive<zeek::RecordVal>(DNSStats);
+	int n = 0;
+
+	zeek::detail::DNS_Mgr::Stats dstats;
+	zeek::detail::dns_mgr->GetStats(&dstats);
+
+	r->Assign(n++, zeek::val_mgr->Count(unsigned(dstats.requests)));
+	r->Assign(n++, zeek::val_mgr->Count(unsigned(dstats.successful)));
+	r->Assign(n++, zeek::val_mgr->Count(unsigned(dstats.failed)));
+	r->Assign(n++, zeek::val_mgr->Count(unsigned(dstats.pending)));
+	r->Assign(n++, zeek::val_mgr->Count(unsigned(dstats.cached_hosts)));
+	r->Assign(n++, zeek::val_mgr->Count(unsigned(dstats.cached_addresses)));
+
+	return r;
+	%}
+
+## Returns statistics about timer usage.
+##
+## Returns: A record with timer usage statistics.
+##
+## .. zeek:see:: get_conn_stats
+##              get_dns_stats
+##              get_event_stats
+##              get_file_analysis_stats
+##              get_gap_stats
+##              get_matcher_stats
+##              get_net_stats
+##              get_proc_stats
+##              get_reassembler_stats
+##              get_thread_stats
+##              get_broker_stats
+##              get_reporter_stats
+function get_timer_stats%(%): TimerStats
+	%{
+	auto r = zeek::make_intrusive<zeek::RecordVal>(TimerStats);
+	int n = 0;
+
+	r->Assign(n++, zeek::val_mgr->Count(unsigned(zeek::detail::timer_mgr->Size())));
+	r->Assign(n++, zeek::val_mgr->Count(unsigned(zeek::detail::timer_mgr->PeakSize())));
+	r->Assign(n++, zeek::val_mgr->Count(zeek::detail::timer_mgr->CumulativeNum()));
+
+	return r;
+	%}
+
+## Returns statistics about file analysis.
+##
+## Returns: A record with file analysis statistics.
+##
+## .. zeek:see:: get_conn_stats
+##              get_dns_stats
+##              get_event_stats
+##              get_gap_stats
+##              get_matcher_stats
+##              get_net_stats
+##              get_proc_stats
+##              get_reassembler_stats
+##              get_thread_stats
+##              get_timer_stats
+##              get_broker_stats
+##              get_reporter_stats
+function get_file_analysis_stats%(%): FileAnalysisStats
+	%{
+	auto r = zeek::make_intrusive<zeek::RecordVal>(FileAnalysisStats);
+	int n = 0;
+
+	r->Assign(n++, zeek::val_mgr->Count(zeek::file_mgr->CurrentFiles()));
+	r->Assign(n++, zeek::val_mgr->Count(zeek::file_mgr->MaxFiles()));
+	r->Assign(n++, zeek::val_mgr->Count(zeek::file_mgr->CumulativeFiles()));
+
+	return r;
+	%}
+
+## Returns statistics about thread usage.
+##
+## Returns: A record with thread usage statistics.
+##
+## .. zeek:see:: get_conn_stats
+##              get_dns_stats
+##              get_event_stats
+##              get_file_analysis_stats
+##              get_gap_stats
+##              get_matcher_stats
+##              get_net_stats
+##              get_proc_stats
+##              get_reassembler_stats
+##              get_timer_stats
+##              get_broker_stats
+##              get_reporter_stats
+function get_thread_stats%(%): ThreadStats
+	%{
+	auto r = zeek::make_intrusive<zeek::RecordVal>(ThreadStats);
+	int n = 0;
+
+	r->Assign(n++, zeek::val_mgr->Count(zeek::thread_mgr->NumThreads()));
+
+	return r;
+	%}
+
+## Returns statistics about TCP gaps.
+##
+## Returns: A record with TCP gap statistics.
+##
+## .. zeek:see:: get_conn_stats
+##              get_dns_stats
+##              get_event_stats
+##              get_file_analysis_stats
+##              get_matcher_stats
+##              get_net_stats
+##              get_proc_stats
+##              get_reassembler_stats
+##              get_thread_stats
+##              get_timer_stats
+##              get_broker_stats
+##              get_reporter_stats
+function get_gap_stats%(%): GapStats
+	%{
+	auto r = zeek::make_intrusive<zeek::RecordVal>(GapStats);
+	int n = 0;
+
+	r->Assign(n++, zeek::val_mgr->Count(zeek::detail::tot_ack_events));
+	r->Assign(n++, zeek::val_mgr->Count(zeek::detail::tot_ack_bytes));
+	r->Assign(n++, zeek::val_mgr->Count(zeek::detail::tot_gap_events));
+	r->Assign(n++, zeek::val_mgr->Count(zeek::detail::tot_gap_bytes));
+
+	return r;
+	%}
+
+## Returns statistics about the regular expression engine. Statistics include
+## the number of distinct matchers, DFA states, DFA state transitions, memory
+## usage of DFA states, cache hits/misses, and average number of NFA states
+## across all matchers.
+##
+## Returns: A record with matcher statistics.
+##
+## .. zeek:see:: get_conn_stats
+##              get_dns_stats
+##              get_event_stats
+##              get_file_analysis_stats
+##              get_gap_stats
+##              get_net_stats
+##              get_proc_stats
+##              get_reassembler_stats
+##              get_thread_stats
+##              get_timer_stats
+##              get_broker_stats
+##              get_reporter_stats
+function get_matcher_stats%(%): MatcherStats
+	%{
+	auto r = zeek::make_intrusive<zeek::RecordVal>(MatcherStats);
+	int n = 0;
+
+	zeek::detail::RuleMatcher::Stats s;
+	memset(&s, 0, sizeof(s));
+	if ( zeek::detail::rule_matcher )
+		zeek::detail::rule_matcher->GetStats(&s);
+
+	r->Assign(n++, zeek::val_mgr->Count(s.matchers));
+	r->Assign(n++, zeek::val_mgr->Count(s.nfa_states));
+	r->Assign(n++, zeek::val_mgr->Count(s.dfa_states));
+	r->Assign(n++, zeek::val_mgr->Count(s.computed));
+	r->Assign(n++, zeek::val_mgr->Count(s.mem));
+	r->Assign(n++, zeek::val_mgr->Count(s.hits));
+	r->Assign(n++, zeek::val_mgr->Count(s.misses));
+
+	return r;
+	%}
+
+## Returns statistics about Broker communication.
+##
+## Returns: A record with Broker statistics.
+##
+## .. zeek:see:: get_conn_stats
+##              get_dns_stats
+##              get_event_stats
+##              get_file_analysis_stats
+##              get_gap_stats
+##              get_matcher_stats
+##              get_net_stats
+##              get_proc_stats
+##              get_reassembler_stats
+##              get_thread_stats
+##              get_timer_stats
+##              get_broker_stats
+##              get_reporter_stats
+function get_broker_stats%(%): BrokerStats
+	%{
+	auto r = zeek::make_intrusive<zeek::RecordVal>(BrokerStats);
+	int n = 0;
+
+	auto cs = broker_mgr->GetStatistics();
+	r->Assign(n++, zeek::val_mgr->Count(static_cast<uint64_t>(cs.num_peers)));
+	r->Assign(n++, zeek::val_mgr->Count(static_cast<uint64_t>(cs.num_stores)));
+	r->Assign(n++, zeek::val_mgr->Count(static_cast<uint64_t>(cs.num_pending_queries)));
+	r->Assign(n++, zeek::val_mgr->Count(static_cast<uint64_t>(cs.num_events_incoming)));
+	r->Assign(n++, zeek::val_mgr->Count(static_cast<uint64_t>(cs.num_events_outgoing)));
+	r->Assign(n++, zeek::val_mgr->Count(static_cast<uint64_t>(cs.num_logs_incoming)));
+	r->Assign(n++, zeek::val_mgr->Count(static_cast<uint64_t>(cs.num_logs_outgoing)));
+	r->Assign(n++, zeek::val_mgr->Count(static_cast<uint64_t>(cs.num_ids_incoming)));
+	r->Assign(n++, zeek::val_mgr->Count(static_cast<uint64_t>(cs.num_ids_outgoing)));
+
+	return r;
+	%}
+
+## Returns statistics about reporter messages and weirds.
+##
+## Returns: A record with reporter statistics.
+##
+## .. zeek:see:: get_conn_stats
+##              get_dns_stats
+##              get_event_stats
+##              get_file_analysis_stats
+##              get_gap_stats
+##              get_matcher_stats
+##              get_net_stats
+##              get_proc_stats
+##              get_reassembler_stats
+##              get_thread_stats
+##              get_timer_stats
+##              get_broker_stats
+function get_reporter_stats%(%): ReporterStats
+	%{
+	auto r = zeek::make_intrusive<zeek::RecordVal>(ReporterStats);
+	int n = 0;
+
+	auto weirds_by_type = zeek::make_intrusive<zeek::TableVal>(zeek::id::find_type<TableType>("table_string_of_count"));
+
+	for ( auto& kv : reporter->GetWeirdsByType() )
+		{
+		auto weird = zeek::make_intrusive<zeek::StringVal>(kv.first);
+		weirds_by_type->Assign(std::move(weird), zeek::val_mgr->Count(kv.second));
+		}
+
+	r->Assign(n++, zeek::val_mgr->Count(reporter->GetWeirdCount()));
+	r->Assign(n++, std::move(weirds_by_type));
+
+	return r;
+	%}

@@ -1,0 +1,3 @@
+# @TEST-IGNORE
+
+cat $1 | sed 's/original/filtered/g' >$2

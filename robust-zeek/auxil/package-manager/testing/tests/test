@@ -1,0 +1,26 @@
+# @TEST-EXEC: bash %INPUT
+# @TEST-EXEC: zkg test rot13
+
+# @TEST-EXEC: bash we_need_to_go_deeper
+# @TEST-EXEC-FAIL: zkg test rot13
+
+echo "$(pwd)/packages/rot13" >> sources/one/bob/zkg.index
+cd sources/one
+git commit -am 'add rot13 package'
+
+cd ../../packages/rot13
+echo 'depends = bar *' >> zkg.meta
+echo -e "@load bar\n$(cat scripts/Demo/Rot13/__load__.zeek)" > scripts/Demo/Rot13/__load__.zeek
+
+cd testing/Baseline/tests.main
+echo "rot13 plugin is loaded" > output
+echo "bar loaded" >> output
+echo "rot13 script is loaded" >> output
+
+git commit -am 'new stuff'
+
+@TEST-START-FILE we_need_to_go_deeper
+cd packages/rot13
+echo 'hello' > testing/Baseline/tests.rot13/output
+git commit -am 'new stuff'
+@TEST-END-FILE 

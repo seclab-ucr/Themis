@@ -1,0 +1,10 @@
+# This is a wrapper for the "script" command, which has different
+# options depending on the OS.
+
+if ! script -q -c ls /dev/null >/dev/null 2>&1; then
+    # FreeBSD and macOS
+    script -q /dev/null $@
+else
+    # Linux
+    script -qfc "$@" /dev/null
+fi

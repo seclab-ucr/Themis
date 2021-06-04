@@ -1,0 +1,15 @@
+# Test that a worker node using PF_RING load balancing on multiple interfaces
+# has different cluster IDs automatically assigned (one for each group of
+# processes sniffing the same interface).
+#
+# @TEST-EXEC: bash %INPUT
+# @TEST-EXEC: TEST_DIFF_CANONIFIER="$SCRIPTS/diff-remove-abspath | $SCRIPTS/diff-remove-localhost-values" btest-diff out
+
+. zeekctl-test-setup
+
+while read line; do installfile $line; done << EOF
+etc/zeekctl.cfg__debug
+etc/node.cfg__pfring_2_nics
+EOF
+
+zeekctl nodes > out

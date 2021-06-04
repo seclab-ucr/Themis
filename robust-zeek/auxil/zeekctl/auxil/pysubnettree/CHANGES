@@ -1,0 +1,323 @@
+
+0.35 | 2020-12-07 15:05:57 -0800
+
+  * Release 0.35.
+
+0.34-16 | 2020-12-07 15:05:32 -0800
+
+  * Update CMake logic to prefer Python 3 over Python 2 (Jon Siwek, Corelight)
+
+0.34-13 | 2020-12-02 11:09:48 -0800
+
+  * Update minimum required CMake to 3.5 (Jon Siwek, Corelight)
+
+0.34-11 | 2020-11-26 18:03:05 +0000
+
+  * Update cmake submodule for changes related to Python 2 EOL (Jon Siwek, Corelight)
+
+  * Update CI: test newer Python versions and drop older versions (Jon Siwek, Corelight)
+
+  * Update Python invocations to use `python3` explicitly (Jon Siwek, Corelight)
+
+  * Change CMakeLists.txt to enforce Python >= 3.5 (Jon Siwek, Corelight)
+
+  * Update documentation for Python 2 EOL and new Python 3 requirements (Jon Siwek, Corelight)
+
+0.34-2 | 2020-09-22 11:03:48 -0700
+
+  * Fix undefined behavior of left-shifting a negative value (Jon Siwek, Corelight)
+
+0.34 | 2020-07-23 10:12:30 -0700
+
+  * Release 0.34
+
+  * Update btest.cfg for aux/ to auxil/ rename (Jon Siwek, Corelight)
+
+0.33 | 2020-02-15 11:06:27 -0800
+
+  * Release 0.33.
+
+0.32-2 | 2020-02-15 11:06:12 -0800
+
+  * GH-18: Update Makefile to use swig -I option (Jon Siwek, Corelight)
+
+0.32 | 2020-02-05 21:29:34 -0800
+
+  * Release 0.32
+
+0.31-16 | 2020-01-13 10:07:00 -0800
+
+  * Fix use of CMake VERSION_GREATER_EQUAL (Jon Siwek, Corelight)
+
+0.31-15 | 2020-01-13 09:29:26 -0800
+
+  * Set CMake policies according to CMake version (Jon Siwek, Corelight)
+
+    CMake versions earlier than when the policy was introduced otherwise
+    emit an "unknown policy" error.
+
+0.31-14 | 2020-01-13 11:34:17 +0000
+
+  * Update CMake script for new SWIG policies. (Jon Siwek, Corelight)
+
+  * Fix btest.cfg's PYTHONPATH. (Jon Siwek, Corelight)
+
+  * Move header files into "include/ to avoid confusion on
+    case-insensitive file systems. (Jon Siwek, Corelight)
+
+0.31-7 | 2019-10-28 18:08:28 -0700
+
+  * Move CMake project() after cmake_minimum_required() (Jon Siwek, Corelight)
+
+0.31 | 2019-08-01 12:05:46 -0700
+
+  * Release 0.31.
+
+0.30-10 | 2019-08-01 12:05:12 -0700
+
+  * Drop use of Python 2.6 for Travis CI tests (Jon Siwek, Corelight)
+
+0.30-9 | 2019-06-17 20:15:55 -0700
+
+  * Update Travis config for bro to zeek renaming (Daniel Thayer)
+
+0.30-7 | 2019-06-12 15:06:22 -0700
+
+  * Update for a directory name change  (Daniel Thayer)
+
+    Also a few other unrelated bro to zeek renaming changes.
+
+0.30 | 2019-04-12 16:36:23 -0700
+
+  * Release 0.30.
+
+0.29-3 | 2019-04-12 16:34:55 -0700
+
+  * Check for twine existence in `make upload` (Jon Siwek, Corelight)
+
+  * GH-14: Fix segfault in lookup operations with Python3 (Jon Siwek, Corelight)
+
+    Due to decrementing a reference count too early.
+
+0.29-1 | 2019-03-22 16:33:21 -0700
+
+  * Update the `make upload` target to use twine (Jon Siwek, Corelight)
+
+0.29 | 2019-03-22 16:16:56 -0700
+
+  * Release 0.29.
+
+0.28-11 | 2019-03-22 16:15:24 -0700
+
+  * Improve parsing/handling of invalid subnet strings (Shai Bentov)
+
+  * GH-12: fix segfault on invalid prefixes (Jon Siwek, Corelight)
+
+  * Fix python3 compatibility of ./configure script (Jon Siwek, Corelight)
+
+0.28-2 | 2018-12-07 16:30:21 -0600
+
+  * Update github/download link (Jon Siwek, Corelight)
+
+  * Update submodules to use github.com/zeek (Jon Siwek, Corelight)
+
+0.28 | 2018-08-22 11:55:29 -0500
+
+  * Release v0.28.
+
+0.27-18 | 2018-08-06 15:59:38 -0500
+
+  * Fix deprecation warning for swig_add_module (Jon Siwek, Corelight)
+
+0.27-12 | 2018-05-15 15:37:40 +0000
+
+  * Updating submodule.
+
+0.27-9 | 2018-03-29 12:57:25 -0700
+
+  * Update README with correct Python version requirement. (Daniel Thayer)
+
+  * Fix some issues reported by Coverity. (Daniel Thayer)
+
+0.27-6 | 2018-03-15 14:56:13 -0700
+
+  * Configure Travis CI email recipients and build branches. (Daniel
+    Thayer)
+
+0.27-3 | 2018-02-05 15:06:20 -0800
+
+  * Add a .travis.yml file. (Daniel Thayer)
+
+0.27 | 2017-05-26 08:28:10 -0500
+
+  * Release 0.27.
+
+0.26-2 | 2016-12-06 12:33:17 -0800
+
+  * Fix compiler warnings on OpenBSD, add missing include. (Daniel Thayer)
+
+0.26 | 2016-10-27 14:43:48 -0700
+
+ * Release 0.26.
+
+0.25-4 | 2016-10-06 09:08:48 -0700
+
+  * Fix the prefixes() function to compile and work on Python 3.
+    (Daniel Thayer)
+
+  * Cleanup tests for the prefixes() function and improved comments
+    and error messages. (Daniel Thayer)
+
+0.25 | 2016-08-12 13:19:45 -0700
+
+  * Release 0.25.
+
+0.24-7 | 2016-01-25 14:22:14 -0800
+
+  * Added prefixes() method to return all prefixes in the tree as a
+    set of strings, with or without length.  Also supports returning
+    IPv4 addresses in their "native" format. (James Royalty)
+
+0.24 | 2015-05-07 20:24:57 -0700
+
+  * Release 0.24.
+
+  * Update dist Makefile target (Johanna Amann)
+
+0.23-23 | 2015-03-23 10:37:20 -0500
+
+  * Update try..except syntax in one example in the README.
+    (Daniel Thayer)
+
+  * BIT-1303: Reorganize tests to use btest and add more test cases.
+    (Daniel Thayer)
+
+0.23-19 | 2015-03-23 09:36:00 -0500
+
+  * Add IPv6 example in the docs (David Salisbury)
+
+0.23-18 | 2015-03-17 09:27:14 -0700
+
+  * Python 3 compatibility fixes. (Jon Siwek)
+
+0.23-12 | 2014-12-12 10:44:38 -0800
+
+  * Use IPv6 as canonical storage format (IPv4 -> IPv4-mapped IPv6).
+    Addresses GitHub issues #4 and maybe #5. (Jon Siwek)
+
+  * Update MANIFEST.in. Include SubnetTree.i in the distribution so
+    the swig file (SubnetTree.cc) can be regenerated with the tarball
+    if needed. . (Scott Kitterman)
+
+0.23 | 2014-04-03 15:53:51 -0700
+
+  * Release 0.23.
+
+0.23 | 2014-03-31 18:05:31 -0700
+
+  * Updated setup.py to work with setuptools. Uploaded to PyPI. (Henry
+    Stern/Robin Sommer)
+
+0.22 | 2013-10-14 09:47:15 -0700
+
+  * Release.
+
+0.21 | 2013-10-14 09:46:34 -0700
+
+  * Fixing version number in setup.cfg. Addresses BIT-1088. (Robin
+    Sommer)
+
+  * Remove dead code. (Jon Siwek)
+
+  * Fix allocator/deallocator mismatch. (Jon Siwek)
+
+0.20 | 2013-09-23 11:53:17 -0700
+
+  * Fix an error in README and improve the examples (Daniel Thayer)
+
+  * Fix a broken link in the documentation. (Daniel Thayer)
+
+0.19-9 | 2013-03-08 09:19:54 -0800
+
+  * Fix a compiler warning. (John Siwek)
+
+  * s/bro-ids.org/bro.org/g. (Robin Sommer)
+
+0.19-3 | 2012-09-29 14:10:39 -0700
+
+  * Fix compile error with Python C API. Addresses #887. (Matthias
+    Vallentin)
+
+0.19-1 | 2012-09-24 16:11:13 -0700
+
+  * Fixing memory leak. When deleting a PySubnetTree, the values
+    weren't unref'ed. (Simon Arlott)
+
+0.19 | 2012-08-01 13:57:31 -0500
+
+  * Fix configure script to exit with non-zero status on error (Jon Siwek)
+
+0.18 | 2012-07-05 12:33:40 -0700
+
+  * Improve check for SWIG/Python version incompatibility. Addresses
+    #843. (Jon Siwek)
+
+0.17-16 | 2012-07-02 14:53:05 -0700
+
+  * Cleanup and update of SubnetTree_wrap.cc file. (Daniel Thayer)
+    
+  * Fix compile warnings and dependencies of swig-generated files. (Jon Siwek)
+
+  * Fix typos. (Daniel Thayer)
+
+0.17-8 | 2012-04-09 15:36:47 -0700
+
+  * pysubnettree now supports IPv6 addresses and prefixes. (Henry
+    Stern, updated by Daniel Thayer). 
+
+  * SubnetTree now have a binary mode as well in in which single
+    addresses are passed in the form of packed binary strings as,
+    e.g., returned by `socket.inet_aton. (Henry Stern, updated by
+    Daniel Thayer).
+
+  * Raise minimum required CMake version to 2.6.3 (Jon Siwek)
+
+
+0.17 | 2012-01-09 16:11:02 -0800
+
+  * Submodule README conformity changes. (Jon Siwek)
+
+  * Simplify finding of Python headers/libraries. Addresses #666. (Jon
+    Siwek).
+
+0.16-3 | 2011-11-03 15:17:21 -0700
+
+  * Fixing compiler warnings. Addresses #388. (Jon Siwek)
+
+0.16 | 2011-10-26 13:50:28 -0700
+
+  * Compile SWIG bindings with no-strict-aliasing (closes #644) (Jon Siwek)
+
+0.15 | 2011-10-25 20:15:08 -0700
+
+  * New make dist/distclean targets. (Jon Siwek)
+
+  * Cleaning up the distribution. (Jon Siwek and Robin Sommer)
+
+0.14-8 | 2011-09-04 09:19:08 -0700
+
+  * Install binaries with an RPATH. (Jon Siwek)
+
+  * Add check for incompatible swig+python versions. Addresses #562.
+    (Jon Siwek)
+
+  * Workaround for FreeBSD CMake port missing debug flags. (Jon Siwek)
+
+0.14 | 2011-05-05 20:59:58 -0700
+
+  * CMake build setup. (Jon Siwek)
+
+  * Cleanup, and converting README to REST. (Robin Sommer)
+
+  * Initial import to git. (Robin Sommer)
+

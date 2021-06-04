@@ -1,0 +1,5 @@
+# %TEST-EXEC: btest %INPUT
+
+@TEST-COPY-FILE: ${ENV2}/../../Scripts/dummy-script
+@TEST-EXEC: test -e dummy-script
+@TEST-EXEC: cmp dummy-script %DIR/../../Scripts/dummy-script

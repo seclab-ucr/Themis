@@ -1,0 +1,39 @@
+# Test that the restart command can start all stopped nodes, or just a
+# specified node. Test that the restart command can restart all running nodes,
+# or just a specified node.
+#
+# @TEST-EXEC: bash %INPUT
+# @TEST-EXEC: btest-diff start-all.out
+# @TEST-EXEC: btest-diff restart-one.out
+# @TEST-EXEC: btest-diff restart-all.out
+# @TEST-EXEC: TEST_DIFF_CANONIFIER=$SCRIPTS/diff-remove-abspath btest-diff restart-all-clean.out
+# @TEST-EXEC: btest-diff start-one.out
+
+. zeekctl-test-setup
+
+while read line; do installfile $line; done << EOF
+etc/zeekctl.cfg__no_email
+etc/node.cfg__cluster
+bin/zeek__test
+EOF
+
+zeekctl install
+
+# start all nodes (using restart command)
+zeekctl restart > start-all.out
+
+# restart one node
+zeekctl restart worker-1 > restart-one.out
+
+# restart all nodes
+zeekctl restart > restart-all.out
+
+# restart all nodes with --clean option
+zeekctl restart --clean > restart-all-clean.out
+
+zeekctl stop
+
+# start one node (using restart command)
+zeekctl restart manager > start-one.out
+
+zeekctl stop

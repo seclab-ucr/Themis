@@ -1,0 +1,17 @@
+# Test that plugins can define new state variables.
+#
+# @TEST-EXEC: bash %INPUT
+# @TEST-EXEC: btest-diff out1
+# @TEST-EXEC: btest-diff out2
+
+. zeekctl-test-setup
+
+while read line; do installfile $line; done << EOF
+plugins/statetest.py $ZEEKCTL_INSTALL_PYTHON_DIR/zeekctl/plugins --new
+EOF
+
+zeekctl exit
+mv state.out out1
+
+zeekctl exit
+mv state.out out2

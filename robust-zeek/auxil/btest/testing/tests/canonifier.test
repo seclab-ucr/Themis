@@ -1,0 +1,17 @@
+# %TEST-EXEC: chmod +x test-canonifier
+# %TEST-EXEC: btest -d %INPUT
+
+%TEST-START-FILE Baseline/canonifier/output
+ABC 123 DEF
+%TEST-END-FILE
+
+%TEST-START-FILE test-canonifier
+sed 's/[0-9][0-9][0-9]/XXX/g'
+%TEST-END-FILE
+
+@TEST-EXEC: echo ABC 890 DEF >output
+@TEST-EXEC-FAIL: btest-diff output
+@TEST-EXEC: TEST_DIFF_CANONIFIER="sh -c ../../test-canonifier" btest-diff output
+
+
+

@@ -1,0 +1,14 @@
+#
+# Sets ZEEKPATH to either the installed policy scripts (if
+# use_installed_policies is 1), or the user-provided originals
+# (otherwise).
+#
+# Should be sourced.
+
+ZEEKPATH=${tmp_node_dir}:${policydirsiteinstallauto}:${policydir}:${policydir}/policy:${policydir}/site
+
+if [ "$use_installed_policies" = "1" ]; then
+   export ZEEKPATH=${policydirsiteinstall}:$ZEEKPATH
+else
+   export ZEEKPATH=${sitepolicypath}:$ZEEKPATH
+fi

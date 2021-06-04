@@ -1,0 +1,33 @@
+# Test that the netstats command can get status of all nodes, or just
+# a specified node.
+#
+# This test needs to be serialized because we are using the broker python
+# bindings.
+# @TEST-SERIALIZE: listen
+#
+# @TEST-EXEC: bash %INPUT
+# @TEST-EXEC: TEST_DIFF_CANONIFIER=$SCRIPTS/diff-remove-timestamps-unix btest-diff all.out
+# @TEST-EXEC: TEST_DIFF_CANONIFIER=$SCRIPTS/diff-remove-timestamps-unix btest-diff onenode.out
+
+. zeekctl-test-setup
+
+while read line; do installfile $line; done << EOF
+etc/zeekctl.cfg__no_email
+etc/node.cfg__no_netifs
+EOF
+
+zeekctl install
+zeekctl start
+
+# get status of all nodes
+zeekctl netstats > all.out
+
+# get status of one node
+zeekctl netstats worker-2 > onenode.out
+
+zeekctl stop
+
+# no nodes are running, so zeekctl cannot get any results
+! zeekctl netstats > stopped.out
+# the file size should be zero
+test ! -s stopped.out

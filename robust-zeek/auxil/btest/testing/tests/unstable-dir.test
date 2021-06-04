@@ -1,0 +1,38 @@
+# %TEST-EXEC: btest -t -z 4 mydir/test1 >output 2>&1
+# %TEST-EXEC: btest-diff output
+
+%TEST-START-FILE Baseline/mydir.test1/test1-output
+ran
+more
+ran
+more
+ran
+more
+ran
+more
+%TEST-END-FILE
+
+%TEST-START-FILE Baseline/mydir.test1/test1-dir-output
+tests.unstable-dir/mydir
+tests.unstable-dir/mydir
+tests.unstable-dir/mydir
+tests.unstable-dir/mydir
+%TEST-END-FILE
+
+%TEST-START-FILE mydir/test1
+@TEST-START-FILE single-output1
+ran
+@TEST-END-FILE
+
+@TEST-START-FILE single-output2
+more
+@TEST-END-FILE
+
+@TEST-EXEC: echo $(basename $(dirname %DIR))/$(basename %DIR) >> ../../persist-dirs
+@TEST-EXEC: cat single-output1 >> ../../persist
+@TEST-EXEC: cat single-output2 >> ../../persist
+@TEST-EXEC: cat ../../persist > test1-output
+@TEST-EXEC: cat ../../persist-dirs > test1-dir-output
+@TEST-EXEC: btest-diff test1-output
+@TEST-EXEC: btest-diff test1-dir-output
+%TEST-END-FILE

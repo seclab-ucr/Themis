@@ -1,0 +1,2462 @@
+
+2.3.0 | 2020-12-14 21:02:33 -0800
+
+  * Release 2.3.0
+
+2.2.0-27 | 2020-12-12 20:20:43 -0800
+
+  * Install zeekctl into Zeek's common Python library subdirectory (Christian Kreibich, Corelight)
+
+    - This removes the unused --python-install-dir option from the
+      configure help output, and adds --python-home and --python-prefix to
+      allow specifying custom Python installation folders, as done in the
+      Broker package. Bundled installation with Zeek inherits
+      PY_MOD_INSTALL_DIR, as the rest of the tree.
+
+    - The testsuite no longer hardwires assumptions about the location of
+      the Python module folder, and instead relies on "zeek-config
+      --python_dir" to obtain it. This required some rewiring of the
+       per-test string substitution logic. Cross fingers.
+
+    - Switches cmake's deprecated "remove_directory" command to "rm".
+
+    - Bumps trace-summary submodule to make it find Python modules in the
+      Zeek distribution's installation directory.
+
+2.2.0-25 | 2020-12-10 14:11:47 -0800
+
+  * Update Broker Python binding usages to new API (Jon Siwek, Corelight)
+
+    Without properly use of context-management or explicit reset() calls,
+    the destruction order of subscriber objects can cause
+    heap-use-after-free crashes.
+
+2.2.0-24 | 2020-12-10 15:45:03 +0000
+
+  * Baseline refresh to reflect btest 0.64 (Christian Kreibich, Corelight)
+
+2.2.0-21 | 2020-12-07 15:06:31 -0800
+
+  * Update CMake logic to prefer Python 3 over Python 2 (Jon Siwek, Corelight)
+
+2.2.0-17 | 2020-12-02 11:10:51 -0800
+
+  * Update minimum required CMake to 3.5 (Jon Siwek, Corelight)
+
+2.2.0-15 | 2020-11-26 18:06:12 +0000
+
+  * Remove an empty/useless 'btest' file (Jon Siwek, Corelight)
+
+  * Remove CI testing of older Python versions and add newer versions (Jon Siwek, Corelight)
+
+  * Remove Python 2 compatibility logic from all Python scripts (Jon Siwek, Corelight)
+
+  * Update Python invocations to use explicit `python3` (Jon Siwek, Corelight)
+
+  * Update CMake logic to enforce Python >= 3.5 (Jon Siwek, Corelight)
+
+  * Update docs to reflect new Python 3.5 minimum requirement (Jon Siwek, Corelight)
+
+  * Update submodules for changes related to Python 2 EOL (Jon Siwek, Corelight)
+
+2.2.0-6 | 2020-11-24 15:16:37 -0800
+
+  * Rely on GNUInstallDirs for definition of libdir and adopt it for installation (Christian Kreibich, Corelight)
+
+2.2.0 | 2020-07-27 11:14:20 -0700
+
+  * Release 2.2.0
+
+2.1.0-25 | 2020-07-21 12:55:47 -0700
+
+  * Update a test baseline for new Broker::table_store_db_directory (Jon Siwek, Corelight)
+
+2.1.0-24 | 2020-07-21 14:45:35 +0000
+
+  * Add new "BrokerDBDir" configuration option, which sets the
+    location in which Zeek tables that are backed by Broker stores are
+    persisted. (Johanna Amann, Corelight)
+
+2.1.0-20 | 2020-06-30 11:31:03 -0700
+
+  * Fix .travis.yml to use auxil/ instead of aux/ (Jon Siwek, Corelight)
+
+2.1.0-18 | 2020-06-08 11:14:14 -0700
+
+  * Rename aux/ to auxil/ (Jon Siwek, Corelight)
+
+    Since "aux" is not an allowed file/dir name on Windows.
+
+2.1.0-11 | 2020-03-26 13:33:50 -0700
+
+  * Update generated docs (Jon Zeolla)
+
+  * Clarify docs and example for multi-logger cluster (Jon Zeolla)
+
+2.1.0 | 2020-02-08 12:32:49 -0800
+
+  * Release 2.1.0
+
+2.0.0-39 | 2020-02-04 12:07:18 -0800
+
+  * Don't check for sqlite3 python module when cross-compiling (Fabrice Fontaine)
+
+    Don't check for sqlite3 python module support by calling
+    "${PYTHON_EXECUTABLE}" -c "import sqlite3" when cross-compiling as this
+    will check sqlite3 support on the host python interpreter and not the
+    target python interpreter.
+
+2.0.0-36 | 2020-01-30 19:11:25 -0800
+
+  * No longer need to look for BROCTL_DISABLE_LISTEN. (Robin Sommer, Corelight)
+
+  * Error out when old Bro options are used. (Robin Sommer, Corelight)
+
+  * Error out when old Bro plugin API used. (Robin Sommer, Corelight)
+
+  * Remove 'bro' command from ps plugin. (Robin Sommer, Corelight)
+
+  * Abort if there's a broctl.cfg but no zeekctl.cfg. (Robin Sommer, Corelight)
+
+  * Abort when using old BroControl plugin API. (Robin Sommer, Corelight)
+
+2.0.0-25 | 2019-11-25 10:21:18 -0800
+
+  * Fix "scripts" command in standalone mode (Jon Siwek, Corelight)
+
+    Addresses https://github.com/zeek/zeek/issues/697
+
+2.0.0-24 | 2019-11-25 09:21:27 -0800
+
+  * Change install.py to use a relative path for the zeekctl-config.sh symlink (Craig Leres)
+
+2.0.0-18 | 2019-10-28 20:14:23 -0700
+
+  * Remove Python 3.4 from Travis CI matrix (Jon Siwek, Corelight)
+
+    It's end-of-life and not available in Travis "dist: bionic".
+
+2.0.0-17 | 2019-10-28 18:27:37 -0700
+
+  * Use Ubuntu 18.04 (Bionic) in Travis CI (Jon Siwek, Corelight)
+
+    To satisfy Zeek C++17 requirement
+
+2.0.0-16 | 2019-10-28 18:25:20 -0700
+
+  * Move CMake project() after cmake_minimum_required() (Jon Siwek, Corelight)
+
+2.0.0-12 | 2019-10-17 16:30:37 -0700
+
+  * Change gzip compression level from 9 to default #614 (JC Connell)
+
+2.0.0-6 | 2019-08-23 06:31:33 -0400
+
+  * archive-log: Print a usage string if the number of arguments is incorrect. (Vlad Grigorescu)
+
+2.0.0-3 | 2019-08-13 13:43:34 -0700
+
+  * Add CompressLogsInFlight option to compress logs while writing instead of upon rotation (Tim Wojtulewicz, Corelight)
+
+2.0.0 | 2019-08-08 10:51:01 -0700
+
+  * Release 2.0.0
+
+1.9-60 | 2019-08-06 11:48:09 -0700
+
+  * Simplify check-pid script
+
+    Still keeps support for Alpine/BusyBox version of `ps`, which lacks
+    the -p option, but removes the use of `kill -0`, which transiently
+    fails for unknown reason: see https://github.com/zeek/zeek/issues/518 (Jon Siwek, Corelight)
+
+1.9-56 | 2019-06-21 09:55:14 -0700
+
+  * Fix alpine ps => PID issue (Jeff Barber)
+
+1.9-52 | 2019-06-12 15:08:09 -0700
+
+  * Rename directories from bro to zeek (Daniel Thayer)
+
+1.9-49 | 2019-05-23 19:33:47 -0700
+
+  * Rename the BROPATH environment variable (Daniel Thayer)
+
+1.9-47 | 2019-05-20 19:37:27 -0700
+
+  * More changes for Bro to Zeek renaming (Daniel Thayer)
+
+1.9-45 | 2019-05-15 15:00:39 -0700
+
+  * Adjust parallelism of build-zeek script (Jon Siwek, Corelight)
+
+  * Update broker.bro module usage to broker.zeek (Jon Siwek, Corelight)
+
+1.9-43 | 2019-05-14 19:29:56 -0700
+
+  * Fix plugin.ps test (Jon Siwek, Corelight)
+
+1.9-42 | 2019-05-14 18:19:43 -0700
+
+  * Remove the "update" command (Jon Siwek, Corelight)
+
+1.9-41 | 2019-05-14 17:27:44 -0700
+
+  * Update Travis config to use zeek/zeekctl (Jon Siwek, Corelight)
+
+  * Update README.rst symlink (Jon Siwek, Corelight)
+
+1.9-39 | 2019-05-14 13:12:15 -0700
+
+  * Fix legacy plugin API and add new tests (Daniel Thayer)
+
+  * Added new test cases and improved a few tests. (Daniel Thayer)
+
+  * Fixed one line in the help output to fit within an 80 character display. (Daniel Thayer)
+
+  * Some fixes for bro-to-zeek renaming and docs (Daniel Thayer)
+
+  * Updating documentation. (Robin Sommer, Corelight)
+
+  * Renamed broctl to zeekctl (Robin Sommer, Corelight)
+
+    I ended up doing the rename pretty comprehensively across all the
+    scripts, as it was hard to change some places but not others. So most
+    uses of Bro are replaced with Zeek now. I tried to maintain backwards
+    compatibility with the old names where user visible, including names
+    for options and IDs inside plugins.
+
+    Changes to maintain backwards compabibility:
+
+    - We now also puts links in place for backwards compability:
+
+        bin/broctl -> bin/zeek-wrapper (which then forwards to zeekctl)
+        lib/broctl -> lib/zeekctl
+
+    - If an etc/broctl.cfg exists from a previous install, we symlink
+      etc/zeekctl.cfg to it to keep any customizations that were made.
+
+    - We create a Python wrapper module BroControl that forwards (with a
+      warning) to the renamed ZeekControl, so that old plugins continue to
+      work.
+
+    - Old option name containing "Bro" are accepted in place of the new
+      Zeek variants.
+
+    - "ps.bro" is an alias for "ps.zeek".
+
+    - BROCTL_DISABLE_LISTEN is an alias for ZEEKCTL_DISABLE_LISTEN
+
+1.9-32 | 2019-05-10 19:13:32 -0700
+
+  * Add LibDir64 option (Jon Siwek, Corelight)
+
+    And make it and LibDir optional dirs for syncing to remote nodes as
+    well as for use with the 'df' command.
+
+    On some platforms, certain libraries in the Zeek-ecosystem now install
+    into the lib64/ directory by default (per that platform's convention).
+
+  * Allow option names that have numbers in them (Jon Siwek, Corelight)
+
+  * Silence test failures due to rotate_file_by_name deprecation (Jon Siwek, Corelight)
+
+1.9-28 | 2019-04-19 11:11:53 -0700
+
+  * Replace bro_init/bro_done usages with zeek_init/zeek_done (Seth Hall, Corelight)
+
+1.9-24 | 2019-04-16 11:53:06 -0700
+
+  * Update some tests and baselines due to new file extension (Daniel Thayer)
+
+  * Install script files with new file extension (Daniel Thayer)
+
+  * Change file extension of all script files to ".zeek" (Daniel Thayer)
+
+  * Fix the update command
+
+    This broke due to https://github.com/zeek/zeek/pull/261, in which
+    errors in initialization are now fatal, but there happened to be
+    benign/unnoticed errors with the way `broctl update` was working.
+    Namely, it was incorrectly treating the bro process that it spawned
+    for using the control framework as a cluster node, by setting the
+    CLUSTER_NODE environment variable, and that causes an attempt to listen
+    on a port which, when a cluster is up and running as it should be,
+    is already listened upon, thus generating an error and completely
+    failing now due to change in initialization behavior. (Jon Siwek, Corelight)
+
+1.9-11 | 2019-01-04 13:10:54 -0600
+
+  * Adding support for log rotation/expiration for distributed loggers. (Stefan Maerz)
+
+1.9-8 | 2018-12-10 15:07:31 -0600
+
+  * Change Travis btest commnad to help isolate hung tests (Jon Siwek, Corelight)
+
+1.9-7 | 2018-12-10 13:09:29 -0600
+
+  * Update Travis URL for cloning Zeek (Jon Siwek, Corelight)
+
+  * GH-11: Improve check-pid helper script for Alpine support (Jon Siwek, Corelight)
+
+1.9-4 | 2018-12-07 16:31:33 -0600
+
+  * Update github/download link (Jon Siwek, Corelight)
+
+  * Update submodules to use github.com/zeek (Jon Siwek, Corelight)
+
+1.9-2 | 2018-09-26 10:31:47 -0500
+
+  * Update broctl.rst (by running "make doc") (Daniel Thayer)
+
+1.9 | 2018-09-18 16:47:56 -0500
+
+  * Release 1.9.
+
+1.8-1 | 2018-09-18 16:46:20 -0500
+
+  * Fix commands that use broker python bindings (Jon Siwek, Corelight)
+
+1.8 | 2018-09-18 14:26:09 -0500
+
+  * Release v1.8.
+
+1.7-126 | 2018-09-07 09:56:19 -0500
+
+  * Update the broctl top command to not show the "Proc" column (Daniel Thayer)
+
+  * Update the stats-to-csv script for broker and loggers (Daniel Thayer)
+
+  * Improve `make dist` (Jon Siwek, Corelight)
+
+1.7-122 | 2018-08-29 23:44:14 +0000
+
+  * Include Broker node ID in "control" event topics. This helps break
+    a message routing loop due to all "control" nodes being subscribed
+    to a common topic. (Jon Siwek, Corelight)
+
+1.7-119 | 2018-08-21 13:20:35 -0500
+
+  * Change default snaplen to 9216 bytes to better accommodate
+    jumbo frames (Justin Azoff)
+
+1.7-117 | 2018-08-20 14:57:41 -0500
+
+  * Change broctl to warn about unrecognized broctl options (Daniel Thayer)
+
+  * Remove deprecated node-specific SitePolicy* options (Daniel Thayer)
+
+1.7-107 | 2018-07-16 10:57:58 -0500
+
+  * Update docs about the "update" command being deprecated (Daniel Thayer)
+
+  * Various unit test additions/improvements/cleanups (Daniel Thayer)
+
+  * Update diff-top-output script based on a recent change (Daniel Thayer)
+
+  * Reduce the number of node.cfg files used by the tests (Daniel Thayer)
+
+  * Reduce the number of broctl.cfg files used by the tests (Daniel Thayer)
+
+  * Set BRO_DEFAULT_LISTEN_ADDRESS when running tests (Daniel Thayer)
+
+  * The check and scripts tests no longer need to be serialized (Daniel Thayer)
+
+1.7-93 | 2018-06-21 11:54:09 -0500
+
+  * Make 'check' and 'scripts' commands skip connection setup (Corelight)
+
+1.7-92 | 2018-06-08 09:55:24 -0500
+
+  * Broker-related updates and fixes for the docs (Daniel Thayer)
+
+  * Reduce the size of the Bro build and build more quickly when running
+    broctl tests (Daniel Thayer)
+
+  * Travis CI improvements (Daniel Thayer)
+
+  * Fix the testing Makefile "cleanup" target to remove all test tmp files.
+    (Daniel Thayer)
+
+  * Fix a few commands to report error when bro is not running (Daniel Thayer)
+
+  * Improve error message for import broker failure (Daniel Thayer)
+
+  * Remove redundant output from broctl capstats command (Daniel Thayer)
+
+  * Output error messages to stderr instead of stdout (Daniel Thayer)
+
+  * Improved capstats error message when capstatspath option is not set.
+    (Daniel Thayer)
+
+  * Fixed exit status of capstats command when it doesn't produce any
+    results. (Daniel Thayer)
+
+  * Updated some test baselines. (Daniel Thayer)
+
+1.7-81 | 2018-06-06 14:01:23 -0500
+
+  * Listen in standalone mode, but not when processing a trace (Corelight)
+
+1.7-77 | 2018-05-21 17:46:06 +0000
+
+    * Port BroControl to use Broker. (Corelight) This includes:
+
+        - Add deprecation warning to "update" command. Bro's new
+          configuration framework supersedes it.
+
+        - Make Broker's control topic a configuration option.
+
+        - Add 'DefaultStoreDir' option that controls location of
+          persistent stores
+
+        - Remove 'IPv6Comm' and 'ZoneID'. For the former, Broker
+          should be able to handle IPv6 automatically. The latter is
+          not supported anymore for now.
+
+    * Don't open debug.log when not configured to do logging, and
+      catch when broctl can't open the debug log file. (Daniel Thayer)
+
+1.7-61 | 2018-03-15 14:57:05 -0700
+
+  * Configure Travis CI email recipients and build branches. (Daniel
+    Thayer)
+
+1.7-57 | 2018-02-05 15:04:41 -0800
+
+  * Add a .travis.yml file (Daniel Thayer)
+
+  * Fix a race condition in the bro__test script. (Daniel Thayer)
+
+  * Fix the build-bro script when running on Travis CI. (Daniel Thayer)
+
+1.7-53 | 2018-01-18 13:18:38 -0600
+
+  * Allow capstats to work with af_packet (Mike Reeves)
+
+  * Fix race conditions in the "update" command test and the "start-slowstart"
+    command test.  Cleaned up the bro__test script. (Daniel Thayer)
+
+  * Sort the list of filesystems for each node in the "df" command output.
+    This fixes the "df" command test on Python 3. (Daniel Thayer)
+
+  * Enable easier changing of the node type sort order in broctl command
+    output.  A list of node types in the preferred sort order is now used
+    instead of using alphabetical order. (Daniel Thayer)
+
+  * Add a logger to the node.cfg for some tests to verify correct ordering
+    of node names in the output of various broctl commands. (Daniel Thayer)
+
+  * Update test baselines for recent change of PFRINGClusterID default value.
+    Also, it is no longer necessary to set a value for the PFRINGClusterID
+    option in broctl.cfg for the PF_RING tests. (Daniel Thayer)
+
+1.7-44 | 2017-12-28 10:33:48 -0500
+
+  * Fix bug in broctl df command where it could skip checking the filesystem
+    of the "logs" directory if none of the other Bro directories were on that
+    filesystem, but only when a cluster config with a logger node was being
+    used.  Also fixed the check for NFS mounted volumes to prevent broctl from
+    skipping non-NFS filesystems that have a colon in the name.
+    Addresses BIT-1880 (Daniel Thayer)
+
+  * Added "df" command tests for a standalone configuration, and for Bro
+    directories on different partitions. (Daniel Thayer)
+
+1.7-39 | 2017-12-28 10:29:22 -0500
+
+  * Changed the default value of PFRINGClusterID to be 21 (instead of 0)
+    when PF_RING is not installed.  Also changed the default value of
+    SendMail to /usr/sbin/sendmail (instead of SENDMAIL-NOTFOUND) when
+    sendmail is not installed. (Daniel Thayer)
+
+1.7-34 | 2017-12-13 11:30:50 -0600
+
+  * Simplify broctl "start" and "stop" output to show the node type
+    instead of listing each node name. (Daniel Thayer)
+
+  * Code cleanup: reduce number of hard-coded node type names in the code.
+    (Daniel Thayer)
+
+  * Add new tests of the BroControl plugin API (Daniel Thayer)
+
+  * Reorganize, rename, and simplify numerous test scripts. (Daniel Thayer)
+
+  * Cleanup the broctl test build and setup scripts. (Daniel Thayer)
+
+  * Add test for "broctl --version" (Daniel Thayer)
+
+  * Added a test case for multiple logger nodes in the "install" command test.
+    (Daniel Thayer)
+
+1.7-16 | 2017-09-26 09:16:47 -0400
+
+  * Allow broctl plugin command names that are an empty string to be run
+    by typing just the plugin prefix name (no dot needed). (Daniel Thayer)
+
+  * Add tests to verify that bugs fixed in the following commits
+    are actually fixed: 6bf5bb0f, 9f387354, and f472a05f. (Daniel Thayer)
+
+1.7-12 | 2017-09-20 17:18:40 -0400
+
+  * Fix archive-log to correctly handle logs that are already compressed.
+    (Daniel Thayer)
+
+1.7-10 | 2017-09-19 17:06:27 -0500
+
+  * Fix "install" command to preserve symlinks in "site" directory.
+    Addresses BIT-1846. (Jon Siwek)
+
+  * Fix broctl "print" command to not truncate output. (Daniel Thayer)
+
+1.7-7 | 2017-07-27 14:38:10 -0500
+
+  * lb_pf_ring update: support for ZC and the new bro::pf_ring plugin (cardigliano)
+
+1.7-5 | 2017-07-11 08:45:32 -0500
+
+  * Use SHA-1 instead of MD5 to compute config hash values. Addresses BIT-1817.
+    (Daniel Thayer)
+
+1.7 | 2017-06-26 15:55:09 -0700
+
+  * Release 1.7.
+
+1.6-3 | 2017-06-26 10:52:27 -0400
+
+  * Set a value for the global_hash_seed constant.  Addresses BIT-1819.
+    (Daniel Thayer)
+
+1.6 | 2017-06-06 17:43:14 -0500
+
+  * Release 1.6
+
+  * Pruning CHANGES a bit (Daniel Thayer)
+
+1.5-49 | 2017-04-30 12:53:44 -0400
+
+  * Allow more than one logger to be defined.
+
+    This adds initial support for running a Bro cluster with multiple logger
+    processes.  This is primarily useful for installations that use something
+    like Kafka or Logstash to aggregate logs.  (Daniel Thayer)
+
+  * Add a "--version" option to show broctl version (Daniel Thayer)
+
+  * Added a new option MailReceivingPackets to allow users to disable
+    broctl cron mail that no packets were seen on an interface. (Daniel Thayer)
+
+  * A large number of unused code removal and code cleanups (Daniel Thayer)
+
+  * Fix some failing tests when using python 3 (Daniel Thayer)
+
+  * The "start" helper script now reports error if PID string is empty (Daniel
+    Thayer)
+
+  * Fixed the sorting of node names in command output (e.g. "worker-10"
+    should be output after "worker-2").  Now the order of names is based on
+    the "count" node attribute instead of the name.  (Daniel Thayer)
+
+  * Fixed some bugs in stats-to-csv script (proxies were being handled like
+    workers, and it was assuming that the manager is named "manager").
+    Also added more error checking. (Daniel Thayer)
+
+  * Fix potential cases of unhandled IndexError and ValueError. (Daniel Thayer)
+
+  * Fixed a few cases where the ps plugin didn't return non-zero when an
+    error occurred. (Daniel Thayer)
+
+  * Fix shell scripts to no longer depend on bash (Daniel Thayer)
+
+  * Improve the run_cmds() and run_localcmd() functions by returning output
+    as a string (instead of list of strings) and check and handle output
+    string correctly in all cases. (Daniel Thayer)
+
+1.5-21 | 2017-03-17 13:18:58 -0400
+
+  * Fix some tests to make sure the test tmp dir is removed (Daniel Thayer)
+
+  * Update crash-diag script due to recent change where "bro -v" now outputs
+    the version to stdout.  Also fixed crash-diag to not show stderr output
+    from running "bro -N". (Daniel Thayer)
+
+  * Add a new broctl option to expire crash directories
+
+    Added functionality to broctl cron to remove crash directories older than
+    the number of days specified in the new option CrashExpireInterval (the
+    default value is 0, which means crash directories never expire). (Daniel
+    Thayer)
+
+  * Add a test for expiration of crash directories (Daniel Thayer)
+
+  * Reduce disk usage of post-terminate and crash-diag
+
+    Changed post-terminate and crash-diag so that the bro binary is not
+    copied when there is no core file.  Also, the crash report is now
+    saved to disk only when crash-diag is run from post-terminate (i.e.,
+    the "diag" command will no longer create any files). (Daniel Thayer)
+
+  * Change archive-log to use "mv" instead of "cp"
+
+    Changed archive-log to "mv" (rather than "cp") logs when not using gzip
+    for better efficiency.  This means we will not have the logs in the tmp
+    directory when Bro crashes, so the scripts have now been simplified to
+    never attempt to keep a copy of archived logs in the tmp dir (previously,
+    logs >100MB were always being deleted anyway). (Daniel Thayer)
+
+
+1.5-12 | 2017-03-13 13:43:43 -0400
+
+  * Prevent the broctl check and scripts commands from hanging
+
+    Changed the check-config script to run bro with the "-a" option
+    when running "broctl check" in the hope that this will prevent broctl
+    from hanging for any reason.  The "-a" option prevents bro
+    from running any bro script statements (previously, "check" would
+    cause bro to exit after handling the bro_init event) but should still
+    be able to identify the same bro scripting errors as before.
+
+    Also, to prevent "broctl scripts" from hanging, set the value
+    of "exit_only_after_terminate" to False (in broctl/check.bro) in case
+    another script sets the value of that constant to True.  Since "bro -a"
+    prevents bro from creating the loaded_scripts.log file, that option
+    cannot be used with "broctl scripts". (Daniel Thayer)
+
+1.5-9 | 2017-01-26 16:38:17 -0500
+
+  * Fix some failing tests
+
+    Added a new broctl option, called StopWait, to force the stop command
+    to wait for the post-terminate script to finish.  This is needed
+    because some tests were failing due to background log-archive processes
+    creating logs after "broctl stop" finished, which was preventing the
+    test directory from being deleted. (Daniel Thayer)
+
+  * Fix post-terminate to not generate invalid timestamps
+
+    Fixed the code that tries to extract the base name and timestamp
+    from a log filename, because it wasn't extracting them correctly
+    when the base name contained a period (this doesn't happen for any
+    of the standard Bro logs) or if the timestamp in the filename wasn't in
+    the format YYYY-MM-DD-HH-MM-SS (this could happen if Bro terminates
+    but for some reason doesn't execute the code in the writers/ascii.bro
+    script that renames the log, or if someone uses a different forma
+    by redefining Log::default_rotation_date_format).  The fix involves
+    first removing the log suffix, then trying to extract the timestamp
+    in one of the two default timestamp formats.  This procedure is more
+    reliable than the previous method of making assumptions about how many
+    period characters should be in a log filename.
+
+    Also, when Bro terminates normally, post-terminate now just tries to
+    archive all log files, instead of only those that were rotated.  This
+    is to avoid missing any logs.  This also means that the
+    stderr.log/stdout.log files are now archived when Bro terminates
+    normally (instead of only when Bro crashes), which is useful to
+    capture any error messages from archive-log or Bro.
+
+    Also fixed an issue that could occasionally occur when post-terminate
+    archives an unrotated log file (i.e., no timestamp in the filename)
+    and a different log with the same base name was archived after
+    post-terminate started, then the computed start time of the unrotated
+    log would be later than the end time.  Fixed by setting the start time
+    to equal the end time.
+
+    Also added the node name to the subject line in the email sent when
+    post-terminate fails to archive a log. (Daniel Thayer)
+
+  * Add error checking of archive-log timestamp parameters
+
+    Check if the format of the timestamp command-line parameters matches
+    the required format.  If not, exit with an error message.  This will
+    prevent archive-log from creating an archived log file with a corrup
+    filename or in a directory with a corrupt name.
+
+    Also simplified the code that gets the current century. (Daniel Thayer)
+
+1.5-5 | 2017-01-26 13:34:37 -0500
+
+  * Fix crash-diag script to use the correct debugger, because on some systems
+    the correct debugger to use is not called "gdb" (currently, this
+    affects OS X and OpenBSD). (Daniel Thayer)
+
+1.5-2 | 2016-12-06 12:35:40 -0800
+
+  * Don't show output of "ulimit -v" in crash reports on OpenBSD; adjusting
+    it always fails and showing the value only creates confusion. (Daniel Thayer)
+
+1.5 | 2016-11-16 14:51:05 -0800
+
+  * Pruning CHANGES a bit. (Daniel Thayer)
+
+  * Update broctl.rst using "make doc". (Daniel Thayer)
+
+1.5-beta2 | 2016-11-02 11:08:45 -0700
+
+  * Release 1.5-beta2.
+
+1.5-beta-56 | 2016-11-02 13:44:41 -0400
+
+  * A number of portability fixes, mostly related to OpenBSD. (Daniel Thayer)
+
+1.5-beta-48 | 2016-11-02 13:38:34 -0400
+
+  * Fix bug where standalone bro port isn't recorded to state.db, and
+    add more test cases. (Daniel Thayer)
+
+1.5-beta-41 | 2016-11-01 09:34:19 -0700
+
+  * Add support for local-logger.bro site policy script. (Daniel Thayer)
+
+  * Add a few clarifications to broctl documentation. (Daniel Thayer)
+
+1.5-beta-31 | 2016-10-07 14:55:07 -0400
+
+  * Improve diag command output. (Daniel Thayer)
+
+  * Add new option SitePolicyScripts to replace SitePolicyStandalone.
+    Also marked SitePolicyManager, SitePolicyWorker, and SitePolicyStandalone
+    as deprecated in the documentation. (Daniel Thayer)
+
+  * Fix a couple of failing tests. (Daniel Thayer)
+
+  * Fix a failing test on FreeBSD. (Daniel Thayer)
+
+  * Improved the documentation, especially documentation of node attributes,
+    documentation of broctl commands, and added a section about Bro/BroControl
+    communication. (Daniel Thayer)
+
+1.5-beta-24 | 2016-09-26 16:24:21 -0400
+
+  * Define all BroControl exceptions in the new exceptions.py file.
+    The broctl client will now handle only those exceptions, showing a
+    useful error message instead of a stack trace.  As before, if a
+    standard Python exception is raised (this is not expected to occur),
+    then broctl will terminate with a stack trace, which is useful to
+    help debug the problem. (Daniel Thayer)
+
+1.5-beta-22 | 2016-09-26 16:11:21 -0400
+
+  * Fix crash-diag script to not confuse log files with core files
+
+    Fixed the crash-diag script to not include any log filenames that
+    contain the word "core" in the list of core files. (Daniel Thayer)
+
+  * Improve crash-diag script's handling of core filenames
+
+    Fixed the script to handle filenames that contain a space. (Daniel Thayer)
+
+1.5-beta-19 | 2016-09-26 15:50:22 -0400
+
+  * Fix a bug where broctl loses state of running Bro nodes
+
+    If a node name contains uppercase letters, then restarting broctl while
+    that node is running results in a confusing warning about that node still
+    running, and broctl discards the PID of that node.  Fixed by converting
+    the node name to lowercase before checking the state database (where all
+    keys are converted to lowercase).
+
+    Addresses BIT-1676. (Daniel Thayer)
+
+  * Report an error if a user defines node names differing only by case (such
+    as "worker-1" and "Worker-1").  This check is needed because keys
+    in the state db are converted to lowercase. (Daniel Thayer)
+
+  * Improve error messages for plugin API functions (Daniel Thayer)
+
+  * Removed the restriction that plugin state variables must be string
+    type, because normal state variables have no such restriction. (Daniel Thayer)
+
+  * Fixed the getGlobalOption() function in the plugin API.  It did not
+    convert its argument to lowercase, and could return the value of a
+    state variable.
+
+    Also simplified some code by replacing the config has_attr() function
+    with a new function get_option(), which helps reduce the number of places
+    in the code where keys are converted to lowercase. (Daniel Thayer)
+
+  * Do not set a plugin state var. with invalid name (Daniel Thayer)
+
+  * Improve code that sets plugin option values
+
+    Improved error messages to include the name of the plugin, and fixed a
+    problem where any option with an invalid name was being set (now such
+    options are skipped). (Daniel Thayer)
+
+  * Simplify some broctl cron-related code by using get_state() (Daniel Thayer)
+
+  * Fix the subst() function for non-string data types (Daniel Thayer)
+
+  * Code simplification involving the config get_state() function
+
+    Added an optional default parameter to the config get_state() function,
+    and changed that function to convert the key to lowercase.  These changes
+    help simplify some code by reducing the number of conversions to lowercase. (Daniel Thayer)
+
+  * Simplify code by not converting option values to lowercase (Daniel Thayer)
+
+  * Fix problem with custom node keys that are not lowercase (Daniel Thayer)
+
+  * Improve documentation of case-sensitive issues in broctl (Daniel Thayer)
+
+  * Remove redundant lowercase conversions of state var. names (Daniel Thayer)
+
+
+1.5-beta-2 | 2016-09-01 12:03:46 -0400
+
+  * Improve crash reports by showing Bro plugin info (Daniel Thayer)
+
+
+1.5-beta | 2016-08-12 13:20:27 -0700
+
+  * Release 1.5-beta.
+
+  * Fix rsync error message to not show ssh login banner. (Daniel Thayer)
+
+  * Run "make doc" to update broctl.rst (Daniel Thayer)
+
+  * Pruning CHANGES a bit (Daniel Thayer)
+
+1.4-150 | 2016-08-09 13:38:17 -0400
+
+  * Show python stack trace if unexpected exception is raised.
+    (Daniel Thayer)
+
+  * Improve broctl error messages and error handling across the board.
+    (Daniel Thayer)
+
+  * Add a new optional node type "logger" that will handle logging
+    instead of the manager. (Daniel Thayer)
+
+1.4-132 | 2016-07-14 18:23:27 -0400
+
+  * Don't run capstats on interfaces with packet source prefix. (Daniel Thayer)
+
+1.4-130 | 2016-07-13 14:36:34 -0400
+
+  * Improve the text of crash reports with instructions on how to
+    get a backtrace, which should reduce the amount of useless crash
+    reports mailed to the Bro team. (Daniel Thayer)
+
+1.4-127 | 2016-07-06 08:58:18 -0500
+
+  * Ignore packet source prefix of interface name when using capstats. (Jan Grashoefer)
+
+1.4-125 | 2016-07-02 17:53:42 -0500
+
+  * New plugin function "broctl_config" so plugin authors can add their own
+    script code to the autogenerated broctl-config.bro script. (Seth Hall)
+
+1.4-122 | 2016-07-02 12:05:23 -0500
+
+  * Follow symlinks to directories when searching for plugins. (Jon Siwek)
+
+1.4-119 | 2016-06-28 11:11:19 -0400
+
+  * Fix race condition in reading/writing broctl-config.sh (Daniel Thayer)
+
+1.4-117 | 2016-06-22 12:14:37 -0400
+
+  * Improve broctl behavior when unable to stop a node. (Daniel Thayer)
+
+1.4-112 | 2016-06-14 16:14:52 -0700
+
+  * Fix a failing test on some platforms and improve its error
+     message. (Daniel Thayer)
+
+  * Add Bro plugin directory to broctl plugin search path. (Daniel Thayer)
+
+  * Update test baselines. (Daniel Thayer)
+
+  * Changed the default value of the StatusCmdShowAll option so that
+    the broctl status command runs faster. (Daniel Thayer)
+
+  * Changed the status-timefmt test so that it can be run in parallel
+    with the other tests. (Daniel Thayer)
+
+  * Remove dead code and update docs. (Daniel Thayer)
+
+  * Rename serialization set for cluster tests. (Daniel Thayer)
+
+  * Change node hostname resolution to be more consistent. (Daniel Thayer)
+
+  * Add another test for broctl start command. (Daniel Thayer)
+
+  * Prevent start helper from getting in infinite loop. (Daniel Thayer)
+
+1.4-100 | 2016-05-17 16:22:25 -0700
+
+  * Updating baseline for Bro control framework change. (Robin Sommer)
+
+  * Fix for running broctl tests on OS X 10.11 (Daniel Thayer)
+
+1.4-96 | 2016-04-28 13:43:22 -0400
+
+  * Fix inconsistent return value data type for some commands, so that
+    they always return a CmdResult. (Daniel Thayer)
+
+1.4-94 | 2016-04-28 13:29:34 -0400
+
+  * Fix the top command on OS X 10.10 or newer. (Daniel Thayer)
+
+  * Fix build-bro script for running broctl tests on FreeBSD. (Daniel Thayer)
+
+1.4-91 | 2016-03-31 15:08:24 -0500
+
+  * Explicitly close the Broccoli connection to avoid resource leak. (Aaron Eppert)
+
+1.4-89 | 2016-03-31 12:02:19 -0500
+
+  * Prevent ssh login banners from appearing in broctl output. (Jon Schipp)
+
+1.4-87 | 2016-03-31 10:35:47 -0400
+
+  * Eliminate unnecessary writes to the state db. (Daniel Thayer)
+
+1.4-84 | 2016-03-11 16:32:46 -0600
+
+  * Support ip command for getting local IP addrs. (Jon Schipp)
+
+1.4-77 | 2016-01-20 14:44:36 -0500
+
+  * Changed LogExpireInterval to allow users to specify a more
+    granular log expire interval, which is a number followed by
+    a unit: "day", "hr", or "min".  An integer value with no unit
+    is still allowed and interpreted the same as before. (Daniel Thayer)
+
+  * More verbose error message for logexpireinterval value. (Daniel Thayer)
+
+  * Prevent log expire interval from being less than rotation interval. (Daniel Thayer)
+
+  * Improve the ps test diff canonifier. (Daniel Thayer)
+
+  * Improve the cron-expire test script. (Daniel Thayer)
+
+
+1.4-70 | 2016-01-19 22:42:10 -0600
+
+  * Fix custom plugin commands to behave more like built-in commands. (Aaron Eppert/Daniel Thayer)
+
+  * Add README.rst -> doc/broctl.rst symlink. Addresses BIT-1413 (Johanna Amann)
+
+1.4-61 | 2015-12-19 13:39:47 -0800
+
+  * Add broctl.cfg options PcapSnaplen and PcapBuflen to set pcap's
+    packet snap length and buffer size, respectively. (Jan Grashoefer)
+
+1.4-57 | 2015-12-11 12:00:07 -0500
+
+  * Simplify some code and fix a test that can fail on OS X. (Daniel Thayer)
+
+  * Improvements to broctl documentation. (Daniel Thayer)
+
+  * Improve diagnostic and error messages. (Daniel Thayer)
+
+  * Add more private IP space to etc/networks.cfg (Daniel Thayer)
+
+  * Add a new broctl option, MailArchiveLogFail, to control sending
+    log archive mail. (Daniel Thayer)
+
+  * Check for invalid option names and values more carefully. (Daniel Thayer)
+
+  * Fix use of ssh to always use IP address to avoid host key verification
+    failures, and use BatchMode consistently to avoid a misleading
+    error message when rsync fails. (Daniel Thayer)
+
+  * Changed post-terminate to attempt to archive logs that have already
+    been rotated.  Also changed crash-diag output file extension to no
+    longer use ".log" in order to avoid post-terminate trying to
+    archive it. (Daniel Thayer)
+
+  * Send email if post-terminate fails to archive logs, and changed
+    the post-terminate script to run archive-log serially instead
+    of multiple instances simultaneously in the background.
+    (Daniel Thayer)
+
+  * Rename logs in the spool/tmp/post-terminate directory to indicate
+    they were successfully archived when archive-log is run with the "-c"
+    option.  (Daniel Thayer)
+
+  * Capture output of background post-terminate script to file
+    "post-terminate.out" which might be helpful for debugging
+    problems with log archival. (Daniel Thayer)
+
+  * Add bro node type to post-terminate dir name (Daniel Thayer)
+
+1.4-36 | 2015-12-08 13:21:05 -0500
+
+  * Fix problem of unexpected ifconfig output with some locales (Daniel Thayer)
+
+1.4-34 | 2015-10-27 21:13:15 -0500
+
+  * Added plugin for custom load balancing (Jan Grashoefer)
+
+1.4-30 | 2015-08-21 17:23:39 -0700
+
+  * Updating submodule(s).
+
+1.4-28 | 2015-07-29 15:33:37 -0500
+
+  * Handle a missing broctl-config.sh symlink (Justin Azoff)
+
+1.4-26 | 2015-07-27 14:13:43 -0400
+
+  * Create broctl-config.sh automatically (Daniel Thayer)
+
+  * Undo a previous change for lb_procs error checking (Daniel Thayer)
+
+  * Update broctl.rst by running "make doc" (Daniel Thayer)
+
+  * Convert boolean config values to python bool type (Daniel Thayer)
+
+1.4-20 | 2015-07-27 09:12:44 -0400
+
+  * Merge remote-tracking branch 'origin/topic/dnthayer/ticket1434' (Justin Azoff)
+
+  * Improve the broctl top helper script for FreeBSD (Daniel Thayer)
+
+1.4-18 | 2015-07-27 09:03:22 -0400
+
+  * Improve error message for invalid broctl plugin config values (Daniel Thayer)
+
+  * Improve error message for invalid broctl config values (Daniel Thayer)
+
+  * Improve error checking for local IP addresses (Daniel Thayer)
+
+  * Cleanup some error msgs and source code comments (Daniel Thayer)
+
+  * Close ssh connections upon config reload (Daniel Thayer)
+
+  * Check for dangling Bro nodes every time node.cfg is loaded (Daniel Thayer)
+
+  * Improve check for dangling Bro nodes (Daniel Thayer)
+
+  * Remove unnecessary state variable type conversions (Daniel Thayer)
+
+  * Convert config option values to correct data type (Daniel Thayer)
+
+  * Check config file contents rather than timestamp (Daniel Thayer)
+
+  * Add ability for broctl to reload its configuration, which the
+    deploy command will do if a config file change is detected. (Daniel Thayer)
+
+  * Avoid caching config values because config might change (Daniel Thayer)
+
+  * Update a broctl test file (Daniel Thayer)
+
+  * Keep track of both loaded plugins and active plugins (Daniel Thayer)
+
+  * Reorganize some code (no changes in functionality) (Daniel Thayer)
+
+  * Remove some config options and add a new one (Daniel Thayer)
+
+
+1.4-1 | 2015-07-22 13:20:49 -0500
+
+  * Fix test setup script to not overwrite LD_LIBRARY_PATH (Jon Siwek)
+
+1.4 | 2015-06-09 09:19:56 -0500
+
+  * Release 1.4.
+
+1.4-beta-22 | 2015-06-02 10:34:44 -0500
+
+  * Update broctl man page for deploy command (Daniel Thayer)
+
+  * Updating baselines. (Robin Sommer)
+
+
+1.4-beta-20 | 2015-05-28 12:15:28 -0700
+
+  * Slight output tweaks. (Robin Sommer)
+
+1.4-beta-19 | 2015-05-28 11:59:39 -0700
+
+  * Improve documentation on site-specific customization. (Daniel
+    Thayer)
+
+  * Don't use daemon threads in ssh_runner. (Daniel Thayer)
+
+  * Improve broctl documentation. (Daniel Thayer)
+
+  * Fix minor error with restart clean. (Daniel Thayer)
+
+  * Improve and extend tests. (Daniel Thayer)
+
+  * Improve error messages related to the env_vars option. (Daniel Thayer)
+
+  * Remove code that was automatically removing quoted values of the
+    env_vars option. (Daniel Thayer)
+
+  * Show help when user runs broctl with unknown command. (Daniel
+    Thayer)
+
+  * Improve visibility of archive-log error messages. (Daniel Thayer)
+
+  * Add sanity checks on broctl options. (Daniel Thayer)
+
+  * Improve error messages involving the state database file.
+    Addresses BIT-1397 (Daniel Thayer)
+
+  * Fixed error when a broctl command outputs binary data. (Daniel
+    Thayer)
+
+  * Fix the config change warnings on Python 3. (Daniel Thayer)
+
+  * Fix an issue with the ps plugin where the "run-bro" script would
+    appear in the output on some systems. (Daniel Thayer)
+
+  * Inform user to run broctl deploy to get started. (Daniel Thayer)
+
+  * Fix communication with muxer for newer Python versions. (Daniel
+    Thayer)
+
+  * Set correct Python path in Python scripts. (Daniel Thayer)
+
+1.4-beta | 2015-05-07 20:26:22 -0700
+
+  * Release 1.4-beta.
+
+1.3-221 | 2015-04-22 15:20:20 -0500
+
+  * Improve the test build script to show build error output. (Daniel Thayer)
+
+1.3-220 | 2015-04-21 14:54:49 -0400
+
+  * Fix problem where use of broargs causes error message (Daniel Thayer)
+
+  * Avoid unnecessary string building in logging functions (Daniel Thayer)
+
+  * Handle broctl output messages more consistently (Daniel Thayer)
+
+  * Don't show certain warnings when they're not useful (Daniel Thayer)
+
+  * Fix the interactive command tab completion feature (Daniel Thayer)
+
+  * Simplify some SQL and remove unused code in the state database (Daniel Thayer)
+
+1.3-212 | 2015-04-17 15:27:14 -0500
+
+  * Fix the use of the "first-line" helper script (Daniel Thayer)
+
+  * Added a new broctl option "CommandTimeout" that specifies the number
+    of seconds to wait for a command to return results.  This value is
+    passed to ssh_runner. (Daniel Thayer)
+
+  * Improve error reporting for ssh_runner (Daniel Thayer)
+
+  * Changed the status command to run only one helper script so that the
+    status command takes half as long to run in the worst-case scenario.
+    This involved replacing the "cat-file" helper with a new one that
+    can handle multiple files, and only outputs the first line of each file.
+    (Daniel Thayer)
+
+  * Remove unused default timeout values in ssh_runner.  Also changed the
+    ping timeout and changed the code to actually use it. (Daniel Thayer)
+
+  * Fix response handling (Justin Azoff)
+
+  * Enable json serialization of CmdResult objects (Justin Azoff)
+
+  * Enable BatchMode for ssh
+
+    From the ssh manual:
+
+        If set to ``yes'', passphrase/password querying will be disabled.
+        This option is useful in scripts and other batch jobs where no user
+        is present to supply the password. (Justin Azoff)
+
+  * Improve some error messages (Daniel Thayer)
+
+  * Fix to prevent broctl from hanging when an exception occurs.
+    Make sure that the finish method is called (to signal that we're done
+    to the ssh_runner worker threads). (Daniel Thayer)
+
+
+1.3-197 | 2015-04-16 16:15:25 -0500
+
+  * Use daemon threads only for remote hosts (Daniel Thayer)
+
+  * Fix to prevent the broctl stop command from hanging (Daniel Thayer)
+
+  * Remove the run-cmd helper script (Daniel Thayer)
+
+1.3-185 | 2015-04-03 14:54:06 -0400
+
+  * Update test baselines. (Daniel Thayer)
+
+  * Improved error reporting in several cases. (Daniel Thayer)
+
+  * Added checks if there are any nodes to start or stop to avoid
+    executing code unnecessarily. (Daniel Thayer)
+
+  * Preserve order of hosts in command lists to be executed. (Daniel
+    Thayer)
+
+  * Catch the KeyboardInterrupt exception. (Daniel Thayer)
+
+  * Reorganize code for the df command. (Daniel Thayer)
+
+  * Python 3 compatibility fixes. (Daniel Thayer)
+
+  * Make sure "broctl deploy" error messages are visible. (Daniel Thayer)
+
+  * Speedup the deploy command by checking only one node of each node
+    type. (Daniel Thayer)
+
+  * Fix a race condition that results in data loss on the SSH control
+    channels. (Daniel Thayer)
+
+  * While waiting for lock, show owning PID of lock. (Daniel Thayer)
+
+  * Make sure broctl always closes any file that it opens. (Daniel Thayer)
+
+  * Update broctl install requirements list. (Daniel Thayer)
+
+  * Don't show log header lines in "broctl scripts" output. (Daniel
+    Thayer)
+
+  * Added functions to cleanup before broctl terminates (Daniel
+    Thayer)
+
+1.3-165 | 2015-03-30 13:46:23 -0500
+
+  * BIT-1326: Add configure-time check for required sqlite3 python
+    module. (Jon Siwek)
+
+1.3-162 | 2015-03-17 09:36:26 -0700
+
+  * Update the documentation. (Daniel Thayer)
+
+  * Add a new command "deploy" which does a "check", "install", and
+    "restart".  The intention of this command is to reduce the chance
+    that users will forget to install after modifying their
+    configuration. (Daniel Thayer)
+
+  * Sort broctl command output for easy readability.
+
+  * Remove duplicate nodes from input so that broctl can't run a
+    command twice for the same Bro node. (Daniel Thayer)
+
+  * Improve error output. (Daniel Thayer)
+
+  * Allow specifying alternate Bro script directory via "--scriptdir"
+    option of the configure script when building Bro. (Daniel Thayer)
+
+  * Allow specifying alternate location for etc/ directory via the
+    "--conf-files-dir" option of the configure script when building
+    Bro. (Daniel Thayer)
+
+  * Simplify internals of the main broctl script. (Daniel Thayer)
+
+  * Removed the use of BROCTL_INSTALL_PREFIX for modifying the install
+    prefix at run-time.  This was only intended for use by the test
+    scripts. Now the test setup scripts just modify all the files
+    where the install prefix is hard-coded. (Daniel Thayer)
+
+1.3-150 | 2015-03-04 12:17:42 -0800
+
+  * Significant improvements (mostly internal), reorganization, and
+    cleanup across the whole code base. (Justin Azoff and Daniel
+    Thayer)
+
+    This includes:
+
+      - Refactor broctl to make it usable as a library (reduce global
+        state, module-level setup code, and functions return results
+        instead of printing).
+
+      - Integrate ssh_runner code into broctl to fix current problems
+        (use only one connection per host instead of one per Bro node;
+        broctl shouldn't hang when a host goes down or if we forgot to
+        run "broctl install"),
+
+      - Write state info using SQLite state storage instead of writing
+        to a plain text file (broctl.dat).
+
+      - When the node config changes, we now do additional checks if
+        there are any Bro nodes running that are no longer in our node
+        config and warn user if any are detected.
+
+      - Keep track of the expected state (running or stopped) of each
+        Bro node, and have broctl cron start or stop nodes as needed.
+
+      - Improved broctl cron by adding two new options (MailHostUpDown
+        and StatsLogEnable) to enable users the option to turn off
+        unwanted functionality to speed up broctl cron and reduce the
+        chance of errors.
+
+      - When broctl cron tries to send email but fails, now it will
+        output a message that includes the text it was trying to mail.
+
+      - Silence warning messages that are intended for interactive use
+        of broctl when broctl cron runs to reduce unwanted emails from
+        cron.
+
+      - Added new broctl option StatusCmdShowAll to enable users to
+        speed up "broctl status" significantly.
+
+      - Fixed the stats-to-csv script to not create files that can
+        never include any data.
+
+      - Fixed archive-log script to detect exit status of gzip or cp
+        command, so that we don't delete log file when the archival
+        fails.
+
+      - Improved post-terminate script to process log files more
+        consistently.
+
+      - Made all broctl command output go to stdout (previously, some
+        output would go to stderr, which made grepping or redirecting
+        the output more difficult),
+
+      - Improved the default broctl.cfg file to show more of the
+        useful options.
+
+      - Added more error checks to help catch errors earlier.
+
+      - Some error message output is more specific and helpful now.
+
+1.3-12 | 2014-12-08 13:53:23 -0800
+
+  * Add man page for broctl. (Raúl Benencia)
+
+1.3-9 | 2014-12-01 12:03:53 -0600
+
+  * Remove execute permission on scripts not needing it. (Raúl Benencia)
+
+1.3-8 | 2014-10-31 09:17:27 -0500
+
+  * BIT-1166: Add configure options to fine tune local state dirs.
+    (Jon Siwek)
+
+1.3 | 2014-06-02 08:59:01 -0700
+
+  * Fix for capstats to display correct interface name when using
+    PF_RING+DNA with pfdnacluster_master. (Daniel Thayer)
+
+  * Fix for capstats with PF_RING+DNA pfdnacluster_master.
+    (Daniel Thayer)
+
+1.3-beta | 2014-05-19 16:29:36 -0500
+
+  * Improve documentation of PFRINGFirstAppInstance option (Daniel Thayer)
+
+  * Update broctl.rst with "make doc" (no other changes) (Daniel Thayer)
+
+  * Move some content into the main Bro docs in a new section "Cluster
+    Configuration". (Daniel Thayer)
+
+  * Rename the broctl option pfringdnafirstappinstance to
+    pfringfirstappinstance. (Daniel Thayer)
+
+  * Remove references to the now unused BROMAGIC (Daniel Thayer)
+
+1.2-129 | 2014-05-01 20:58:28 -0700
+
+  * A bug fix and feature add for PF_Ring support. (Seth Hall)
+
+     - Reset the app_instance for the case where there
+       are multiple dnaclusters on a single host.
+
+     - Add naming support for zerocopy (zc) clusters.
+
+  * Use a hash to determine if a config change occurred. (Daniel Thayer)
+
+  * Change hosts() function in the plugin API to return a list of
+    nodes instead of just hostnames. (Daniel Thayer)
+
+  * Add warnings when node config or broctl.cfg has changed. (Daniel Thayer)
+
+  * Code simplification, remove the unused broctl "home" option, and
+    improved a couple warning messages. (Daniel Thayer)
+
+  * Fixed a bug where broctl cron could email about the "$total"
+    pseudo-node not receiving any packets. (Daniel Thayer)
+
+  * Code reorganization for the getDf function to avoid direct output
+    and thereby reporting the same error message multiple times for
+    the same host. (Daniel Thayer)
+
+  * Cleanup some code for style consistency, reformat some comments to
+    fit on an 80-column display, and remove some dead code. (Daniel
+    Thayer)
+
+  * Replace the update-stats script with Python code. (Daniel Thayer)
+
+  * Gather disk usage by host rather than by node. The output now also
+    shows both node and host names and is now sorted by node type.
+
+  * Adjust column widths for top, netstats, peerstatus commands.
+    (Daniel Thayer)
+
+  * Change the broctl exec command to run only once per host. (Daniel
+    Thayer)
+
+  * Changed the hosts() function so that it preserves the order of the
+    returned node list as it was sorted by the nodes() function.
+    (Daniel Thayer)
+
+1.2-106 | 2014-04-10 08:32:18 -0700
+
+  * Update test baselines, and minor code cleanup. (Daniel Thayer)
+
+1.2-104 | 2014-04-05 01:01:29 -0400
+
+  * Updated PF_Ring plugin now supports PF_Ring+DNA. (Seth Hall)
+
+1.2-99 | 2014-03-30 22:21:20 +0200
+
+  * Update documentation with better install/setup instructions.
+    Addresses BIT-1160 (Daniel Thayer)
+
+1.2-97 | 2014-03-16 07:40:31 -0700
+
+  * Minor doc update for a broctl option. (Daniel Thayer)
+
+  * Adjust broctl status output to avoid bad column alignment. (Daniel
+    Thayer)
+
+  * Do not ping when checking if a host is alive. Removed the ping
+    from the host alive check because the ping might be blocked by a
+    firewall, and neither Bro nor broctl needs the ability to ping
+    hosts. (Daniel Thayer)
+
+  * If the current version of Bro doesn't match the version when
+    broctl install was previously run, then a warning message (to run
+    broctl install) is displayed when broctl starts. Addresses
+    BIT-1152. (Daniel Thayer)
+
+  * Reduce the risk of losing track of state info. Changed the way
+    broctl updates PIDs and crash flags by writing the new values to
+    disk immediately, one at a time, as soon as each new value is
+    available. Also changed the way that the state file is updated
+    when each command finishes by doing the update as an atomic
+    operation. (Daniel Thayer)
+
+  * Better error handling for a number of broctl commands. (Daniel Thayer)
+
+  * Improve error output when broctl install has not been run yet.
+    (Daniel Thayer)
+
+  * Fix a failing test on FreeBSD 10. (Daniel Thayer)
+
+  * Changed the output of the check command to be more specific about
+    what it is actually checking. (Daniel Thayer)
+
+  * Improve handling of dead hosts and closed/hanging connections.
+    (Daniel Thayer)
+
+  * Fixed a typo in the run-bro script that was causing the memlimit
+    option to be ignored. Added added a test to verify that memlimit
+    is used. (Daniel Thayer)
+
+  * Simplify code that execs commands locally. (Daniel Thayer)
+
+  * Prevent infinite loop in start helper script if it cannot execute
+    the run-bro script. (Daniel Thayer)
+
+  * pf_ring plugin: Show error if lb_procs is needed but not given,
+    and disable plugin if not used. (Daniel Thayer)
+
+  * Catch an exception that is raised when loading a plugin that does
+    not override all required methods, and output an error message.
+    (Daniel Thayer)
+
+  * Fix start helper script to return nonzero on error. (Daniel
+    Thayer)
+
+  * Improve start/stop command output for crashed nodes.
+
+  * Added a test for stopping a node that crashes during shutdown.
+    (Daniel Thayer)
+
+
+1.2-73 | 2014-02-28 14:44:51 -0800
+
+  * Added ability of broctl cron to expire entries in stats.log that
+    are older than the number of days specified in the new broctl
+    option StatsLogExpireInterval. Addresses BIT-123. (Daniel Thayer)
+
+  * Add broctl option BroPort to change the starting Bro port.
+    Addresses BIT-1117. (Daniel Thayer)
+
+1.2-66 | 2014-02-06 20:29:20 -0800
+
+  * Make sure logs are archived after broctl kills Bro. Addresses
+    BIT-1126. (Daniel Thayer)
+
+1.2-63 | 2014-02-04 09:10:39 -0800
+
+  * Fix a few sporadic test failures. (Daniel Thayer)
+
+1.2-61 | 2014-01-31 11:11:39 -0800
+
+  * Fix error handling for process command. (Daniel Thayer)
+
+  * Update and improve the tests of broctl process. (Daniel Thayer)
+
+  * Improve broctl help message for the process command. (Daniel
+    Thayer)
+
+  * Reorder the broctl process command Bro arguments. Addresses
+    BIT-1124. (Daniel Thayer)
+
+1.2-56 | 2014-01-28 15:54:14 -0800
+
+  * A large set of improvements to the test build scripts to address
+    error scenarios, fix failures to report problems, and provide
+    convenience features.  (Daniel Thayer)
+
+    Includes:
+
+        - New Makefile target "rerun" to more easily re-run failed
+          tests.
+
+        - Two new environment variables recognized by test scripts:
+
+            * If Bro fails to build, you can define an environment
+              variable BROCTL_TEST_BUILDARGS which specifies
+              additional options that will be passed to Bro's
+              "configure" script.
+
+            * Defining BROCTL_TEST_USEBUILD will use the Bro default
+              build directory (instead of a custom build directory for
+              the broctl tests).
+
+  * Add lots of new tests. (Daniel Thayer)
+
+1.2-28 | 2014-01-22 10:47:49 -0800
+
+  * Fix bug with timemachineport broctl option. (Daniel Thayer)
+
+  * Improved formatting of cluster-layout.bro for readability. (Daniel
+    Thayer)
+
+1.2-26 | 2014-01-21 07:12:38 -0800
+
+  * Update the docs. (Daniel Thayer)
+
+1.2-23 | 2014-01-20 12:22:42 -0800
+
+  * Move some output about slow nodes to debug.log. (Daniel Thayer)
+
+  * Improve broctl output formatting. (Daniel Thayer)
+
+  * Fix redundant emails from broctl cron when dead host found.
+    (Daniel Thayer)
+
+  * Fix broctl top on OS X Mavericks. (Daniel Thayer)
+
+  * Fix plugin init return values. This also fixes the myricom plugin,
+    which wasn't explicitly returning a value from its init method and
+    therefore was being disabled as a result. (Daniel Thayer)
+
+  * Enable dead hosts caching while in cron mode. (Justin Azoff)
+
+  * Use getattr for looking up plugin methods for simplifying the
+    plugin code. (Justin Azoff)
+
+  * Remove redundant plugin initialization. (Justin Azoff)
+
+1.2-12 | 2014-01-20 11:23:23 -0800
+
+  * Fix bug with IPv6Comm broctl option, which had no effect. (Daniel Thayer)
+
+1.2-10 | 2014-01-13 01:57:53 -0800
+
+  * Add a new option "PFRINGClusterType" that allows a user to specify
+    a PF_RING cluster type; it defaults to 4-tuple (which is different
+    from the 6-tuple that previous versions used). The PF_RING plugin
+    uses this information to set the corrresponding environment
+    variable for a PF_RING-aware libpcap. Addresses BIT-1108. (Daniel
+    Thayer)
+
+  * Minor reorganization of the README to avoid redundancy. (Daniel
+    Thayer)
+
+1.2-3 | 2013-12-09 13:24:28 -0800
+
+  * Remove unused Broxygen-style script comments. (Jon Siwek)
+
+1.2 | 2013-11-07 07:04:54 -0800
+
+  * Release 1.2.
+
+1.2-beta-28 | 2013-11-06 00:22:24 -0800
+
+  * Improve check-pid helper script. (Daniel Thayer)
+
+1.2-beta-26 | 2013-11-01 04:51:57 -0700
+
+  * Add another warning message when a host is not alive. (Daniel
+    Thayer)
+
+1.2-beta-24 | 2013-10-31 00:19:41 -0700
+
+  * Do not check if the local host is "alive". (Daniel Thayer)
+
+1.2-beta-22 | 2013-10-26 19:19:31 -0700
+
+  * Document which broctl options override Bro script variables.
+    (Daniel Thayer)
+
+  * Updates and clarifications to docs. (Daniel Thayer)
+
+1.2-beta-17 | 2013-10-18 13:22:16 -0700
+
+  * Fix internal lookup of nodes, which would fail to return the right
+    items in some cases when node naming didn't match standard
+    terminology. Addresses BIT-1091. (Daniel Thayer)
+
+1.2-beta-13 | 2013-10-10 13:38:58 -0700
+
+  * Updating copyright notice. (Robin Sommer)
+
+  * Fix the broctl "top" command output on Linux. (Daniel Thayer)
+
+  * Fix a race condition when sendmail option is empty string. (Daniel
+    Thayer)
+
+  * Fix a deadlock when capturing output from local command. (Daniel
+    Thayer)
+
+  * Improve portability of shell scripts used by broctl. (Daniel
+    Thayer)
+
+  * Fix for setting REPO in Makefile. (Robin Sommer)
+
+1.2-beta | 2013-09-23 20:30:31 -0700
+
+  * Update 'make dist' target. (Jon Siwek)
+
+  * Fix problem with the "broargs" options that would occur when a
+    command-line argument in broargs contained a space. (Daniel
+    Thayer)
+
+  * Change submodules to fixed URL. (Jon Siwek)
+
+1.1-190 | 2013-09-20 14:26:41 -0700
+
+  * Add more links in BroControl documentation. (Daniel Thayer)
+
+1.1-188 | 2013-09-18 14:46:10 -0700
+
+  * Add tests for new BroControl features (CPU pinning, PF_RING
+    multiple cluster IDs, "env_vars") (Daniel Thayer)
+
+  * Fix link to git repo to be consistent with other links. (Daniel
+    Thayer)
+
+  * Fix broken doc links. (Jon Siwek)
+
+1.1-182 | 2013-08-27 13:32:35 -0700
+
+  * Improve CPU pinning documentation and error message. Addresses
+    BIT-1068 (Daniel Thayer)
+
+  * Switching to relative submodule paths. (Robin Sommer)
+
+  * Documentation fixes. (Daniel Thayer)
+
+  * Minor fixes for broctl tests. (Daniel Thayer)
+
+  * Fix bug with usage of cmd_restart_pre method. (Daniel Thayer)
+
+  * Remove unused subdirectory "spool/scripts". (Daniel Thayer)
+
+  * Remove unused imports, variables, and semicolons. (Daniel Thayer)
+
+1.1-171 | 2013-08-16 15:36:14 -0700
+
+  * Changed and document the behavior of the SitePolicyPath broctl
+    option to not clobber existing files/directories when copying, in
+    order to match the expected behavior (directories earlier in the
+    list take precedence over directories later in the list when
+    duplicate filenames are encountered). Addresses BIT-714. (Daniel
+    Thayer)
+
+  * A series of changes to make broctl return useful exit codes. (Vlad
+    Grigorescu, Daniel Thayer).
+
+    Generally, broctl now returns 0 if everything went ok with regards
+    to what the documentation says should have happened, and 1
+    otherwise. We keep the following exceptions for now though:
+
+        - "cron" always returns 0.
+        - "status" and "top" return 0 if all bro nodes are
+          running, and returns 1 otherwise.
+        - commands provides by plugins always return 0.
+
+1.1-158 | 2013-08-02 17:06:57 -0700
+
+  * Add ability to set environment variables in node.cfg and
+    broctl.cfg via new "env_vars" options taking a comma-separated
+    list (e.g., "env_vars=VAR1=1,VAR2=2"). Variables in node.cfg take
+    prioroty over broctl.cfg. Addresses BIT-1010. (Daniel Thayer)
+
+1.1-150 | 2013-07-14 08:00:44 -0700
+
+  * Fix broken link in README. (Johanna Amann, thanks kraigu)
+
+1.1-148 | 2013-07-03 17:06:44 -0700
+
+  * Updates to test infrastructure. (Daniel Thayer)
+
+    - Fix canonifier script for handling missing gdb.
+    - Update baselines for recent changes to crash-diag.
+    - Remove "make quick" from the README.
+    - Minor cleanup of the build script.
+    - Remove unused Makefile variable.
+    - Remove the "-j" option to make as it can cause lock-ups on
+      some machines.
+    - Replace realpath command with more portable Python equivalent.
+
+1.1-140 | 2013-06-07 16:35:08 -0700
+
+  * Adding OS to crash output. (Robin Sommer)
+
+  * Giving the broctl test suite its own build directory. (Robin Sommer)
+
+1.1-137 | 2013-05-31 17:16:14 -0700
+
+  * New regression test suite for BroControl. "make test" runs it. See
+    testing/README for more information. (Daniel Thayer)
+
+1.1-101 | 2013-05-24 17:55:41 -0700
+
+  * Add support for CPU pinning. To use CPU pinning, a new per-node
+    option "pin_cpus" can be specified in node.cfg, and the OS must be
+    either Linux or FreeBSD (if such a node.cfg is used on another OS,
+    then the "pin_cpus" option is ignored). Addresses #996. (Daniel
+    Thayer)
+
+1.1-99 | 2013-05-24 17:34:44 -0700
+
+  * Allow multiple conn-summary.log files to be processed to avoid
+    conflicts when stopping Bro shortly after a log rotation. (Daniel
+    Thayer)
+
+  * Prevent deletion of unarchived logs during "broctl stop" when
+    archiving takes a while. (Daniel Thayer)
+
+1.1-94 | 2013-05-17 13:29:04 -0700
+
+  * Don't import readline, it's loaded implicitly already. (Daniel
+    Thayer)
+
+1.1-92 | 2013-05-17 07:37:13 -0700
+
+  * Removing uncessary directory check. (Robin Sommer)
+
+1.1-91 | 2013-05-16 20:25:00 -0700
+
+  * Stop trying to create the stats/www directory if it already
+    exists. Addresses #1007. (Seth Hall)
+
+  * Another batch of fixes. (Daniel Thayer)
+
+    This includes:
+
+    - Fix usage of PF_RING interface containing semicolons.
+    - Fix broctl exec command to check for errors.
+    - Fix a race condition during broctl start.
+    - Remove some dead code.
+    - Fix exit status output in debug log.
+
+  * Add support for the "--scriptdir" configure option. Adresses
+    #993. (Daniel Thayer)
+
+1.1-79 | 2013-05-10 19:39:55 -0700
+
+  * A set of bug fixes and robustness improvements. (Daniel Thayer)
+
+    This includes:
+
+    - Add more error checking and reporting to cron command.
+    - Improve error checking of top helper output.
+    - Improve error checking of capstats output.
+    - Fix a bug when the time command is not found.
+    - Fix the broctl top and cron commands on OS X.
+    - Fix a couple of bugs in the broctl ps plugin.
+    - Remove unused broctl scripts.
+    - Improve the check-pid helper script.
+
+1.1-63 | 2013-04-25 16:14:51 -0400
+
+  * Add support for multiple PF_RING cluster IDs
+
+    Instead of assigning the same PF_RING cluster ID to every worker
+    in a Bro cluster, the pf_ring broctl plugin has been modified to
+    automatically assign a different PF_RING cluster ID for each se
+    of workers on a host that all sniff the same interface.  The firs
+    such set of workers on a host are assigned the globally-configured
+    PF_RING cluster ID (this is the "pfringclusterid" broctl option in
+    broctl.cfg).  Each subsequent set of workers on a host that sniff
+    another interface are assigned a different value (incremented by
+    one from previous value). Addresses #943. (Daniel Thayer)
+
+1.1-61 | 2013-03-22 12:25:22 -0700
+
+  * Fix problem with the cron command hanging sometimes. Addresses
+    #591. (Seth Hall)
+
+1.1-59 | 2013-03-17 13:36:04 -0700
+
+  * Lots of small fixes, cleanup, and documentation improvemets (in
+    particular, but not only, to the plugin API). (Daniel Thayer).
+
+    This includes:
+
+        - Check for plugins with same prefix
+        - Prevent capstats from being run with invalid args
+        - Fix plugin inconsistency for certain broctl commands
+        - Document the broctl user option KeepLogs?
+        - Add a note in documentation about editing crontab
+        - Fix broctl plugin option names to be case-insensitive
+        - Remove reserved word "cluster" from node args
+        - Fix documentation of broctl commands
+        - Add calls to plugin cmd_restart_pre/post methods
+        - Fix instructions for adding plugin directories
+        - Fix the broctl check command to report results
+        - Fix handling of cmd_diag_pre for diag command
+        - Changed return value of plugin API "execute" method
+        - Add return value to some cmd_<cmd>_pre methods
+        - Add a check for state variables in broctl.cfg
+        - Changed "hosts" method to return list of hosts
+        - Call "done" method from plugin API
+        - Call hostStatusChanged with correct arg type
+        - Fix the parseNodes method in plugin API
+        - Fix the "error" method in broctl plugin API
+        - Fixed tab-completion of commands with node args
+        - Fix broctl plugin API documentation errors
+        - Fix typos in TestPlugin? output messages
+        - Add cron "--no-watch" option to broctl "help" output
+        - Fix the "execute" method of the Plugin class
+        - Fix various bugs and remove some unused code
+
+1.1-26 | 2012-12-20 17:53:52 -0800
+
+  * Add Bro version to crash reports. (Robin Sommer)
+
+  * Add a new broctl option "MailConnectionSummary" that specifies
+    whether or not to mail the connection summary reports.  (Daniel
+    Thayer)
+
+1.1-23 | 2012-12-06 15:52:20 -0800
+
+  * Update documentation for recent MailFrom change. (Daniel Thayer)
+
+1.1-21 | 2012-12-06 08:34:14 -0800
+
+  * MailFrom broctl.cfg option now adds a redef for Notice::mail_from.
+    (Jon Siwek)
+
+  * Bump CPack RPM package requirement to python >= 2.6.0. (Jon Siwek)
+
+1.1-18 | 2012-10-31 14:24:27 -0700
+
+  * Add new broctl.cfg option "MailAlarmsInterval" to allow user to
+    specify alarm mail interval. Default is once per day. (Daniel
+    Thayer)
+
+1.1-12 | 2012-10-24 15:53:48 -0700
+
+    * Add a message at the top of broctl-generated crash report emails
+      that explains how to submit the crash report to a mailing list
+      address. Addresses #876. (Daniel Thayer)
+
+1.1-10 | 2012-10-19 15:10:20 -0700
+
+  * Fix `broctl install` to now also copy subdirs in SitePolicyPath.
+    Addresses #902. (Jon Siwek)
+
+1.1-8 | 2012-10-19 14:52:23 -0700
+
+  * Add options CompressCmd and CompressExtension to customize log
+    compressions scheme. (Justin Azoff)
+
+1.1-3 | 2012-09-25 06:23:34 -0700
+
+  * Updates to documentation. (Daniel Thayer)
+
+1.1 | 2012-08-24 15:09:04 -0700
+
+  * Fix MailAlarmsTo broctl config option. Addresses #814. (Daniel
+    Thayer)
+
+  * Fix configure script to exit with non-zero status on error. (Jon
+    Siwek)
+
+1.1-beta-2 | 2012-08-10 12:29:56 -0700
+
+  * Updates to disable STDERR printing from the reporter framework.
+    (Seth Hall)
+
+1.1-beta | 2012-07-20 07:03:21 -0700
+
+  * Fix broctl startup when using custom config file dirs. (Jon Siwek)
+
+  * Change crash report info to include stack traces from all threads.
+    (Jon Siwek)
+
+  * Changed the invocation of gdb that produces the crash report. (Jon
+    Siwek)
+
+1.0-64 | 2012-07-10 16:07:50 -0700
+
+  * Remove automatic override of config file directory with /usr prefix.
+
+  * Small updates to BroControl docs. (Daniel Thayer)
+
+1.0-58 | 2012-07-02 15:55:06 -0700
+
+  * Improvements to built-in load-balancing support. Instead of adding
+    a separate worker entry in node.cfg for each Bro worker process on
+    each worker host, it is now possible to just specify the number of
+    worker processes on each host. (Daniel Thayer)
+
+    This change adds three new keywords to the node.cfg file (to be
+    used with worker entries): lb_procs (specifies number of workers
+    on a host), lb_method (specifies what type of load balancing to
+    use: pf_ring, myricom, or interfaces), and lb_interfaces (used
+    only with "lb_method=interfaces" to specify which interfaces to
+    load-balance on).
+
+    Two new broctl plugins (which operate automatically and the user
+    doesn't need to be aware of them) are added to set the appropriate
+    environment variables when either PF_RING or myricom
+    load-balancing is being used.
+
+1.0-43 | 2012-07-02 15:40:01 -0700
+
+  * Improve README. Rewrote the section on site-specific customization
+    so that it is more clear about the load order of scripts relevant
+    to site-specific customization.  Removed the description of
+    several features that don't seem to work: "worker-1.local.bro" is
+    not automatically loaded, there is no example policy in
+    local-manager.bro, local-manager.bro and local-worker.bro do not
+    automatically load local.bro, and proxies do not automatically
+    load local-worker.bro. (Daniel Thayer)
+
+1.0-40 | 2012-06-06 11:52:06 -0700
+
+    * Fix the "cron disable" command, which didn't work. This also
+      removes the config option CronEnabled. The command is now the
+      only way to turn off cron operation. (Daniel Thayer)
+
+1.0-38 | 2012-05-24 17:42:37 -0700
+
+  * Improvements to IPv6 support. (Jon Siwek)
+
+    - Add ability to manage a cluster over non-global IPv6 scope (e.g.
+      link-local), by specifying "zone_id" keys per node in node.cfg
+      and "ZoneID" option in broctl.cfg.
+
+    - Replace socket.gethostbyname lookups with socket.getaddrinfo to
+      support IPv6.
+
+    - ::1 is now recognized as the IPv6 loopback and a "local" address
+      where before 127.0.0.1 was expected.
+
+    - Update usages of ping, ssh, rsync, and ifconfig to work with IPv6
+      addresses.
+
+    - New "IPv6Comm" option in broctl.cfg can be set to 0 to turn off
+      IPv6-based communication capabilities (on by default).
+
+1.0-35 | 2012-05-17 11:57:30 -0700
+
+  * BroControl tweaks to support non-ASCII logs. (Robin)
+
+        - The main change is that we give another argument to
+          post-processors that indicates the writer type that produced
+          the log. That comes with an incompatible part: the
+          make-archive-name script now receives the writer as its
+          2nd(!) argument. Customized versions need be adapted.
+
+        - The standard postprocessors now check whether they are
+          processing something else than ASCII logs and adapt their
+          behaviour accordingly (e.g., by not compressing, and or not
+          running trace-summary).
+
+1.0-32 | 2012-05-14 17:20:17 -0700
+
+  * Fix typos in broctl docs. (Daniel Thayer)
+
+1.0-29 | 2012-05-03 11:34:29 -0700
+
+  * Added an option to specify 'etc' directory. Addresses #801.
+    (Daniel Thayer)
+
+  * Fix typos. (Daniel Thayer)
+
+1.0-24 | 2012-04-24 14:37:49 -0700
+
+  * Update some broctl option descriptions. (Daniel Thayer)
+
+1.0-22 | 2012-04-19 09:52:44 -0700
+
+  * Options SitePolicyStandalone, SitePolicyManager, and
+    SitePolicyWorker were unused. Now they are, and they replace the
+    hard-coded defaults if defined. Addresses #797. (Daniel Thayer)
+
+1.0-20 | 2012-04-19 09:08:32 -0700
+
+  * Remove unused broctl options and fixed a couple of typos in the
+    option names. (Daniel Thayer)
+
+1.0-17 | 2012-04-16 18:06:28 -0700
+
+  * Fixed lots of documentation typos and broken links. (Daniel
+    Thayer)
+
+  * Update broctl help information. (Daniel Thayer)
+
+
+1.0-13 | 2012-04-09 15:59:17 -0700
+
+  * Remove "-p" option from broctl "scripts" command help. (Daniel
+    Thayer)
+
+  * Updating helper script to work with conn.log in Bro 2.0. (Daniel
+    Thayer)
+
+
+1.0-9 | 2012-03-28 15:46:02 -0700
+
+  * Improve error message when failing to update broctl-config.sh
+    symlink (Jon Siwek)
+
+  * Raise minimum required CMake version to 2.6.3. (Jon Siwek)
+
+  * Remove the unused "PolicyDirBroCtl" option. (Daniel Thayer)
+
+  * Rename the spool/policy directory so it is less visible. Addresses
+    #767. (Daniel Thayer)
+
+1.0 | 2012-01-10 18:57:50 -0800
+
+  * Tweaks for OpenBSD support. (Jon Siwek)
+
+0.5-beta-43 | 2012-01-03 14:45:40 -0800
+
+  * broctl now creates spool directories it finds missing. Addresses
+    #716. (Edward Groenendaal)
+
+0.5-beta-39 | 2011-12-16 02:49:28 -0800
+
+  * Add StopTimeout option to broctl.cfg that sets the number of
+    seconds to wait after issuing the 'stop' command before sending a
+    SIGKILL to Bro instances. Adresses #608. (Jon Siwek)
+
+  * Add CommTimeout option to broctl.cfg that sets the number of
+    seconds to timeout Broccoli connnections. Addresses #608. (Jon
+    Siwek)
+
+  * Re-order the way local.bro and local-<node>.bro scripts are
+    loaded. Node-specific local scripts now load after local.bro so
+    tha identifiers defined by the loading of local.bro can be used in
+    them. Addresses #663 (Jon Siwek)
+
+0.5-beta-34 | 2011-12-02 17:17:14 -0800
+
+  * Make BroControl more robust when a node dies. (Robin Sommer)
+
+  * Disable collecting of prof.logs. The logs can get huge, which lets
+    cron take a while. (Robin Sommer)
+
+  * Fix standalone->cluster upgrade failing to update logs/current
+    symlink. Fixes #676. (Jon Siwek)
+
+  * Fix broctl 'scripts' command in cluster mode. Fixes #655. (Jon
+    Siwek)
+
+  * Teach 'check' command to generate temporary versions of autogen.
+    files. Addresses #658. (Jon Siwek)
+
+  * Submodule README conformity changes. (Jon Siwek)
+
+0.5-beta-20 | 2011-11-14 20:04:21 -0800
+
+  * Fixing some platforms behaving poorly during configure-time checks
+    when a superproject's languages didn't encompass a subproject's.
+    (Jon Siwek)
+
+  * Configure sendmail option in options.py instead of broctl.cfg.
+    Fixed #645. (Jon Siwek)
+
+  * Fix extraneous installation of BroControl plugins. (Jon Siwek)
+
+  * Apply patch for BroControl Python 2.3/2.4 compatibility. Closes
+    #662. (William Jones)
+
+  * Avoid rerunning the previous command when hitting just enter in
+    broctl. (Justin Azoff)
+
+0.5-beta-12 | 2011-11-06 19:23:43 -0800
+
+  * broctl.cfg now determines sendmail location at configure-time.
+    Addreses #645 (Jon Siwek)
+
+  * Disable log expiration by default. Addresses #613. (Jon Siwek)
+
+  * Make symlink to broctl-config.sh update with `broctl install`.
+    Addresses #648 (Jon Siwek)
+
+  * Fixed a problem when host= in standalone is not 127.0.0.1 or
+    localhost. (Seth Hall)
+
+0.5-beta | 2011-10-27 17:45:15 -0700
+
+  * Updating submodule(s). (Robin Sommer)
+
+0.41-143 | 2011-10-26 10:15:16 -0500
+
+  * Update submodules. (Jon Siwek)
+
+0.41-142 | 2011-10-25 20:17:25 -0700
+
+  * Updating submodule(s). (Robin Sommer)
+
+0.41-137 | 2011-10-25 15:44:18 -0700
+
+  * Updating CHANGES and VERSION. (Robin Sommer)
+
+  * Make dist now cleans the copied source. (Jon Siwek)
+
+0.41-130 | 2011-10-18 08:03:35 -0700
+
+  * Distribution cleanup and some README fixes. (Robin Sommer)
+
+  * Fixed a bug caused by communication framework API update. Reported
+    by Daniel. (Seth Hall)
+
+0.41-128 | 2011-10-06 17:23:03 -0700
+
+  * Change broctl.cfg LogRotationInterval to be specificed in seconds. (Jon Siwek)
+
+  * Force broctl 'process' command to enable local logging. Addresses
+    #632 (Jon Siwek)
+
+0.41-124 | 2011-10-05 16:58:10 -0700
+
+   * New broctl.cfg option for log rotation interval. Addresses #630.
+     (Jon Siwek)
+
+   * Removed some of the broct/nodes/* scripts and instead
+     consolidated their functionality into the node-specific scripts
+     that come with Bro's cluster framework. (Jon Siwek)
+
+   * Within the cluster framework, local-<node>.bro scripts should now
+     be loaded after the distributions <node>.bro script so things can
+     be overrided. (Jon Siwek)
+
+   * Auto-generated broctl scripts are loaded after all node-specific
+     scripts and can override their options. (Jon Siwek)
+
+  * Move configuration of PFRINGClusterID from broctl.cfg.in to
+    options.py. Addresses #621. (Jon Siwek)
+
+  * Add configure-time check for libpcap PF_RING support. Addresses
+    #621 (Jon Siwek)
+
+  * Fixing typo with process command. (Robin Sommer)
+
+  * Script cleanup.  (Seth Hall)
+
+    - Reshuffling "check" functionality into check.bro.
+
+    - Removing some code to deal with the non-existent react framework.
+
+  * Give check command its own script for tuning options. Addresses
+    #618). (Jon Siwek)
+
+  * Stop and restart command now stop worker nodes first. Addresses
+    #596. (Jon Siwek)
+
+  * broctl check no longer rotates logs. Addresses #618. (Jon Siwek)
+
+0.41-101 | 2011-09-08 02:20:28 -0400
+
+  * Implementing PF_RING environment variables. (Seth Hall)
+
+0.41-99 | 2011-09-04 09:08:59 -0700
+
+  * Added --with-pcap configure option. (Jon Siwek)
+
+  * Various smaller tweaks to CMake setup. (Jon Siwek)
+
+  * Removed alarm log mailing postprocessing script from BroControl.
+    (Jon Siwek)
+
+  * Log rotation is disabled when using the 'process' command to
+    analyze trace files. (Jon Siwek)
+
+  * Fixed 'scripts' command. (Jon Siwek)
+
+  * Fixed inconsistent rotated-log naming. (Jon Siwek)
+
+  * Changed the 'mail-log' postprocessor to mail alarm.log's. (Jon
+    Siwek)
+
+  * Fix Config.state key capitalization inconsistencies. (Jon Siwek)
+
+  * Fixes for broctl 'check' command. Addresses #548. (Seth Hall and
+    Jon Siwek)
+
+  * Updated README. (Jon Siwek)
+
+  * Copy bro binary only in NFS mode (fixes #361). (Jon Siwek)
+
+  * Fix install command failing because of missing parent dirs. (Jon Siwek)
+
+  * Removing the analysis.dat file since it's not used anymore. (Seth Hall)
+
+  * Better informational output if attempt to remove old scripts
+    before installing new ones failes. Addresses #470. (Craig Leres)
+
+  * Updating log rotation support for the new logging rotation code.
+    (Seth Hall)
+
+  * Updates for cleanup and meshing with Bro reorg. (Seth Hall)
+
+0.41-73 | 2011-08-13 12:14:28 -0700
+
+  * Moving README*. into subdir doc. The top-level README is now
+    auto-generated. (Robin Sommer)
+
+0.41-68 | 2011-08-05 12:49:30 -0700
+
+  * Install example config files dynamically when the distribution
+    version differs from existing version on disk. (Jon Siwek)
+
+0.41-63 | 2011-08-03 22:10:40 -0700
+
+  * Revamped how the work is split between Bro and BroControl. Much of
+    functionality previously found in BroControl policy scripts has
+    moved over to Bro. (Seth Hall)
+
+  * Adapted BroControl to Bro 2.0 policy scripts.
+
+  * A new plugin interface allows external Python code to hook into
+    BroControl processing. See README for more information. (Robin
+    Sommer)
+
+    Two example plugins are shipped: (1) "ps.bro" shows all Bro
+    processes currently running on any cluster node, even if not
+    managed by BroControl; (2) "TestPlugin" is a demo plugin
+    demonstrating all the functionality a plugin can use (but doesn't
+    do anything sensible with it).
+
+  * A new offline mode for processing a trace. The new command
+    "process <trace>" runs Bro offline on the given trace, using the
+    current BroControl configuration. One can optionally give give
+    further Bro command line options and scripts. In cluster mode the
+    the Bro process loads both manager and worker configurations
+    simultaniously.
+
+    Addresses #273. (Robin Sommer)
+
+  * Removed the "analysis" command. (Seth Hall)
+
+  * Installation does no longer differentiate between standalone and
+    cluster mode. node.cfg now fully controls this. (Seth Hall)
+
+  * Tons of little fixes, improvements, and polishing (Seth Hall, Jon
+    Siwek, and Robin Sommer)
+
+0.41-9 | 2011-06-01 11:35:36 -0700
+
+  * Standardize shell script hashbang on install. (Jon Siwek)
+
+  * Fix binary package broctl-config.sh symlink installation
+    regression. (Jon Siwek)
+
+  * Changes to allow DEB packaging via CPack, addresses #458. (Jon Siwek)
+
+  * Fixed a problem with the "update" command, which could delete data
+    from many global state tables unintentionally. (Seth Hall)
+
+0.41-2 | 2011-05-02 11:29:07 -0700
+
+  * Symlink install scripted at install time for CMake 2.6
+    compatibility. (Jon Siwek)
+
+0.41 | 2011-04-07 21:14:53 -0700
+
+  * Tweaks to the documentation generation. (Robin Sommer)
+
+  * CMake tweaks. (Jon Siwek)
+
+  * Bugfix: trace-summary sampled in standalone mode rather than cluster
+    mode. (Robin Sommer)
+
+  * Bugfix: Creating links from the log directory to the current log files
+    didn't work in standalone mode. (Robin Sommer)
+
+0.4-19 | 2011-01-31 15:26:48 -0800
+
+  * A new option CompressLogs (default on), indicating whether
+    archived logs are to be gzipped. (Robin Sommer)
+
+  * A lot of configure/cmake/install/package tuning. (Jon Siwek)
+
+  * Adding /sbin and /usr/sbin to path local-interfaces script
+    searches for ifconfig. Closes #293. (Robin Sommer)
+
+  * Fixing uncaught exception in lock file handling. (Seth Hall).
+
+  * Making cluster event specifications redefinable. (Seth Hall).
+
+  * Fixing for pretty printing numerical values. (Seth Hall).
+
+  * Fixing "netstats" command distinction between cluster and
+    standalone mode. (Justin Azoff)
+
+0.4-10 | 2011-01-15 14:14:05 -0800
+
+  * Changes for CPack binary packaging (Jon Siwek)
+
+  * Fix package configuration macro returning from sub-project too early (Jon Siwek)
+
+  * Add warning when building and installing are done by different users (Jon Siwek)
+
+  * Changes to broctl's "make install" process (Jon Siwek)
+
+    - Simplify install by not compiling python code.
+    - The broctl-config.sh symlink needs to be made at configure time
+      and install()'ed in order for CPack packaging to correctly bundle it
+    - Reverted a change in (90ddc4d) to that caused spool/ and logs/
+      directories to not be installed in the case that they existed at
+      configure time.
+
+  * Fix for PackageMaker not accepting non-numeric versions (Jon Siwek)
+
+0.4-9 | 2011-01-12 08:51:11 -0800
+
+  * Making df portably deal with long lines in the OS's df output.
+    (Robin Sommer)
+
+0.4-8 | 2011-01-04 20:30:41 -0800
+
+  * Changing some installation paths. "broctl install" copied a
+    number of files to share/bro/*, which violates the common
+    assumption that things there are static. It can also create
+    permission problems if the user running "broctl install" is not
+    the one installing Bro. So now the pieces copied/generated by
+    "broctl install" are moved to spool/*. (Robin Sommer)
+
+  * The CMake install does no longer recreate some of the top-level
+    directories when they already exist. That makes it possible to
+    now symlink them somewhere else after the first install. (Robin
+    Sommer)
+
+  * When broctl doesn't find spool/broctl.dat it no longer aborts
+    but just warns. That allows CMake to skip installing an empty
+    one. (Robin Sommer)
+
+  * Deleting an unused policy file. (Robin Sommer)
+
+  * Updating update-changes script. (Robin Sommer)
+
+0.4-5 | 2010-12-20 14:10:25 -0800 | 768a9e550c3554de2e0bf9e3af2ae99400203046
+
+  * New helper script for maintaing CHANGES file. (Robin Sommer)
+
+0.4-1 | 2010-12-20 12:03:34 -0800 | a05be1242b4e06dca1bb1a38ed871e7e2d78181b
+
+  * Fix for dealing with large vsize values reported by "top" (Craig
+    Leres)
+
+  * Fixed the top helper script to assign the command variable
+    appropriately. (Seth Hall)
+
+  * Escape commands given to CMake's execute_process (Jon Siwek)
+
+0.4 | Fri Dec 10 01:35:36 2010 -0800 | df922e8a64a631aadb485b5044fe9ae1046d47ca
+
+- Moving BroControl to its own git repository.
+
+- Converting README to reST format.
+
+- Renamed "Capstats" config option to "CapstatsPath".
+
+- Merge with Subversion repository as of r7098. Incorporated changes:
+
+  o Increasing default timeouts for scan detector significantly.
+
+  o Increasing the manager's max_remote_events_processed to
+    something large, as it would slow down the process too much
+    otherwise and there's no other work to be interleaved with it
+    anyway.
+
+  o Adding debug output to cluster's part of catch-and-release
+    (extends the debugging already present in policy/debug.bro)
+
+  o Fixing typo in util.py. Closes #223.
+
+  o Added note to README pointing to HTML version.
+
+  o Disabling print_hook for proxies' remote.log.
+
+  o broctl's capstats now reports a total as well, and stats.log
+    tracks these totals. Closes #160.
+
+  o Avoiding spurious "waiting for lock" messages in cron mode.
+    Closes #206.
+
+  o Bug fixes for installation on NFS.
+
+  o Bug fix for top command on FreeBSD 8.
+
+  o crash-diag now checks whether gdb is available.
+
+  o trace-summary reports the sample factor in use in its output,
+    and now also applies it to the top-local-networks output (not
+    doing the latter was a bug).
+
+  o Removed the default twice-a-day rotation for conn.log. The
+    default rotation for conn.log now is now once every 24h, just
+    like for all other logs with the exception of mail.log (which is
+    still rotated twice a day, and thus the alarms are still mailed
+    out twice a day).
+
+  o Fixed the problem of logs sometimes being filed into the wrong
+    directory (see the (now gone) FAQ entry in the README).
+
+  o One can now customize the archive naming scheme. See the
+    corresponding FAQ entry in the README.
+
+  o Cleaned up, and extended, collection of cluster statistics.
+
+    ${logdir}/stats now looks like this:
+
+      drwxr-xr-x   4 bro  wheel      59392 Apr  5 17:55 .
+      drwxr-xr-x  96 bro  wheel       2560 Apr  6 12:00 ..
+      -rw-r--r--   1 bro  wheel        576 Apr  6 16:40 meta.dat
+      drwxr-xr-x   2 bro  wheel       2048 Apr  6 16:40 profiling
+      -rw-r--r--   1 bro  wheel  771834825 Apr  6 16:40 stats.log
+      drwxr-xr-x   2 bro  wheel       2048 Apr  6 16:25 www
+
+    stats.log accumulates cluster statistics collected every time
+    "cron" is called.
+
+    - profiling/ keeps the nodes' prof.logs.
+
+    - www/ keeps a subset of stats.log in CSV format for easy plotting.
+
+    - meta.dat contains meta information about the current cluster
+    state (in particular which nodes we have, and when the last
+    stats update was done).
+
+    Note that there is not Web setup yet to actually plot the data
+    in www/.
+
+  o BroControl now automatically maintains links inside today's log
+    archive directory pointing to the current live version of the
+    corresponding log file (if Bro is running). For example:
+
+    smtp.log.11:52:18-current -> /usr/local/cluster/spool/manager/smtp.log
+
+  o Alarms mailed out by BroControl now (1) have the notice msg in the
+    subject; and (2) come with the full mail.log entry in the body.

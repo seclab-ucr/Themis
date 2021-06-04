@@ -1,0 +1,57 @@
+#! /usr/bin/env bash
+#
+# Check Zeek's configuration for errors.
+#
+# check-config <use_installed_policies> <print_loaded_scripts> <cwd> <zeek_opts>
+#
+# use_installed_policies:  1 to use local policy files installed by
+#                          "zeekctl install", or 0 to use the original files
+# print_loaded_scripts:  1 to output loaded_scripts.log, or 0 to not output
+# cwd:  directory name to run Zeek from
+# zeek_opts:  string containing Zeek cmd-line options
+
+if [ $# -lt 4 ]; then
+    echo "check-config: missing arguments"
+    exit 1
+fi
+
+. `dirname $0`/zeekctl-config.sh
+
+use_installed_policies=$1
+print_loaded_scripts=$2
+tmp_node_dir=$3
+shift 3
+
+. "${scriptsdir}"/set-zeek-path
+if [ $? -ne 0 ]; then
+    exit 1
+fi
+
+if [ ! -f "${zeek}" ]; then
+    echo "check-config: file not found: ${zeek}"
+    exit 1
+fi
+
+export PATH=${bindir}:${scriptsdir}:$PATH
+
+cd "$tmp_node_dir"
+if [ $? -ne 0 ]; then
+    exit 1
+fi
+
+echo $@ >.cmdline
+
+check_option="-a"
+if [ "$print_loaded_scripts" = "1" ]; then
+    # No Zeek logs are created with "-a", so don't use it with "zeekctl scripts".
+    check_option=
+fi
+
+ZEEKCTL_DISABLE_LISTEN=1 ZEEKCTL_CHECK_CONFIG=1 "${zeek}" $check_option "$@"
+rc=$?
+
+if [ $rc -eq 0 ] && [ "$print_loaded_scripts" = "1" ]; then
+    grep -v '^#' loaded_scripts*
+fi
+
+exit $rc

@@ -1,0 +1,5 @@
+---
+add_rule:
+  - 'echo iptables -A INPUT [?address:-s . ][?conn.orig_h:-s . ][?conn.orig_p: --sport . ][?flow.src_h: -s . ][?flow.src_p: --sport .] [?conn.resp_h:-d . ][?conn.resp_p: --dport . ][?flow.dst_h: -d . ][?flow.dst_p: --dport . ] -j DROP'
+remove_rule:
+  - 'echo iptables -D INPUT [?address:-s . ][?conn.orig_h:-s . ][?conn.orig_p: --sport . ][?flow.src_h: -s . ][?flow.src_p: --sport .] [?conn.resp_h:-d . ][?conn.resp_p: --dport . ][?flow.dst_h: -d . ][?flow.dst_p: --dport . ] -j DROP'

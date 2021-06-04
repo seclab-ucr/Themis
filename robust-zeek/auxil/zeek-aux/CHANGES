@@ -1,0 +1,737 @@
+
+0.46 | 2020-12-07 17:52:52 +0000
+
+  * Release 0.46.
+
+0.45-13 | 2020-12-07 17:52:17 +0000
+
+  * Baseline refresh to reflect btest 0.64 (Christian Kreibich, Corelight)
+
+0.45-10 | 2020-12-02 11:08:41 -0800
+
+  * Update minimum required CMake to 3.5 (Jon Siwek, Corelight)
+
+    This includes CMake skeletons for Zeek plugins
+
+0.45-7 | 2020-11-24 15:13:44 -0800
+
+  * Add zeek-config --lib_dir to the cmake variables available during plugin builds (Christian Kreibich, Corelight)
+
+0.45-3 | 2020-09-14 13:24:13 -0700
+
+  * Add zeek-cut flag -m and -M to output minimal header field info (Guy Magen)
+
+    With these options, just the field names are output: the "#fields" token
+    itself as well as other header metadata lines are not output.  This
+    can essentially help target a CSV-ready output format.
+
+0.45-1 | 2020-08-19 10:48:17 -0700
+
+  * Prevent CI notifications on forked repos (Jon Siwek, Corelight)
+
+0.45 | 2020-07-23 08:28:10 -0700
+
+  * Release 0.45.
+
+0.44-19 | 2020-07-23 08:26:26 -0700
+
+  * Update Zeek Plugin template to new namespacing and include style
+
+    Related to https://github.com/zeek/zeek/issues/1068 (Jon Siwek, Corelight)
+
+  * Update mozilla ca list update tool to changed format (Johanna Amann, Corelight)
+
+  * Update btest.cfg and plugin skeleton for aux/ to auxil/ rename (Jon Siwek, Corelight)
+
+  * Make exit code from "update-changes -c" useable.
+
+    If CHANGES is not up to date, "update-changes -c" now returns with
+    exit code 1. This allows using it in a git pre-commit hook. (Robin Sommer, Corelight)
+
+  * Renice the zeek process in perf-benchmark
+
+    This should help keep the kernel from pre-empting the process and
+    give slightly more consistent results from run to run. (Tim Wojtulewicz, Corelight)
+
+0.44-4 | 2020-02-20 17:21:06 -0800
+
+  * Updates to the benchmarking script (Tim Wojtulewicz, Corelight)
+
+    - Added --mode argument for setting the benchmarking mode
+    - Added "file" mode for reading a file directly from disk with the Zeek '-r' argument
+    - Added reverse flamegraphs to the output from the flamegraph mode
+    - Added --seed argument for passing a random seed file to Zeek
+
+  * Update docs in performance benchmarking script (Tim Wojtulewicz, Corelight)
+
+0.44 | 2020-02-07 09:26:27 -0800
+
+  * Release 0.44.
+
+0.43-25 | 2020-02-07 09:26:03 -0800
+
+  * Add a script for running benchmarks on linux vs recorded data sets (Tim Wojtulewicz, Corelight)
+
+0.43-20 | 2020-01-30 18:58:57 -0800
+
+  * zeek-cut: Tiny formatting cleanup. (Robin Sommer, Corelight)
+
+  * zeek-cut: warn if BRO_CUT_TIMEFMT is used. (Robin Sommer, Corelight)
+
+  * Update the plugin skeleton's configure to require new Zeek trees. (Robin Sommer, Corelight)
+
+    It won't allow a Bro tree any further.
+
+0.43-16 | 2019-12-20 07:52:14 +0000
+
+  * Fix when update-changes chooses to amend commits. The old logic
+    didn't work when used on a branch (e.g. release/X.Y for doing
+    releases). (Jon Siwek, Corelight)
+
+0.43-11 | 2019-10-28 22:22:26 -0700
+
+  * Prefer cmake3 in Zeek plugin configure skeleton (Jon Siwek, Corelight)
+
+0.43-10 | 2019-10-28 18:05:09 -0700
+
+  * Move CMake project() after cmake_minimum_required() (Jon Siwek, Corelight)
+
+  * Zeek plugin skeleton: require CMake 3 (Dominik Charousset, Corelight)
+
+0.43-2 | 2019-08-14 13:22:54 -0700
+
+  * Fix a regex in update-changes to be compatible with BSD-sed (Jon Siwek, Corelight)
+
+0.43 | 2019-07-29 09:54:40 -0700
+
+  * Release v0.43 (Jon Siwek, Corelight)
+
+  * Change versioning of "-pre-X" to "-pre.X"
+
+    Where "pre" is any pre-release tag, like "beta", "rc", or "dev".
+    The new form using a dot to separate the numerical increment allows
+    for better ordering according to SemVer rules. (Jon Siwek, Corelight)
+
+  * Allow beta tag to be either -beta or -rc
+
+0.42-28 | 2019-06-12 15:04:43 -0700
+
+  * Rename directories from bro to zeek (Daniel Thayer)
+
+    Also updated a test to use zeek.
+
+0.42-26 | 2019-06-12 10:33:37 -0700
+
+  * Use zkg.meta file in plugin skeleton (Jon Siwek, Corelight)
+
+0.42-25 | 2019-06-07 20:02:05 -0700
+
+  * Update plugin skeleton to use zeek_plugin CMake functions (Jon Siwek, Corelight)
+
+    One may still change this to use the bro_plugin functions to be
+    compatible with older Bro versions, but I think it's good to encourage
+    new plugins to be authored for the latest Zeek version by default.
+
+0.42-24 | 2019-06-06 20:01:06 -0700
+
+  * Update plugin skeleton unit test to use "zeek" (Jon Siwek, Corelight)
+
+0.42-23 | 2019-05-23 19:33:19 -0700
+
+  * Rename all BRO-prefixed environment variables (Daniel Thayer)
+
+    For backward compatibility when reading values, we first check
+    the ZEEK-prefixed value, and if not set, then check the corresponding
+    BRO-prefixed value.
+
+0.42-21 | 2019-05-20 19:52:45 -0700
+
+  * Rename Bro to Zeek (Daniel Thayer)
+
+0.42-18 | 2019-05-14 12:27:26 -0700
+
+  * Update plugin skeleton's configure to work with Bro 2.6. (Robin Sommer, Corelight)
+
+  * GH-239: Rename bro-cut to zeek-cut. (Robin Sommer, Corelight)
+
+  * Use zeek-config instead of bro-config in plugin skeleton. (Robin Sommer, Corelight)
+
+0.42-13 | 2019-04-16 11:54:45 -0700
+
+  * Change script file extension from ".bro" to ".zeek" (Daniel Thayer)
+
+  * Update submodules to use github.com/zeek (Jon Siwek, Corelight)
+
+0.42-5 | 2018-11-29 16:21:54 -0600
+
+  * Add patch version to plugin skeleton (Jon Zeolla)
+
+0.42 | 2018-11-14 17:09:06 -0600
+
+  * Release 0.42.
+
+0.41-12 | 2018-11-14 17:07:14 -0600
+
+  * Remove the version number from show-plugin btest skeleton.
+    With 2.7, the additional .patch version will break bro-pkg tests during
+    the transition from previous versions. (Michael Dopheide)
+
+  * use ${bro_dist} instead of ${bro} in get-bro-env since bro is undefined as
+    of fdd1f55 (Foster McLane)
+
+0.41-8 | 2018-10-12 12:44:40 -0400
+
+  * Fix comments in scripts skeleton files. (Robin Sommer, Corelight)
+
+  * Remove init.bro from plugin skeleton. (Robin Sommer, Corelight)
+
+  * Update the plugin skeleton. (Robin Sommer, Corelight)
+
+    - Add top-level .gitignore file
+    - Add bro-pkg.meta template
+    - Don't skip .gitignore files when creating skeleton
+    - Update btest configuration to no longer require a source tree.
+
+0.41-3 | 2018-10-05 14:22:04 -0500
+
+  * Update plugin configure script to automatically add debug flags
+    Addresses bro/bro#184 (Jon Siwek, Corelight)
+
+0.41-2 | 2018-09-19 09:52:48 -0500
+
+  * Remove some unused code in the update-changes script (Daniel Thayer)
+
+0.41 | 2018-09-18 15:03:00 -0500
+
+  * Fix update-changes to allow beta version tags w/o patch number
+    (Jon Siwek, Corelight)
+
+0.40 | 2018-08-31 15:24:30 -0500
+
+  * Improve `make dist` (Jon Siwek, Corelight)
+
+0.39-34 | 2018-07-24 16:35:27 -0500
+
+  * Teach plugin configure script about bro-config's broker/caf/binpac dirs
+    (Jon Siwek, Corelight)
+
+0.39-32 | 2018-07-24 01:47:55 +0000
+
+  * Update plugin configure skeleton to allow independence from
+    --bro-dist. (Jon Siwek, Corelight)
+
+0.39-30 | 2018-07-16 16:11:02 -0500
+
+  * Change how update-changes formats Corelight credit (Jon Siwek, Corelight)
+
+0.39-29 | 2018-07-16 10:02:20 -0500
+
+  * Add author re-writing logic to update-changes
+
+    Any commits authored by an @corelight.com email address will use
+    "Corelight" as the author name in CHANGES entries. (Corelight)
+
+0.39-27 | 2018-05-15 15:38:29 +0000
+
+  * Updating submodules.
+
+0.39-24 | 2018-03-15 14:55:39 -0700
+
+  * Configure Travis CI email recipients and build branches. (Daniel Thayer)
+
+0.39-21 | 2018-02-05 15:03:13 -0800
+
+  * Add a .travis.yml file (Daniel Thayer)
+
+0.39-19 | 2018-01-26 11:27:08 -0600
+
+  * Add PATH to bro-cut in btest.cfg, allows building bro-cut and running
+    unit tests without needing entire bro repo. (Daniel Thayer)
+
+  * Improve portability of the update-changes script (Daniel Thayer)
+
+  * Improve code comments in the update-changes file (Daniel Thayer)
+
+0.39-15 | 2018-01-16 12:55:57 -0600
+
+  * Improvements to documentation of bro-cut (Daniel Thayer)
+
+  * Improve bro-cut tests (Daniel Thayer)
+
+  * Faster bro-cut timestamp conversion (Daniel Thayer)
+
+0.39-7 | 2017-12-05 11:17:43 -0600
+
+  * Use bro-config for plugin configure if available. (Jan Grashoefer)
+
+0.39-4 | 2017-07-29 07:43:25 -0700
+
+  * Add script to generate certificate transparency list file.
+    (Johanna Amann)
+
+  * Two updates for update-changes. (Johanna Amann)
+
+        - Betas accept versions in the 1.2.3 format, not just 1.2.
+
+        - When searching for the last version tag, upgate-changes now
+          specifically only searches for tags starting with "v", for
+          example ignoring release tags.
+
+0.39 | 2017-05-26 08:26:51 -0500
+
+  * Release 0.39.
+
+  * Update plugin skeleton's CMakeLists.txt.
+
+    The project name is now derived from the actual plugin name instead of
+    just "Plugin" and it now sets up CPack packaging (e.g. RPM/DEB) to be
+    available via "make package" in the build dir. (Jon Siwek)
+
+  * Remove superfluous spaces from line endings. (Johanna Amann)
+
+  * Small update to plugin-support to use override instead of virtual (Johanna Amann)
+
+0.38 | 2016-11-14 09:19:05 -0800
+
+  * Robustness fix for check-release script. (Robin Sommer)
+
+0.37 | 2016-10-27 14:42:01 -0700
+
+  * Release 0.37.
+
+  * Reverting fix to build plugins on OS X; no longer necessary because plugins
+    do no longer have to pull in OpenSSL. (Johanna Amann)
+
+0.36 | 2016-08-12 13:12:49 -0700
+
+  * Release 0.36.
+
+  * Update gen-mozilla-ca-list.rb to use a file instead of accessing the
+    Mozilla server. (Johanna Amann)
+
+  * Fix compiler warning. (Robin Sommer)
+
+  * Removing nftools. (Robin Sommer)
+
+  * Fix coverity warning (memory leak) in bro-cut (Daniel Thayer)
+
+0.35-27 | 2016-06-21 18:31:33 -0700
+
+  * Fix bro-cut to allow unset or zero time values. (Daniel Thayer)
+
+  * Fix failure to build plugins on OS X 10.11 with init-plugin.
+    (Daniel Thayer)
+
+0.35-18 | 2016-03-04 12:38:16 -0800
+
+  * Update for new CMake OpenSSL script. (Johanna Amann)
+
+0.35-15 | 2016-02-01 12:37:46 -0800
+
+  * Fix the init-plugin script to be more portable. (Daniel Thayer)
+
+0.35-8 | 2015-08-10 14:56:24 -0700
+
+  * Plugin skeletons now include a __preload__.bro that pulls in
+    types.bro for defining types. (Robin Sommer)
+
+0.35-7 | 2015-08-10 12:58:35 -0700
+
+  * Fix a test for large time values that fails on some systems.
+    (Daniel Thayer)
+
+0.35-6 | 2015-08-06 22:29:36 -0400
+
+  * Improved handling of malformed input, avoiding crashes. (Justin
+    Azoff and Daniel Thayer)
+
+  * Remove unused code and fix initialization of long_opts. (Daniel
+    Thayer)
+
+0.35-4 | 2015-07-21 09:38:58 -0700
+
+  * Bringing back the ``--help`` option for bro-cut. (Justin Azoff)
+
+0.35-2 | 2015-07-10 07:14:52 -0700
+
+  * Add more documentation for bro-cut. (Daniel Thayer)
+
+0.35 | 2015-06-03 09:02:49 -0700
+
+  * Release 0.35.
+
+0.34-5 | 2015-06-03 09:02:10 -0700
+
+  * Fix replace_version_in_rst function in update-changes script to
+    cope with "beta" in version string. (Daniel Thayer)
+
+  * Portability fix for plugin configure script. (Daniel Thayer)
+
+  * Fix minor typo in init-plugin error message. (Daniel Thayer)
+
+0.34 | 2015-05-07 20:30:43 -0700
+
+  * Release 0.34.
+
+  * Change make-release to assume sign-file is in path (Johanna Amann)
+
+0.33-76 | 2015-04-27 08:23:18 -0700
+
+  * Fix sed regex for replacing version in header file. (Jon Siwek)
+
+0.33-74 | 2015-04-23 06:58:37 -0700
+
+  * Correct a few typos in update-changes script. (Daniel Thayer)
+
+  * Adding function to update-changes that updates version in a C
+    header file. (Robin Sommer)
+
+  * Fix plugin configure skeletons to work on more shells. (Jon Siwek)
+
+0.33-68 | 2015-02-23 11:26:14 -0600
+
+  * Plugin skeleton updates. (Robin Sommer)
+
+    - Updating plugin skeleton license.
+
+    - Removing the plugin MAINTAINER skeleton file.
+
+    - Adding hooks to configure script so that plugins can add options
+      without modifying the scripts itself.
+
+    - BIT-1302: Extending plugin skeleton Makefile to reload cached
+      CMake variables when Bro has been reconfigured. (Robin Sommer)
+
+    - Removing bdist and sdist make targets. The former is superseded by
+      the new build process which always creates a binary distribution
+      tarball. The latter is easy enough to do manually now that all
+      dynamic stuff is in build/
+
+    - Added a VERSION file; content goes into name of the binary tarball
+
+    - Move README.edit-me to README.
+
+    - Allowing relative paths for --bro-dist
+
+  * Changing init-plugin to take an additional parameter specifying the
+    directory where to create the plugin skeleton. (Robin Sommer)
+
+0.33-58 | 2015-02-12 12:15:39 -0600
+
+  * Fix bro-cut compile warning on FreeBSD (Johanna Amann)
+
+0.33-56 | 2015-01-08 13:06:36 -0600
+
+  * Increase minimum required CMake version to 2.8. (Jon Siwek)
+
+0.33-55 | 2014-12-08 13:49:37 -0800
+
+  * Add man page for bro-cut. (Raúl Benencia)
+
+  * Add --install-root to plugin skeleton's configure. (Robin
+    Sommer)
+
+  * Fix get-bro-env script to use sh equality operator. (Jon Siwek)
+
+  * Add an option to update-changes that prevents it from adding
+    author names to entries. (Robin Sommer)
+
+0.33-45 | 2014-08-21 15:47:29 -0500
+
+  * Various tweaks to the plugin skeleton. (Robin Sommer)
+
+0.33-38 | 2014-08-01 14:03:49 -0700
+
+  * bro-cut has been rewritten in C, and is hence much faster. (Daniel
+    Thayer, based on an initial version by Justin Azoff).
+
+0.33-26 | 2014-07-30 15:51:42 -0500
+
+  * Remove a superfluous file from plugin skeleton. (Jon Siwek)
+
+  * init-plugin now creates a Plugin.h as well. (Robin Sommer)
+
+  * Adding a basic btest setup to the plugin skeleton. (Robin Sommer)
+
+  * Updating plugin skeleton to new API. (Robin Sommer)
+
+  * Updates to the init-plugin script/skeleton. (Robin Sommer)
+
+  * A script to setup a skeleton for a new dynamic plugin. (Robin Sommer)
+
+0.33-11 | 2014-07-08 20:42:32 -0700
+
+  * Add more tests of bro-cut. (Daniel Thayer)
+
+  * Fix bug in bro-cut when duplicate fields are specified. (Daniel Thayer)
+
+  * Fix bug in bro-cut when log file has missing field. (Daniel Thayer)
+
+  * Fix bug in bro-cut output of "#types" header line. (Daniel Thayer)
+
+  * Fix bug in bro-cut when separator is not hexadecimal. (Daniel Thayer)
+
+  * Adding test target to top-level Makefile. (Robin Sommer)
+
+0.33-4 | 2014-06-26 17:31:25 -0700
+
+  * Test-suite for bro-cut. (Daniel Thayer)
+
+0.33-2 | 2014-06-26 17:27:09 -0700
+
+  * Change bro-cut UTC options to not always override local time.
+    (Daniel Thayer).
+
+  * Updated the bro-cut usage message to make it more clear that the
+    BRO_CUT_TIMEFMT environment variable affects only the -u and -d
+    options. (Daniel Thayer).
+
+0.33 | 2014-05-08 16:27:10 -0700
+
+  * Release 0.33.
+
+0.32-5 | 2014-05-08 16:25:55 -0700
+
+  * Adding git-move-submodules scriptm, which moves all submodules to
+    the head of a given branch and adapts parent modules
+    correspondingly. (Robin Sommer)
+
+0.32-4 | 2014-04-22 21:34:23 -0700
+
+  * A git hook script to prevent pushs when the external test suite has
+    new commits pending. (Robin Sommer)
+
+0.32 | 2013-11-01 05:24:56 -0700
+
+  * Extending Mozialla cert script to include source URL and copyright
+    in output. (Robin Sommer)
+
+0.31 | 2013-10-14 09:24:54 -0700
+
+  * Release.
+
+0.3-5 | 2013-10-07 17:19:14 -0700
+
+  * Fix for release script. (Robin Sommer)
+
+  * Updating copyright notice. (Robin Sommer)
+
+0.3-3 | 2013-09-28 11:17:42 -0700
+
+  * Don't show error message in bro-cut when gawk not found, which
+    could appear on some systems. (Daniel Thayer)
+
+0.3-1 | 2013-09-24 13:41:02 -0700
+
+  * Fix for setting REPO in Makefile, and some tweaks to release
+    scripts. (Robin Sommer)
+
+0.3 | 2013-09-23 14:42:56 -0500
+
+  * Update 'make dist' target. (Jon Siwek)
+
+  * Change submodules to fixed URL. (Jon Siwek)
+
+  * make-release nows ignores modules that aren't tagged for release
+    or beta. (Robin Sommer)
+
+  * Prettyfing check-release output. (Robin Sommer)
+
+  * Update gen-mozilla-ca-list.rb to retrieve the Mozilla
+    root CA list from a current url. (Johanna Amann)
+
+0.26-25 | 2013-09-18 14:44:35 -0700
+
+  * A set of README updates, including installation instructions and
+    description of bro-cut. (Daniel Thayer)
+
+  * Switching to relative submodule paths. (Robin Sommer)
+
+0.26-21 | 2013-08-19 11:21:11 -0700
+
+  * Fixing git-show-fastpath handling of non-existing fastpath
+    branches. (Robin Sommer)
+
+0.26-19 | 2013-07-31 20:09:52 -0700
+
+  * Making git-show-fastpath save against repositories that don't have
+    a fastpath. (Robin Sommer)
+
+0.26-16 | 2013-05-17 07:45:24 -0700
+
+  * A negate option -n for bro-cut printing all fields *except* those
+    listed on the command-line. (Robin Sommer)
+
+0.26-14 | 2013-03-22 12:17:54 -0700
+
+  * Fixing bro-cut to work with older gawk versions. (Chris Kanich)
+
+  * s/bro-ids.org/bro.org/g (Robin Sommer)
+
+0.26-5 | 2012-11-01 14:24:25 -0700
+
+  * Portability fix: removing interface option on non-Linux. (Robin Sommer)
+
+0.26-4 | 2012-10-31 14:39:03 -0700
+
+  * rst learns a new option "-i <if>" to set the interface to use.
+    (Vlad Grigorescu).
+
+0.26 | 2012-08-24 15:10:04 -0700
+
+  * Fixing update-changes, which could pick the wrong control file. (Robin Sommer)
+
+  * Fixing GPG signing script. (Robin Sommer)
+
+0.25 | 2012-08-01 13:55:46 -0500
+
+  * Fix configure script to exit with non-zero status on error (Jon Siwek)
+
+0.24 | 2012-07-05 12:50:43 -0700
+
+  * Raise minimum required CMake version to 2.6.3 (Jon Siwek)
+
+  * Adding script to delete old fully-merged branches. (Robin Sommer)
+
+0.23-2 | 2012-01-25 13:24:01 -0800
+
+  * Fix a bro-cut error message. (Daniel Thayer)
+
+0.23 | 2012-01-11 12:16:11 -0800
+
+  * Tweaks to release scripts, plus a new one for signing files.
+    (Robin Sommer)
+
+0.22 | 2012-01-10 16:45:19 -0800
+
+  * Tweaks for OpenBSD support. (Jon Siwek)
+
+  * bro-cut extensions and fixes.  (Robin Sommer)
+
+    - If no field names are given on the command line, we now pass through
+      all fields. Adresses #657.
+
+    - Removing some GNUism from awk script. Addresses #653.
+
+    - Added option for time output in UTC. Addresses #668.
+
+    - Added output field separator option -F. Addresses #649.
+
+    - Fixing option -c: only some header lines were passed through
+      rather than all. (Robin Sommer)
+
+  * Fix parallel make portability. (Jon Siwek)
+
+0.21-9 | 2011-11-07 05:44:14 -0800
+
+  * Fixing compiler warnings. Addresses #388. (Jon Siwek)
+
+0.21-2 | 2011-11-02 18:12:13 -0700
+
+  * Fix for misnaming temp file in update-changes script. (Robin Sommer)
+
+0.21-1 | 2011-11-02 18:10:39 -0700
+
+  * Little fix for make-release script, which could pick out the wrong
+    tag. (Robin Sommer)
+
+0.21 | 2011-10-27 17:40:45 -0700
+
+  * Fixing bro-cut's usage message and argument error handling. (Robin Sommer)
+
+  * Bugfix in update-changes script. (Robin Sommer)
+
+  * update-changes now ignores commits it did itself. (Robin Sommer)
+
+  * Fix a bug in the update-changes script. (Robin Sommer)
+
+  * bro-cut now always installs to $prefix/bin by `make install`. (Jon Siwek)
+
+  * Options to adjust time format for bro-cut. (Robin Sommer)
+
+    The default with -d is now ISO format. The new option "-D <fmt>"
+    specifies a custom strftime()-style format string. Alternatively,
+    the environment variable BRO_CUT_TIMEFMT can set the format as
+    well.
+
+  * bro-cut now understands the field separator header. (Robin Sommer)
+
+  * Renaming options -h/-H -> -c/-C, and doing some general cleanup.
+
+0.2 | 2011-10-25 19:53:57 -0700
+
+  * Adding support for replacing version string in a setup.py. (Robin
+    Sommer)
+
+  * Change generated root cert DN indices format for RFC2253
+    compliance. (Jon Siwek)
+
+  * New tool devel-tools/check-release to run before making releases.
+    (Robin Sommer)
+
+  * devel-tools/update-changes gets a new option -a to amend to
+    previous commit if possible. Default is now not to (used to be the
+    opposite). (Robin Sommer)
+
+  * Change Mozilla trust root generation to index certs by subject DN. (Jon Siwek)
+
+  * Change distclean to only remove build dir. (Jon Siwek)
+
+  * Make dist now cleans the copied source (Jon Siwek)
+
+  * Small tweak to make-release for forced git-clean. (Jon Siwek)
+
+  * Fix to not let updates scripts loose their executable permissions.
+    (Robin Sommer)
+
+  * devel-tools/update-changes now looks for a 'release' tag to
+    idenfify the stable version, and 'beta' for the beta versions.
+    (Robin Sommer).
+
+  * Distribution cleanup. (Robin Sommer)
+
+  * New script devel-tools/make-release to create source tar balls.
+    (Robin Sommer)
+
+  * Removing bdcat. With the new log format, this isn't very useful
+    anymore. (Robin Sommer)
+
+  * Adding script that shows all pending git fastpath commits. (Robin
+    Sommer)
+
+  * Script to measure CPU time by loading an increasing set of
+    scripts. (Robin Sommer)
+
+  * extract-conn script now deals wit *.gz files. (Robin Sommer)
+
+  * Tiny update to output a valid CA list file for SSL cert
+    validation. (Seth Hall)
+
+  * Adding "install-aux" target. Addresses #622. (Jon Siwek)
+
+  * Distribution cleanup. (Jon Siwek and Robin Sommer)
+
+  * FindPCAP now links against thread library when necessary (e.g.
+    PF_RING's libpcap) (Jon Siwek)
+
+  * Install binaries with an RPATH (Jon Siwek)
+
+  * Workaround for FreeBSD CMake port missing debug flags (Jon Siwek)
+
+  * Rewrite of the update-changes script. (Robin Sommer)
+
+0.1-1 | 2011-06-14 21:12:41 -0700
+
+  * Add a script for generating Mozilla's CA list for the SSL analyzer.
+    (Seth Hall)
+
+0.1 | 2011-04-01 16:28:22 -0700
+
+  * Converting build process to CMake. (Jon Siwek)
+
+  * Removing cf/hf/ca-* from distribution. The README has a note where
+    to find them now. (Robin Sommer)
+
+  * General cleanup. (Robin Sommer)
+
+  * Initial import of bro/aux from SVN r7088. (Jon Siwek)

@@ -1,0 +1,1481 @@
+##! Definitions of built-in functions related to string processing and
+##! manipulation.
+
+
+%%{ // C segment
+#include <vector>
+#include <algorithm>
+#include <cctype>
+
+#include "zeek/SmithWaterman.h"
+
+using namespace std;
+%%}
+
+## Calculates the Levenshtein distance between the two strings. See `Wikipedia
+## <http://en.wikipedia.org/wiki/Levenshtein_distance>`__ for more information.
+##
+## s1: The first string.
+##
+## s2: The second string.
+##
+## Returns: The Levenshtein distance of two strings as a count.
+##
+function levenshtein_distance%(s1: string, s2: string%): count
+	%{
+	unsigned int n = s1->Len();
+	unsigned int m = s2->Len();
+
+	if ( ! n )
+		return zeek::val_mgr->Count(m);
+
+	if ( ! m )
+		return zeek::val_mgr->Count(n);
+
+	vector<vector<unsigned int> > d(n + 1, vector<unsigned int>(m + 1));
+
+	d[0][0] = 0;
+
+	for ( unsigned int i = 1; i <= n; ++i )
+		d[i][0] = i;
+
+	for ( unsigned int i = 1; i <= m; ++i )
+		d[0][i] = i;
+
+	for ( unsigned int i = 1; i <= n; ++i )
+		{
+		for ( unsigned int j = 1; j <= m; ++j )
+			d[i][j] = min(min(d[i-1][j] + 1, d[i][j-1] + 1),
+				      d[i-1][j-1] + (s1->Bytes()[i-1] == s2->Bytes()[j-1] ? 0 : 1));
+		}
+
+	return zeek::val_mgr->Count(d[n][m]);
+	%}
+
+## Concatenates all arguments into a single string. The function takes a
+## variable number of arguments of type string and stitches them together.
+##
+## Returns: The concatenation of all (string) arguments.
+##
+## .. zeek:see:: cat cat_sep
+##              fmt
+##              join_string_vec
+function string_cat%(...%): string
+	%{
+	int n = 0;
+	for ( const auto& a : @ARG@ )
+		n += a->AsString()->Len();
+
+	u_char* b = new u_char[n+1];
+	zeek::String* s = new zeek::String(1, b, n);
+
+	for ( const auto& a : @ARG@ )
+		{
+		const zeek::String* s = a->AsString();
+		memcpy(b, s->Bytes(), s->Len());
+		b += s->Len();
+		}
+	*b = 0;
+
+	return zeek::make_intrusive<zeek::StringVal>(s);
+	%}
+
+## Joins all values in the given vector of strings with a separator placed
+## between each element.
+##
+## sep: The separator to place between each element.
+##
+## vec: The :zeek:type:`string_vec` (``vector of string``).
+##
+## Returns: The concatenation of all elements in *vec*, with *sep* placed
+##          between each element.
+##
+## .. zeek:see:: cat cat_sep string_cat
+##              fmt
+function join_string_vec%(vec: string_vec, sep: string%): string
+	%{
+	ODesc d;
+	d.SetStyle(RAW_STYLE);
+
+	zeek::VectorVal *v = vec->AsVectorVal();
+
+	for ( unsigned i = 0; i < v->Size(); ++i )
+		{
+		if ( i > 0 )
+			d.Add(sep->CheckString(), 0);
+
+		const auto& e = v->At(i);
+
+		// If the element is empty, skip it.
+		if ( ! e )
+			continue;
+
+		e->Describe(&d);
+		}
+
+	zeek::String* s = new zeek::String(1, d.TakeBytes(), d.Len());
+	s->SetUseFreeToDelete(true);
+
+	return zeek::make_intrusive<zeek::StringVal>(s);
+	%}
+
+## Returns an edited version of a string that applies a special
+## "backspace character" (usually ``\x08`` for backspace or ``\x7f`` for DEL).
+## For example, ``edit("hello there", "e")`` returns ``"llo t"``.
+##
+## arg_s: The string to edit.
+##
+## arg_edit_char: A string of exactly one character that represents the
+##                "backspace character". If it is longer than one character Zeek
+##                generates a run-time error and uses the first character in
+##                the string.
+##
+## Returns: An edited version of *arg_s* where *arg_edit_char* triggers the
+##          deletion of the last character.
+##
+## .. zeek:see:: clean
+##              to_string_literal
+##              escape_string
+##              strip
+function edit%(arg_s: string, arg_edit_char: string%): string
+	%{
+	if ( arg_edit_char->Len() != 1 )
+		zeek::emit_builtin_error("not exactly one edit character", @ARG@[1]);
+
+	const u_char* s = arg_s->Bytes();
+	const u_char* edit_s = arg_edit_char->Bytes();
+
+	u_char edit_c = *edit_s;
+
+	int n = arg_s->Len();
+	u_char* new_s = new u_char[n+1];
+	int ind = 0;
+
+	for ( int i = 0; i < n; ++i )
+		{
+		if ( s[i] == edit_c )
+			{ // Delete last character
+			if ( --ind < 0 )
+				ind = 0;
+			}
+		else
+			new_s[ind++] = s[i];
+		}
+
+	new_s[ind] = '\0';
+
+	return zeek::make_intrusive<zeek::StringVal>(new zeek::String(1, byte_vec(new_s), ind));
+	%}
+
+## Get a substring from a string, given a starting position and length.
+##
+## s: The string to obtain a substring from.
+##
+## start: The starting position of the substring in *s*, where 1 is the first
+##        character. As a special case, 0 also represents the first character.
+##
+## n: The number of characters to extract, beginning at *start*.
+##
+## Returns: A substring of *s* of length *n* from position *start*.
+function sub_bytes%(s: string, start: count, n: int%): string
+	%{
+	if ( start > 0 )
+		--start;	// make it 0-based
+
+	zeek::String* ss = s->AsString()->GetSubstring(start, n);
+
+	if ( ! ss )
+		ss = new zeek::String("");
+
+	return zeek::make_intrusive<zeek::StringVal>(ss);
+	%}
+
+%%{
+static int match_prefix(int s_len, const char* s, int t_len, const char* t)
+	{
+	for ( int i = 0; i < t_len; ++i )
+		{
+		if ( i >= s_len || s[i] != t[i] )
+			return 0;
+		}
+	return 1;
+	}
+
+static zeek::VectorValPtr do_split_string(zeek::StringVal* str_val,
+                                          zeek::RE_Matcher* re, int incl_sep,
+                                          int max_num_sep)
+	{
+	// string_vec is used early in the version script - do not use the NetVar.
+	auto rval = zeek::make_intrusive<zeek::VectorVal>(zeek::id::find_type<zeek::VectorType>("string_vec"));
+	const u_char* s = str_val->Bytes();
+	int n = str_val->Len();
+	const u_char* end_of_s = s + n;
+	int num = 0;
+	int num_sep = 0;
+
+	int offset = 0;
+	while ( n >= 0 )
+		{
+		offset = 0;
+		// Find next match offset.
+		int end_of_match = 0;
+		while ( n > 0 &&
+		        (end_of_match = re->MatchPrefix(s + offset, n)) <= 0 )
+			{
+			// Move on to next byte.
+			++offset;
+			--n;
+			}
+
+		if ( max_num_sep && num_sep >= max_num_sep )
+			{
+			offset = end_of_s - s;
+			n=0;
+			}
+
+		rval->Assign(num++, zeek::make_intrusive<zeek::StringVal>(offset, (const char*) s));
+
+		// No more separators will be needed if this is the end of string.
+		if ( n <= 0 )
+			break;
+
+		if ( incl_sep )
+			{ // including the part that matches the pattern
+			rval->Assign(num++, zeek::make_intrusive<zeek::StringVal>(end_of_match, (const char*) s+offset));
+			}
+
+		if ( max_num_sep && num_sep >= max_num_sep )
+			break;
+
+		++num_sep;
+
+		n -= end_of_match;
+		s += offset + end_of_match;;
+
+		if ( s > end_of_s )
+			zeek::reporter->InternalError("RegMatch in split goes beyond the string");
+		}
+
+	return rval;
+	}
+
+zeek::Val* do_split(zeek::StringVal* str_val, zeek::RE_Matcher* re, int incl_sep, int max_num_sep)
+	{
+	auto* a = new zeek::TableVal(zeek::id::string_array);
+	const u_char* s = str_val->Bytes();
+	int n = str_val->Len();
+	const u_char* end_of_s = s + n;
+	int num = 0;
+	int num_sep = 0;
+
+	int offset = 0;
+	while ( n >= 0 )
+		{
+		offset = 0;
+		// Find next match offset.
+		int end_of_match = 0;
+		while ( n > 0 &&
+		        (end_of_match = re->MatchPrefix(s + offset, n)) <= 0 )
+			{
+			// Move on to next byte.
+			++offset;
+			--n;
+			}
+
+		if ( max_num_sep && num_sep >= max_num_sep )
+			{
+			offset = end_of_s - s;
+			n=0;
+			}
+
+		auto ind = zeek::val_mgr->Count(++num);
+		a->Assign(std::move(ind), zeek::make_intrusive<zeek::StringVal>(offset, (const char*) s));
+
+		// No more separators will be needed if this is the end of string.
+		if ( n <= 0 )
+			break;
+
+		if ( incl_sep )
+			{ // including the part that matches the pattern
+			ind = zeek::val_mgr->Count(++num);
+			a->Assign(std::move(ind), zeek::make_intrusive<zeek::StringVal>(end_of_match, (const char*) s+offset));
+			}
+
+		if ( max_num_sep && num_sep >= max_num_sep )
+			break;
+
+		++num_sep;
+
+		n -= end_of_match;
+		s += offset + end_of_match;;
+
+		if ( s > end_of_s )
+			zeek::reporter->InternalError("RegMatch in split goes beyond the string");
+		}
+
+	return a;
+	}
+%%}
+
+## Splits a string into an array of strings according to a pattern.
+##
+## str: The string to split.
+##
+## re: The pattern describing the element separator in *str*.
+##
+## Returns: An array of strings where each element corresponds to a substring
+##          in *str* separated by *re*.
+##
+## .. zeek:see:: split_string1 split_string_all split_string_n str_split
+##
+function split_string%(str: string, re: pattern%): string_vec
+	%{
+	return do_split_string(str, re, 0, 0);
+	%}
+
+## Splits a string *once* into a two-element array of strings according to a
+## pattern. This function is the same as :zeek:id:`split_string`, but *str* is
+## only split once (if possible) at the earliest position and an array of two
+## strings is returned.
+##
+## str: The string to split.
+##
+## re: The pattern describing the separator to split *str* in two pieces.
+##
+## Returns: An array of strings with two elements in which the first represents
+##          the substring in *str* up to the first occurence of *re*, and the
+##          second everything after *re*. An array of one string is returned
+##          when *s* cannot be split.
+##
+## .. zeek:see:: split_string split_string_all split_string_n str_split
+function split_string1%(str: string, re: pattern%): string_vec
+	%{
+	return do_split_string(str, re, 0, 1);
+	%}
+
+## Splits a string into an array of strings according to a pattern. This
+## function is the same as :zeek:id:`split_string`, except that the separators
+## are returned as well. For example, ``split_string_all("a-b--cd", /(\-)+/)``
+## returns ``{"a", "-", "b", "--", "cd"}``: odd-indexed elements do match the
+## pattern and even-indexed ones do not.
+##
+## str: The string to split.
+##
+## re: The pattern describing the element separator in *str*.
+##
+## Returns: An array of strings where each two successive elements correspond
+##          to a substring in *str* of the part not matching *re* (even-indexed)
+##          and the part that matches *re* (odd-indexed).
+##
+## .. zeek:see:: split_string split_string1 split_string_n str_split
+function split_string_all%(str: string, re: pattern%): string_vec
+	%{
+	return do_split_string(str, re, 1, 0);
+	%}
+
+## Splits a string a given number of times into an array of strings according
+## to a pattern. This function is similar to :zeek:id:`split_string1` and
+## :zeek:id:`split_string_all`, but with customizable behavior with respect to
+## including separators in the result and the number of times to split.
+##
+## str: The string to split.
+##
+## re: The pattern describing the element separator in *str*.
+##
+## incl_sep: A flag indicating whether to include the separator matches in the
+##           result (as in :zeek:id:`split_string_all`).
+##
+## max_num_sep: The number of times to split *str*.
+##
+## Returns: An array of strings where, if *incl_sep* is true, each two
+##          successive elements correspond to a substring in *str* of the part
+##          not matching *re* (even-indexed) and the part that matches *re*
+##          (odd-indexed).
+##
+## .. zeek:see:: split_string split_string1 split_string_all str_split
+function split_string_n%(str: string, re: pattern,
+		incl_sep: bool, max_num_sep: count%): string_vec
+	%{
+	return do_split_string(str, re, incl_sep, max_num_sep);
+	%}
+
+## Substitutes a given replacement string for the first occurrence of a pattern
+## in a given string.
+##
+## str: The string to perform the substitution in.
+##
+## re: The pattern being replaced with *repl*.
+##
+## repl: The string that replaces *re*.
+##
+## Returns: A copy of *str* with the first occurence of *re* replaced with
+##          *repl*.
+##
+## .. zeek:see:: gsub subst_string
+function sub%(str: string, re: pattern, repl: string%): string
+	%{
+	return str->Replace(re, *repl->AsString(), false);
+	%}
+
+## Substitutes a given replacement string for all occurrences of a pattern
+## in a given string.
+##
+## str: The string to perform the substitution in.
+##
+## re: The pattern being replaced with *repl*.
+##
+## repl: The string that replaces *re*.
+##
+## Returns: A copy of *str* with all occurrences of *re* replaced with *repl*.
+##
+## .. zeek:see:: sub subst_string
+function gsub%(str: string, re: pattern, repl: string%): string
+	%{
+	return str->Replace(re, *repl->AsString(), true);
+	%}
+
+
+## Lexicographically compares two strings.
+##
+## s1: The first string.
+##
+## s2: The second string.
+##
+## Returns: An integer greater than, equal to, or less than 0 according as
+##          *s1* is greater than, equal to, or less than *s2*.
+function strcmp%(s1: string, s2: string%): int
+	%{
+	return zeek::val_mgr->Int(Bstr_cmp(s1->AsString(), s2->AsString()));
+	%}
+
+## Locates the first occurrence of one string in another.
+##
+## big: The string to look in.
+##
+## little: The (smaller) string to find inside *big*.
+##
+## Returns: The location of *little* in *big*, or 0 if *little* is not found in
+##          *big*.
+##
+## .. zeek:see:: find_all find_last
+function strstr%(big: string, little: string%): count
+	%{
+	return zeek::val_mgr->Count(
+		1 + big->AsString()->FindSubstring(little->AsString()));
+	%}
+
+## Substitutes each (non-overlapping) appearance of a string in another.
+##
+## s: The string in which to perform the substitution.
+##
+## from: The string to look for which is replaced with *to*.
+##
+## to: The string that replaces all occurrences of *from* in *s*.
+##
+## Returns: A copy of *s* where each occurrence of *from* is replaced with *to*.
+##
+## .. zeek:see:: sub gsub
+function subst_string%(s: string, from: string, to: string%): string
+	%{
+	const int little_len = from->Len();
+	if ( little_len == 0 )
+		return IntrusivePtr{zeek::NewRef{}, s};
+
+	int big_len = s->Len();
+	const u_char* big = s->Bytes();
+	data_chunk_t dc;
+	vector<data_chunk_t> vs;
+
+	while ( big_len >= little_len )
+		{
+		int j = zeek::util::strstr_n(big_len, big, little_len, from->Bytes());
+
+		if ( j < 0 )
+			break;
+
+		if ( j > 0 )
+			{
+			dc.length = j; dc.data = (const char*) big;
+			vs.push_back(dc);
+			}
+
+		dc.length = to->Len();
+		dc.data = (const char*) (to->Bytes());
+		vs.push_back(dc);
+
+		j += little_len;
+		big += j;
+		big_len -= j;
+		}
+
+	if ( big_len > 0 )
+		{
+		dc.length = big_len; dc.data = (const char*) big;
+		vs.push_back(dc);
+		}
+
+	return zeek::make_intrusive<zeek::StringVal>(concatenate(vs));
+	%}
+
+## Replaces all uppercase letters in a string with their lowercase counterpart.
+##
+## str: The string to convert to lowercase letters.
+##
+## Returns: A copy of the given string with the uppercase letters (as indicated
+##          by ``isascii`` and ``isupper``) folded to lowercase
+##          (via ``tolower``).
+##
+## .. zeek:see:: to_upper is_ascii
+function to_lower%(str: string%): string
+	%{
+	const u_char* s = str->Bytes();
+	int n = str->Len();
+	u_char* lower_s = new u_char[n + 1];
+	u_char* ls = lower_s;
+
+	for ( int i = 0; i < n; ++i)
+		{
+		if ( isascii(s[i]) && isupper(s[i]) )
+			*ls++ = tolower(s[i]);
+		else
+			*ls++ = s[i];
+		}
+
+    *ls++ = '\0';
+
+	return zeek::make_intrusive<zeek::StringVal>(new zeek::String(1, lower_s, n));
+	%}
+
+## Replaces all lowercase letters in a string with their uppercase counterpart.
+##
+## str: The string to convert to uppercase letters.
+##
+## Returns: A copy of the given string with the lowercase letters (as indicated
+##          by ``isascii`` and ``islower``) folded to uppercase
+##          (via ``toupper``).
+##
+## .. zeek:see:: to_lower is_ascii
+function to_upper%(str: string%): string
+	%{
+	const u_char* s = str->Bytes();
+	int n = str->Len();
+	u_char* upper_s = new u_char[n + 1];
+	u_char* us = upper_s;
+
+	for ( int i = 0; i < n; ++i)
+		{
+		if ( isascii(s[i]) && islower(s[i]) )
+			*us++ = toupper(s[i]);
+		else
+			*us++ = s[i];
+		}
+
+    *us++ = '\0';
+
+	return zeek::make_intrusive<zeek::StringVal>(new zeek::String(1, upper_s, n));
+	%}
+
+## Replaces non-printable characters in a string with escaped sequences. The
+## mappings are:
+##
+##     - values not in *[32, 126]* to ``\xXX``
+##
+## If the string does not yet have a trailing NUL, one is added internally.
+##
+## In contrast to :zeek:id:`escape_string`, this encoding is *not* fully reversible.`
+##
+## str: The string to escape.
+##
+## Returns: The escaped string.
+##
+## .. zeek:see:: to_string_literal escape_string
+function clean%(str: string%): string
+	%{
+	char* s = str->AsString()->Render();
+	return zeek::make_intrusive<zeek::StringVal>(new zeek::String(1, byte_vec(s), strlen(s)));
+	%}
+
+## Replaces non-printable characters in a string with escaped sequences. The
+## mappings are:
+##
+##     - values not in *[32, 126]* to ``\xXX``
+##     - ``\`` to ``\\``
+##     - ``'`` and ``""`` to ``\'`` and ``\"``, respectively.
+##
+## str: The string to escape.
+##
+## Returns: The escaped string.
+##
+## .. zeek:see:: clean escape_string
+function to_string_literal%(str: string%): string
+	%{
+	char* s = str->AsString()->Render(zeek::String::BRO_STRING_LITERAL);
+	return zeek::make_intrusive<zeek::StringVal>(new zeek::String(1, byte_vec(s), strlen(s)));
+	%}
+
+## Determines whether a given string contains only ASCII characters.
+##
+## str: The string to examine.
+##
+## Returns: False if any byte value of *str* is greater than 127, and true
+##          otherwise.
+##
+## .. zeek:see:: to_upper to_lower
+function is_ascii%(str: string%): bool
+	%{
+	int n = str->Len();
+	const u_char* s = str->Bytes();
+
+	for ( int i = 0; i < n; ++i )
+		if ( s[i] > 127 )
+			return zeek::val_mgr->False();
+
+	return zeek::val_mgr->True();
+	%}
+
+## Replaces non-printable characters in a string with escaped sequences. The
+## mappings are:
+##
+##     - values not in *[32, 126]* to ``\xXX``
+##     - ``\`` to ``\\``
+##
+## In contrast to :zeek:id:`clean`, this encoding is fully reversible.`
+##
+## str: The string to escape.
+##
+## Returns: The escaped string.
+##
+## .. zeek:see:: clean to_string_literal
+function escape_string%(s: string%): string
+	%{
+	char* escstr = s->AsString()->Render(zeek::String::ESC_HEX | zeek::String::ESC_ESC);
+	auto val = zeek::make_intrusive<zeek::StringVal>(escstr);
+	delete [] escstr;
+	return val;
+	%}
+
+## Returns an ASCII hexadecimal representation of a string.
+##
+## s: The string to convert to hex.
+##
+## Returns: A copy of *s* where each byte is replaced with the corresponding
+##          hex nibble.
+function string_to_ascii_hex%(s: string%): string
+	%{
+	char* x = new char[s->Len() * 2 + 1];
+	const u_char* sp = s->Bytes();
+
+	for ( int i = 0; i < s->Len(); ++i )
+		sprintf(x + i * 2, "%02x", sp[i]);
+
+	return zeek::make_intrusive<zeek::StringVal>(new zeek::String(1, (u_char*) x, s->Len() * 2));
+	%}
+
+## Uses the Smith-Waterman algorithm to find similar/overlapping substrings.
+## See `Wikipedia <http://en.wikipedia.org/wiki/Smith%E2%80%93Waterman_algorithm>`__.
+##
+## s1: The first string.
+##
+## s2: The second string.
+##
+## params: Parameters for the Smith-Waterman algorithm.
+##
+## Returns: The result of the Smith-Waterman algorithm calculation.
+function str_smith_waterman%(s1: string, s2: string, params: sw_params%) : sw_substring_vec
+	%{
+	zeek::detail::SWParams sw_params(
+            params->AsRecordVal()->GetField(0)->AsCount(),
+	    zeek::detail::SWVariant(params->AsRecordVal()->GetField(1)->AsCount()));
+
+	auto* subseq = zeek::detail::smith_waterman(s1->AsString(), s2->AsString(), sw_params);
+	auto result = zeek::VectorValPtr{zeek::AdoptRef{}, zeek::detail::Substring::VecToPolicy(subseq)};
+	zeek::util::delete_each(subseq);
+	delete subseq;
+
+	return result;
+	%}
+
+## Splits a string into substrings with the help of an index vector of cutting
+## points.
+##
+## s: The string to split.
+##
+## idx: The index vector (``vector of count``) with the cutting points.
+##
+## Returns: A one-indexed vector of strings.
+##
+## .. zeek:see:: split_string split_string1 split_string_all split_string_n
+function str_split%(s: string, idx: index_vec%): string_vec &deprecated="Remove in v4.1. Use str_split_indices."
+	%{
+	auto idx_v = idx->AsVector();
+	zeek::String::IdxVec indices(idx_v->size());
+	unsigned int i;
+
+	for ( i = 0; i < idx_v->size(); i++ )
+		indices[i] = (*idx_v)[i]->AsCount();
+
+	zeek::String::Vec* result = s->AsString()->Split(indices);
+	auto result_v = zeek::make_intrusive<zeek::VectorVal>(zeek::id::string_vec);
+
+	if ( result )
+		{
+		i = 1;
+
+		for ( zeek::String::VecIt it = result->begin();
+		      it != result->end(); ++it, ++i )
+			result_v->Assign(i, zeek::make_intrusive<zeek::StringVal>(*it));
+			// StringVal now possesses string.
+
+		delete result;
+		}
+
+	return result_v;
+	%}
+
+## Splits a string into substrings with the help of an index vector of cutting
+## points. This differs from str_split() in that it does not return an empty element
+## at the beginning of the result.
+##
+## s: The string to split.
+##
+## idx: The index vector (``vector of count``) with the cutting points
+##
+## Returns: A zero-indexed vector of strings.
+##
+## .. zeek:see:: split_string split_string1 split_string_all split_string_n
+function str_split_indices%(s: string, idx: index_vec%): string_vec
+	%{
+	auto idx_v = idx->AsVector();
+	zeek::String::IdxVec indices(idx_v->size());
+	unsigned int i;
+
+	for ( i = 0; i < idx_v->size(); i++ )
+		indices[i] = (*idx_v)[i]->AsCount();
+
+	zeek::String::Vec* result = s->AsString()->Split(indices);
+	auto result_v = zeek::make_intrusive<zeek::VectorVal>(zeek::id::string_vec);
+
+	if ( result )
+		{
+		i = 0;
+
+		for ( zeek::String::VecIt it = result->begin();
+		      it != result->end(); ++it, ++i )
+			result_v->Assign(i, zeek::make_intrusive<zeek::StringVal>(*it));
+			// StringVal now possesses string.
+
+		delete result;
+		}
+
+	return result_v;
+	%}
+
+## Strips whitespace at both ends of a string.
+##
+## str: The string to strip the whitespace from.
+##
+## Returns: A copy of *str* with leading and trailing whitespace removed.
+##
+## .. zeek:see:: sub gsub lstrip rstrip
+function strip%(str: string%): string
+	%{
+	const u_char* s = str->Bytes();
+	int n = str->Len();
+
+	if ( n == 0 )
+		// Empty string.
+		return zeek::make_intrusive<zeek::StringVal>(new zeek::String(s, n, 1));
+
+	const u_char* sp = s;
+
+	// Move a pointer from the end of the string.
+	const u_char* e = sp + n - 1;
+	while ( e > sp && isspace(*e) )
+		--e;
+
+	// Move the pointer for the beginning of the string.
+	while ( isspace(*sp) && sp <= e )
+		++sp;
+
+	return zeek::make_intrusive<zeek::StringVal>(new zeek::String(sp, (e - sp + 1), 1));
+	%}
+
+%%{
+static bool should_strip(u_char c, const zeek::String* strip_chars)
+	{
+	auto strip_bytes = strip_chars->Bytes();
+
+	for ( auto i = 0; i < strip_chars->Len(); ++i )
+		if ( c == strip_bytes[i] )
+			return true;
+
+	return false;
+	}
+%%}
+
+## Removes all combinations of characters in the *chars* argument
+## starting at the beginning of the string until first mismatch.
+##
+## str: The string to strip characters from.
+##
+## chars: A string consisting of the characters to be removed.
+##        Defaults to all whitespace characters.
+##
+## Returns: A copy of *str* with the characters in *chars* removed from
+##          the beginning.
+##
+## .. zeek:see:: sub gsub strip rstrip
+function lstrip%(str: string, chars: string &default=" \t\n\r\v\f"%): string
+	%{
+	const u_char* s = str->Bytes();
+	int n = str->Len();
+
+	// empty input string
+	if ( n == 0 )
+		return zeek::make_intrusive<zeek::StringVal>(new zeek::String(s, n, 1));
+
+	int i;
+	auto bs_chars = chars->AsString();
+
+	for ( i = 0; i < n; ++i )
+		if ( ! should_strip(s[i], bs_chars) )
+			break;
+
+	return zeek::make_intrusive<zeek::StringVal>(new zeek::String(s + i, n - i, 1));
+	%}
+
+## Removes all combinations of characters in the *chars* argument
+## starting at the end of the string until first mismatch.
+##
+## str: The string to strip characters from.
+##
+## chars: A string consisting of the characters to be removed.
+##        Defaults to all whitespace characters.
+##
+## Returns: A copy of *str* with the characters in *chars* removed from
+##          the end.
+##
+## .. zeek:see:: sub gsub strip lstrip
+function rstrip%(str: string, chars: string &default=" \t\n\r\v\f"%): string
+	%{
+	const u_char* s = str->Bytes();
+	int n = str->Len();
+
+	// empty input string
+	if ( n == 0 )
+		return zeek::make_intrusive<zeek::StringVal>(new zeek::String(s, n, 1));
+
+	int n_to_remove;
+	auto bs_chars = chars->AsString();
+
+	for ( n_to_remove = 0; n_to_remove < n; ++n_to_remove )
+		if ( ! should_strip(s[n - n_to_remove - 1], bs_chars) )
+			break;
+
+	return zeek::make_intrusive<zeek::StringVal>(new zeek::String(s, n - n_to_remove, 1));
+	%}
+
+## Generates a string of a given size and fills it with repetitions of a source
+## string.
+##
+## len: The length of the output string.
+##
+## source: The string to concatenate repeatedly until *len* has been reached.
+##
+## Returns: A string of length *len* filled with *source*.
+function string_fill%(len: int, source: string%): string
+	%{
+	const u_char* src = source->Bytes();
+	int64_t n = source->Len();
+	char* dst = new char[len];
+
+	for ( int i = 0; i < len; i += n )
+		::memcpy((dst + i), src, min(n, len - i));
+
+	dst[len - 1] = 0;
+
+	return zeek::make_intrusive<zeek::StringVal>(new zeek::String(1, byte_vec(dst), len));
+	%}
+
+## Takes a string and escapes characters that would allow execution of
+## commands at the shell level. Must be used before including strings in
+## :zeek:id:`system` or similar calls.
+##
+## source: The string to escape.
+##
+## Returns: A shell-escaped version of *source*.  Specifically, this
+##          backslash-escapes characters whose literal value is not otherwise
+##          preserved by enclosure in double-quotes (dollar-sign, backquote,
+##          backslash, and double-quote itself), and then encloses that
+##          backslash-escaped string in double-quotes to ultimately preserve
+##          the literal value of all input characters.
+##
+## .. zeek:see:: system safe_shell_quote
+function safe_shell_quote%(source: string%): string
+	%{
+	unsigned j = 0;
+	const u_char* src = source->Bytes();
+	unsigned n = source->Len();
+	byte_vec dst = new u_char[n * 2 + 1 + 2];
+	dst[j++] = '"';
+
+	for ( unsigned i = 0; i < n; ++i )
+		{
+		switch ( src[i] ) {
+		case '`': case '"': case '\\': case '$':
+			dst[j++] = '\\';
+			break;
+		default:
+			break;
+		}
+
+		dst[j++] = src[i];
+		}
+
+	dst[j++] = '"';
+	dst[j] = '\0';
+	return zeek::make_intrusive<zeek::StringVal>(new zeek::String(1, dst, j));
+	%}
+
+## Finds all occurrences of a pattern in a string.
+##
+## str: The string to inspect.
+##
+## re: The pattern to look for in *str*.
+##
+## Returns: The set of strings in *str* that match *re*, or the empty set.
+##
+## .. zeek:see: find_all_ordered find_last strstr
+function find_all%(str: string, re: pattern%) : string_set
+	%{
+	auto a = zeek::make_intrusive<zeek::TableVal>(zeek::id::string_set);
+
+	const u_char* s = str->Bytes();
+	const u_char* e = s + str->Len();
+
+	for ( const u_char* t = s; t < e; ++t )
+		{
+		int n = re->MatchPrefix(t, e - t);
+		if ( n >= 0 )
+			{
+			auto idx = zeek::make_intrusive<zeek::StringVal>(n, (const char*) t);
+			a->Assign(std::move(idx), 0);
+			t += n - 1;
+			}
+		}
+
+	return a;
+	%}
+
+## Finds all occurrences of a pattern in a string.  The order in which
+## occurrences are found is preverved and the return value may contain
+## duplicate elements.
+##
+## str: The string to inspect.
+##
+## re: The pattern to look for in *str*.
+##
+## Returns: All strings in *str* that match *re*, or an empty vector.
+##
+## .. zeek:see: find_all find_last strstr
+function find_all_ordered%(str: string, re: pattern%) : string_vec
+	%{
+	auto a = zeek::make_intrusive<zeek::VectorVal>(zeek::id::string_vec);
+
+	const u_char* s = str->Bytes();
+	const u_char* e = s + str->Len();
+
+	for ( const u_char* t = s; t < e; ++t )
+		{
+		int n = re->MatchPrefix(t, e - t);
+		if ( n >= 0 )
+			{
+			auto idx = zeek::make_intrusive<zeek::StringVal>(n, (const char*) t);
+			a->Assign(a->Size(), std::move(idx));
+			t += n - 1;
+			}
+		}
+
+	return a;
+	%}
+
+## Finds the last occurrence of a pattern in a string. This function returns
+## the match that starts at the largest index in the string, which is not
+## necessarily the longest match.  For example, a pattern of ``/.*/`` will
+## return the final character in the string.
+##
+## str: The string to inspect.
+##
+## re: The pattern to look for in *str*.
+##
+## Returns: The last string in *str* that matches *re*, or the empty string.
+##
+## .. zeek:see: find_all find_all_ordered strstr
+function find_last%(str: string, re: pattern%) : string
+	%{
+	const u_char* s = str->Bytes();
+	const u_char* e = s + str->Len();
+
+	for ( const u_char* t = e - 1; t >= s; --t )
+		{
+		int n = re->MatchPrefix(t, e - t);
+		if ( n >= 0 )
+			return zeek::make_intrusive<zeek::StringVal>(n, (const char*) t);
+		}
+
+	return zeek::val_mgr->EmptyString();
+	%}
+
+## Returns a hex dump for given input data. The hex dump renders 16 bytes per
+## line, with hex on the left and ASCII (where printable)
+## on the right.
+##
+## data_str: The string to dump in hex format.
+##
+## Returns: The hex dump of the given string.
+##
+## .. zeek:see:: string_to_ascii_hex bytestring_to_hexstr
+##
+## .. note:: Based on Netdude's hex editor code.
+##
+function hexdump%(data_str: string%) : string
+	%{
+
+// The width of a line of text in the hex-mode view, consisting
+// of offset, hex view and ASCII view:
+//
+// 32 +     16 characters per 8 bytes, twice
+// (2*7) +  Single space between bytes, twice
+// 4 +      Two spaces between 8-byte sets and ASCII
+// 1 +      For newline
+// 17 +     For ASCII display, with spacer column
+// 6        For 5-digit offset counter, including spacer
+//
+#define HEX_LINE_WIDTH               74
+
+#define HEX_LINE_START                6
+#define HEX_LINE_END                 53
+#define HEX_LINE_START_ASCII         56
+#define HEX_LINE_START_RIGHT_ASCII   65
+#define HEX_LINE_LEFT_MIDDLE         28
+#define HEX_LINE_RIGHT_MIDDLE        31
+#define HEX_BLOCK_LEN                23
+#define HEX_LINE_BYTES               16
+#define NULL_CHAR                    '.'
+#define NONPRINT_CHAR                '.'
+
+	const u_char* data = data_str->Bytes();
+	unsigned data_size = data_str->Len();
+
+	if ( ! data )
+		return zeek::val_mgr->EmptyString();
+
+	int num_lines = (data_size / 16) + 1;
+	int len = num_lines * HEX_LINE_WIDTH;
+	u_char* hex_data = new u_char[len + 1];
+	if ( ! hex_data )
+		return zeek::val_mgr->EmptyString();
+
+	memset(hex_data, ' ', len);
+
+	u_char* hex_data_ptr = hex_data;
+	u_char* ascii_ptr = hex_data_ptr + 50;
+	int x = 0, y = 0;
+
+	for ( const u_char* data_ptr = data; data_ptr < data + data_size;
+	      ++data_ptr )
+		{
+		if ( x == 0 )
+			{
+			char offset[5];
+			snprintf(offset, sizeof(offset),
+					"%.4tx", data_ptr - data);
+			memcpy(hex_data_ptr, offset, 4);
+			hex_data_ptr += 6;
+			ascii_ptr = hex_data_ptr + 50;
+			}
+
+		char hex_byte[3];
+		snprintf(hex_byte, sizeof(hex_byte),
+				"%.2x", (u_char) *data_ptr);
+
+		int val = (u_char) *data_ptr;
+
+		u_char ascii_byte = val;
+
+		// If unprintable, use special characters:
+		if ( val < 0x20 || val >= 0x7f )
+			{
+			if ( val == 0 )
+				ascii_byte = NULL_CHAR;
+			else
+				ascii_byte = NONPRINT_CHAR;
+			}
+
+		*hex_data_ptr++ = hex_byte[0];
+		*hex_data_ptr++ = hex_byte[1];
+		*hex_data_ptr++ = ' ';
+		*ascii_ptr++ = ascii_byte;
+
+		if ( x == 7 )
+			{
+			*hex_data_ptr++ = ' ';
+			*ascii_ptr++ = ' ';
+			}
+
+		++x;
+
+		if ( x == 16 )
+			{
+			x = 0;
+			*ascii_ptr++ = '\n';
+			hex_data_ptr = ascii_ptr;
+			}
+		}
+
+	// Terminate the string, but ensure it ends with a newline.
+	if ( ascii_ptr[-1] != '\n' )
+		*ascii_ptr++ = '\n';
+	*ascii_ptr = 0;
+
+	auto result = zeek::make_intrusive<zeek::StringVal>((const char*) hex_data);
+	delete [] hex_data;
+
+	return result;
+	%}
+
+## Returns a reversed copy of the string
+##
+## str: The string to reverse.
+##
+## Returns: A reversed copy of *str*
+##
+function reverse%(str: string%) : string
+	%{
+	string s = str->ToStdString();
+	reverse(s.begin(), s.end());
+	return zeek::make_intrusive<zeek::StringVal>(s.length(), (const char*)s.c_str());
+	%}
+
+## Returns the number of times a substring occurs within a string
+##
+## str: The string to search in.
+## substr: The string to search for.
+##
+## Returns: The number of times the substring occurred.
+##
+function count_substr%(str: string, sub: string%) : count
+	%{
+	string s = str->ToStdString();
+	string sub_s = sub->ToStdString();
+
+	size_t count = 0;
+	size_t pos = s.find(sub_s);
+	while ( pos != string::npos )
+		{
+		++count;
+		pos = s.find(sub_s, pos + sub_s.size());
+		}
+
+	return zeek::val_mgr->Count(count);
+	%}
+
+%%{
+
+static int64_t do_find_str(zeek::StringVal* str, zeek::StringVal* sub, int64_t start, int64_t end, bool rfind)
+	{
+	// Don't bother if the start is after the end of the string.
+	if ( start > str->Len() )
+		return -1;
+
+	// Also don't bother (and return an error) if the end is before the start.
+	if ( (end != -1 ) && end < start )
+		{
+		zeek::reporter->Error("find_str: end position must be greater than start position");
+		return -1;
+		}
+
+	int64_t end_pos = str->Len();
+	if ( end >= 0 && end < str->Len() )
+		end_pos = end;
+
+	// One last sanity check, don't bother doing string operations at all if the range is shorter than
+	// the length of the search string.
+	if ( (end_pos - start + 1) < sub->Len() )
+		return -1;
+
+	string s = str->ToStdString().substr(start, end_pos);
+	size_t pos = string::npos;
+	if ( rfind )
+		pos = s.rfind(sub->ToStdString());
+	else
+		pos = s.find(sub->ToStdString());
+
+	if ( pos == string::npos )
+		return -1;
+
+	return pos + start;
+	}
+
+%%}
+
+## Finds a string within another string, starting from the beginning. This works
+## by taking a substring within the provided indexes and searching for the sub
+## argument. This means that ranges shorter than the string in the sub argument
+## will always return a failure.
+##
+## str: The string to search in.
+## substr: The string to search for.
+## start: An optional position for the start of the substring.
+## end: An optional position for the end of the substring. A value less than
+##      zero (such as the default -1) means a search until the end of the
+##      string.
+##
+## Returns: The position of the substring. Returns -1 if the string wasn't
+##          found. Prints an error if the starting position is after the ending
+##          position.
+function find_str%(str: string, sub: string, start: count &default=0, end: int &default=-1%) : int
+	%{
+	return zeek::val_mgr->Int(do_find_str(str, sub, start, end, false));
+	%}
+
+## The same as :zeek:see:`find_str`, but returns the highest index matching
+## the substring instead of the smallest.
+##
+## str: The string to search in.
+## substr: The string to search for.
+## start: An optional position for the start of the substring.
+## end: An optional position for the end of the substring. A value less than
+##      zero (such as the default -1) means a search from the end of the string.
+##
+## Returns: The position of the substring. Returns -1 if the string wasn't
+##          found. Prints an error if the starting position is after the ending
+##          position.
+function rfind_str%(str: string, sub: string, start: count &default=0, end: int &default=-1%) : int
+	%{
+	return zeek::val_mgr->Int(do_find_str(str, sub, start, end, true));
+	%}
+
+## Returns whether a string starts with a substring.
+##
+function starts_with%(str: string, sub: string%) : bool
+	%{
+	string s = str->ToStdString();
+	return zeek::val_mgr->Bool(s.find(sub->ToStdString()) == 0);
+	%}
+
+## Returns whether a string ends with a substring.
+##
+function ends_with%(str: string, sub: string%) : bool
+	%{
+	if ( sub->Len() > str->Len() )
+		return zeek::val_mgr->Bool(false);
+
+	string s = str->ToStdString();
+	string sub_s = sub->ToStdString();
+	return zeek::val_mgr->Bool(s.rfind(sub_s) == (s.size() - sub_s.size()));
+	%}
+
+## Returns whether an entire string consists only of digits.
+##
+function is_num%(str: string%) : bool
+	%{
+	// Python's version of this method (which this is based on) just checks to see if every
+	// character in the string is a numeric value. If something more than this is desired, we
+	// could use something like std::from_chars or std::strto{ul,f} to check it.
+	const char* s = str->CheckString();
+	for ( int i = 0; i < str->Len(); i++ )
+		if ( ! std::isdigit(s[i]) )
+			return zeek::val_mgr->False();
+
+	return zeek::val_mgr->True();
+	%}
+
+## Returns whether an entire string is alphabetic characters.
+##
+function is_alpha%(str: string%) : bool
+	%{
+	const char* s = str->CheckString();
+	for ( int i = 0; i < str->Len(); i++ )
+		if ( ! std::isalpha(s[i]) )
+			return zeek::val_mgr->False();
+
+	return zeek::val_mgr->True();
+	%}
+
+## Returns whether an entire string is alphanumeric characters
+##
+function is_alnum%(str: string%) : bool
+	%{
+	const char* s = str->CheckString();
+	for ( int i = 0; i < str->Len(); i++ )
+		if ( ! std::isalnum(s[i]) )
+			return zeek::val_mgr->False();
+
+	return zeek::val_mgr->True();
+	%}
+
+## Returns a left-justified version of the string, padded to a specific length
+## with a specified character.
+##
+## str: The string to left-justify.
+## count: The length of the returned string. If this value is less than or
+##        equal to the length of str, a copy of str is returned.
+## fill: The character used to fill in any extra characters in the resulting
+##       string. If a string longer than one character is passed, an error is
+##       reported. This defaults to the space character.
+##
+## Returns: A left-justified version of a string, padded with characters to a
+##          specific length.
+##
+function ljust%(str: string, width: count, fill: string &default=" "%) : string
+	%{
+	if ( fill->Len() != 1 )
+		{
+		reporter->Error("Fill string passed to ljust() must be a single character");
+		return nullptr;
+		}
+
+	string new_s = str->ToStdString();
+
+	if ( width <= new_s.size() )
+		return zeek::StringValPtr(zeek::NewRef{}, str);
+
+	new_s.insert(new_s.size(), width - new_s.size(), fill->CheckString()[0]);
+	return zeek::make_intrusive<zeek::StringVal>(new_s);
+	%}
+
+%%{
+
+static zeek::StringValPtr do_rjust(zeek::StringVal* str, uint64_t width, char fill)
+	{
+	string new_s = str->ToStdString();
+
+	if ( width <= new_s.size() )
+		return { zeek::NewRef{}, str };
+
+	new_s.insert(0, width - new_s.size(), fill);
+	return zeek::make_intrusive<zeek::StringVal>(new_s);
+	}
+
+%%}
+
+## Returns a right-justified version of the string, padded to a specific length
+## with a specified character.
+##
+## str: The string to right-justify.
+## count: The length of the returned string. If this value is less than or
+##        equal to the length of str, a copy of str is returned.
+## fill: The character used to fill in any extra characters in the resulting
+##       string. If a string longer than one character is passed, an error is
+##       reported. This defaults to the space character.
+##
+## Returns: A right-justified version of a string, padded with characters to a
+##          specific length.
+##
+function rjust%(str: string, width: count, fill: string &default=" "%) : string
+	%{
+	if ( fill->Len() != 1 )
+		{
+		reporter->Error("Fill string passed to rjust() must be a single character");
+		return nullptr;
+		}
+
+	return do_rjust(str, width, fill->CheckString()[0]);
+	%}
+
+## Swaps the case of every alphabetic character in a string. For example, the string "aBc" be returned as "AbC".
+##
+## str: The string to swap cases in.
+##
+## Returns: A copy of the str with the case of each character swapped.
+##
+function swap_case%(str: string%) : string
+	%{
+	string s = str->ToStdString();
+	for ( size_t i = 0; i < s.size(); i++ )
+		{
+		if ( std::islower(s[i]) )
+			s[i] = toupper(s[i]);
+		else if ( std::isupper(s[i]) )
+			s[i] = tolower(s[i]);
+		}
+
+	return zeek::make_intrusive<zeek::StringVal>(s);
+	%}
+
+## Converts a string to Title Case. This changes the first character of each sequence of non-space characters
+## in the string to be capitalized. See https://docs.python.org/3/library/stdtypes.html#str.title for more info.
+##
+## str: The string to convert.
+##
+## Returns: A title-cased version of the string.
+##
+function to_title%(str: string%) : string
+	%{
+	string s = str->ToStdString();
+	size_t pos = s.find_first_not_of(' ');
+	if ( pos == string::npos )
+		return zeek::IntrusivePtr<zeek::StringVal>(NewRef{}, str);
+
+	while ( pos != string::npos )
+		{
+		s[pos] = std::toupper(s[pos]);
+		pos = s.find(' ', pos+1);
+		if ( pos == string::npos )
+			break;
+
+		pos = s.find_first_not_of(' ', pos+1);
+		}
+
+	return zeek::make_intrusive<zeek::StringVal>(s);
+	%}
+
+## Returns a copy of a string filled on the left side with zeroes. This is effectively rjust(str, width, "0").
+function zfill%(str: string, width: count%) : string
+	%{
+	return do_rjust(str, width, '0');
+	%}
+
+## Similar to lstrip(), except does the removal repeatedly if the pattern repeats at the start of the string.
+function remove_prefix%(str: string, sub: string%) : string
+	%{
+	// This could just use repeated calls to lstrip(), except for a couple of reasons:
+	// 1) lstrip() creates a StringVal at the end, and that would mean repeated recreation of objects
+	// 2) lstrip() searches for any character in the string, not the string as a whole.
+	string s = str->ToStdString();
+	string sub_s = sub->ToStdString();
+
+	size_t pos = s.find(sub_s);
+	if ( pos != 0 )
+		return zeek::IntrusivePtr<zeek::StringVal>(NewRef{}, str);
+
+	pos = s.find(sub_s, pos+1);
+	size_t next_pos = sub_s.size();
+	while ( pos == next_pos && next_pos < s.size() )
+		{
+		next_pos += sub_s.size();
+		pos = s.find(sub_s, pos+1);
+		}
+
+	return zeek::make_intrusive<zeek::StringVal>(s.substr(next_pos));
+	%}
+
+## Similar to rstrip(), except does the removal repeatedly if the pattern repeats at the end of the string.
+function remove_suffix%(str: string, sub: string%) : string
+	%{
+	// See the note in removeprefix for why this doesn't just call rstrip.
+	string s = str->ToStdString();
+	string sub_s = sub->ToStdString();
+
+	size_t pos = s.rfind(sub_s);
+	size_t next_pos = s.size() - sub_s.size();
+
+	while ( pos == next_pos )
+		{
+		next_pos -= sub_s.size();
+		pos = s.rfind(sub_s, pos-1);
+		}
+
+	return zeek::make_intrusive<zeek::StringVal>(s.substr(0, next_pos + sub_s.size()));
+	%}

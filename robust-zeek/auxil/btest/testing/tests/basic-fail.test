@@ -1,0 +1,11 @@
+# %TEST-EXEC-FAIL: btest t1 t2
+
+%TEST-START-FILE t1
+@TEST-EXEC: echo Hello, World!
+@TEST-EXEC: exit 1
+%TEST-END-FILE
+
+%TEST-START-FILE t2
+@TEST-EXEC: echo Hello, World!
+@TEST-EXEC-FAIL: exit 0
+%TEST-END-FILE

@@ -1,0 +1,14 @@
+.make-release-steps.bash
+Doxyfile
+Makefile
+bin/*
+blog_release_note.md
+build/*
+github_release_note.md
+html/*
+manual/examples
+manual/html/*
+manual/libcaf_core
+manual/libcaf_io
+manual/libcaf_openssl
+release.txt

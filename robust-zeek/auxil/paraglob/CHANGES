@@ -1,0 +1,152 @@
+
+0.6.0 | 2020-12-07 17:50:29 +0000
+
+  * Release 0.6.0.
+
+0.5.0-10 | 2020-12-07 14:16:50 +0000
+
+  * Baseline refresh to reflect btest 0.64 (Christian Kreibich, Corelight)
+
+0.5.0-8 | 2020-12-02 11:06:31 -0800
+
+  * Update minimum required CMake to 3.5 (Jon Siwek, Corelight)
+
+0.5.0-6 | 2020-12-01 09:54:14 -0800
+
+  * Fix compiler warning about copying loop variable. (Robin Sommer, Corelight)
+
+0.5.0-4 | 2020-11-24 15:12:15 -0800
+
+  * Rely on GNUInstallDirs for libdir selection (Christian Kreibich, Corelight)
+
+    This allows libdir overrides to be inherited in Zeek-bundled installs.
+
+0.5.0-2 | 2020-09-21 13:35:55 -0700
+
+  * Avoid calling qsort() with null pointer argument (Jon Siwek, Corelight)
+
+    Likely no ill-effects of doing so since number of elements was always
+    observed to be zero whenever a null pointer was passed, but qsort() may
+    technically be annotated with a `nonnull` attribute, so that triggers an
+    error when using `-fsanitize=nonnull-attribute`.
+
+0.5.0 | 2020-02-18 15:21:21 -0800
+
+  * Release 0.5.0.
+
+0.4-3 | 2020-02-18 15:19:21 -0800
+
+  * GH-16: fix undefined references in libparaglob.a (Jon Siwek, Corelight)
+
+0.4-2 | 2020-02-18 14:49:20 -0800
+
+  * Remove empty paraglob.h (Jon Siwek, Corelight)
+
+0.4-1 | 2020-02-18 10:18:50 -0800
+
+  * Replace non-standard variable-length-array usage in benchmark (Jon Siwek, Corelight)
+
+0.4 | 2020-01-13 11:32:09 +0000
+
+  * Release 0.4.
+
+0.3-12 | 2020-01-13 11:31:10 +0000
+
+  * Increase max allowed time for benchmark test to increase
+    reliability. (Jon Siwek, Corelight)
+
+  * Set pattern ID type in AhoCorasickPlus::addPattern to avoid risk
+    of invalid memory accesses. (Jon Siwek, Corelight)
+
+0.3-9 | 2020-01-03 12:03:22 -0700
+
+  * Change AhoCorasickPlus::addPattern() to take a string_view (Jon Siwek, Corelight)
+
+  * Fix use-after-free bug
+
+    The default assumption of AhoCorasick::addPattern() was that the memory
+    used to store pattern strings is available for the entire lifetime of
+    the process, but Paraglob initialization was passing in temporary
+    std::string objects. (Jon Siwek, Corelight)
+
+  * Fix btest.cfg PATH (Jon Siwek, Corelight)
+
+
+0.3-5 | 2019-10-29 09:10:19 -0700
+
+  * Update RequireCXX17.cmake to recent Zeek version (Jon Siwek, Corelight)
+
+    Uses c++1z flag on Clang 4.0 for C++17
+
+0.3-4 | 2019-10-28 18:03:55 -0700
+
+  * Update RequireCXX17.cmake to remove CMake < 3.0 compat code (Jon Siwek, Corelight)
+
+  * Require CMake 3.0+ (Jon Siwek, Corelight)
+
+  * Move CMake project() after cmake_minimum_required() (Jon Siwek, Corelight)
+
+  * Switch to require C++17. (Robin Sommer, Corelight)
+
+0.3 | 2019-09-30 21:07:37 -0700
+
+  * Re-organize and install all paraglob header files (Jon Siwek, Corelight)
+
+    Moves all paraglob headers into include/paraglob and installs them.
+    Also shortened some filenames since they'll be included via paraglob
+    subdirectory now, like "paraglob/paraglob.h".
+
+    Moves ahocorasick headers into src/ since they're not part of the
+    public API.
+
+    Related to https://github.com/zeek/zeek/issues/602
+
+  * Forward declare AhoCorasickPlus in paraglob.h (Jon Siwek, Corelight)
+
+    Such that it becomes an implementation detail and no longer requires
+    installation of ahocorasick headers along with paraglob's.
+
+  * Remove empty paraglob.h (Jon Siwek, Corelight)
+
+0.2 | 2019-07-09 17:39:28 -0700
+
+  * Release v0.2
+
+  * Some cleanup for Coverity. (Zeke Medley, Corelight)
+
+  * Clarify the type of patterns supported. (Zeke Medley)
+
+    Also updates the syntax to reflect a small change made in the merge.
+
+0.1-19 | 2019-06-06 22:11:05 +0000
+
+  * Make release default build configuration. (Zeke Medley, Corelight)
+
+0.1-15 | 2019-06-05 19:29:03 +0000
+
+  * Improve building and testing. (Zeke Medley, Corelight)
+
+0.1-12 | 2019-06-04 18:59:59 +0000
+
+  * Communicate internal failures by throwing exceptions. (Zeke Medley, Corelight)
+
+0.1-9 | 2019-05-29 18:03:48 +0000
+
+  * Make paraglob serializable. (Zeke Medley, Corelight)
+
+0.1-4 | 2019-05-20 11:19:53 -0700
+
+  * Build from the current source directory. (Zeke Medley)
+
+  * Update update-changes config. (Robin Sommer, Corelight)
+
+  * Fixing README. (Robin Sommer, Corelight)
+
+0.1 | 2019-05-13 23:36:45 +0000
+
+  * Port to C++ & update data structures for better performance. (Zeke
+    Medley, Corelight)
+
+0.01 | 2012-11-08 20:19:59 -0800
+
+  * Starting CHANGES.

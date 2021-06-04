@@ -1,0 +1,33 @@
+# %TEST-EXEC: btest -g G1 t1 t2 t3 t4 t5 >>output 2>&1
+# %TEST-EXEC: btest -g G1,G2 t1 t2 t3 t4 t5 >>output 2>&1
+# %TEST-EXEC: btest -g - t1 t2 t3 t4 t5 >>output 2>&1
+# %TEST-EXEC: btest -g G1,- t1 t2 t3 t4 t5 >>output 2>&1
+# %TEST-EXEC: btest --groups=-G3 t1 t2 t3 t4 t5 >>output 2>&1
+# %TEST-EXEC: btest --groups=-G3,-G1 t1 t2 t3 t4 t5 >>output 2>&1
+# %TEST-EXEC: btest t1 t2 t3 t4 t5 >>output 2>&1
+# %TEST-EXEC: btest-diff output
+
+%TEST-START-FILE t1
+@TEST-GROUP: G1
+@TEST-EXEC: exit 0
+%TEST-END-FILE
+
+%TEST-START-FILE t2
+@TEST-GROUP: G1
+@TEST-EXEC: exit 0
+%TEST-END-FILE
+
+%TEST-START-FILE t3
+@TEST-GROUP: G2
+@TEST-EXEC: exit 0
+%TEST-END-FILE
+
+%TEST-START-FILE t4
+@TEST-EXEC: exit 0
+%TEST-END-FILE
+
+%TEST-START-FILE t5
+@TEST-GROUP: G3
+@TEST-EXEC: exit 0
+%TEST-END-FILE
+

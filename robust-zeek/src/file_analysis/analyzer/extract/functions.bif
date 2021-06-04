@@ -1,0 +1,21 @@
+##! Internal functions used by the extraction file analyzer.
+
+module FileExtract;
+
+%%{
+#include "zeek/zeek/file_analysis/Manager.h"
+
+#include "file_analysis/file_analysis.bif.h"
+%%}
+
+## :zeek:see:`FileExtract::set_limit`.
+function FileExtract::__set_limit%(file_id: string, args: any, n: count%): bool
+	%{
+	using zeek::BifType::Record::Files::AnalyzerArgs;
+	auto rv = args->AsRecordVal()->CoerceTo(AnalyzerArgs);
+	bool result = zeek::file_mgr->SetExtractionLimit(file_id->CheckString(),
+	                                                 std::move(rv), n);
+	return zeek::val_mgr->Bool(result);
+	%}
+
+module GLOBAL;

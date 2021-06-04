@@ -1,0 +1,51 @@
+# This test verifies test case parallelization and control over that
+# parallelization via serializers.
+#
+# %TEST-EXEC: chmod +x normalize-output
+#
+# 5 tests with 5 threads parallelize completely, but tests 4 and 5 are
+# serialized, so must end up in a single thread. The following groups
+# all test numbers run by a given thread on a single line, and confirms
+# that one of them includes 4, then 5.
+# %TEST-EXEC: btest -j 5 t1 t2 t3 t4 t5 2>&1 | ./normalize-output | grep "4.*5" | sed "s/[0-36-9] //" >output.j5
+#
+# Single-thread operation is the default, so "-j 1" should yield same output.
+# %TEST-EXEC: btest -j 1 t1 t2 t3 t4 t5 2>&1 | cat >output.j1
+# %TEST-EXEC: btest -j 0 t1 t2 t3 t4 t5 2>&1 | cat >output.j0
+#
+# %TEST-EXEC: btest-diff output.j5
+# %TEST-EXEC: btest-diff output.j1
+# %TEST-EXEC: btest-diff output.j0
+
+# In multithreaded output, this looks for lines with the thread-number
+# prefix (e.g. "[#2] t4 ... ok"), transforms them into lines separating
+# thread and test numbers by whitespace (e.g. "test 4 thread 2"), groups
+# tests run by the same thread into the same line, and sorts this.
+%TEST-START-FILE normalize-output
+grep '\#' | \
+sed 's/.#\([0-9]\). .\([0-9]\).*/test \2 thread \1/g' | \
+awk '{t[$4] = t[$4] " " $2} END{ for ( i in t ) print t[i];}' | \
+sort
+%TEST-END-FILE
+
+%TEST-START-FILE t1
+@TEST-EXEC: echo t1 >output
+%TEST-END-FILE
+
+%TEST-START-FILE t2
+@TEST-EXEC: echo t2 >output
+%TEST-END-FILE
+
+%TEST-START-FILE t3
+@TEST-EXEC: echo t3 >output
+%TEST-END-FILE
+
+%TEST-START-FILE t4
+@TEST-SERIALIZE: Foo
+@TEST-EXEC: echo t4 >output
+%TEST-END-FILE
+
+%TEST-START-FILE t5
+@TEST-SERIALIZE: Foo
+@TEST-EXEC: echo t5 >output
+%TEST-END-FILE

@@ -1,0 +1,21 @@
+# %TEST-EXEC: btest >out1 2>&1
+# %TEST-EXEC: btest %INPUT >out2 2>&1
+# %TEST-EXEC: btest-diff out1
+# %TEST-EXEC: btest-diff out2
+
+@TEST-EXEC: exit 0
+
+%TEST-START-FILE d1/t1
+@TEST-EXEC: exit 0
+%TEST-END-FILE
+
+%TEST-START-FILE d2/t2.test
+@TEST-EXEC: exit 0
+%TEST-END-FILE
+
+%TEST-START-FILE btest.cfg
+[btest]
+TmpDir      = .tmp
+BaselineDir = Baseline
+TestDirs    = d1 d2
+%TEST-END-FILE

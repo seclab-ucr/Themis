@@ -1,0 +1,21 @@
+# %TEST-EXEC: btest %INPUT
+# %TEST-EXEC: btest-diff output
+
+# @TEST-EXEC: awk -f %INPUT <foo.dat >>../../output
+# @TEST-EXEC: awk -f %INPUT <bar.dat >>../../output
+    { lines += 1; }
+END { print lines; }
+
+@TEST-START-FILE foo.dat
+1
+2
+3
+@TEST-END-FILE
+
+@TEST-START-FILE bar.dat
+A
+B
+C
+D
+@TEST-END-FILE
+

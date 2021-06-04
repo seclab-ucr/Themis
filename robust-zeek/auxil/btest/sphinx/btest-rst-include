@@ -1,0 +1,31 @@
+#! /usr/bin/env bash
+
+base=`dirname $0`
+
+
+function usage()
+{
+    echo "usage: `basename $0` [-n <max-lines>] <file>"
+    exit 1
+}
+
+lines=""
+
+while getopts "n:" opt; do
+    case $opt in
+        n) lines=$OPTARG;;
+        *) usage;;
+    esac
+done
+
+shift $(($OPTIND - 1))
+
+if [ "$1" = "" ]; then
+    usage;
+fi
+
+if [ "$lines" != "" ]; then
+    lines="-n $lines"
+fi
+
+$base/btest-rst-cmd $lines -o cat $1

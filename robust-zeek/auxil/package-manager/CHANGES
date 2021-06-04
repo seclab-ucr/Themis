@@ -1,0 +1,1618 @@
+
+2.7.1 | 2021-02-05 15:29:59 -0800
+
+  * Release 2.7.1.
+
+2.7.0-2 | 2021-02-05 15:29:41 -0800
+
+  * Teach autoconfig command the --force option (Jon Siwek, Corelight)
+
+    Allows for skipping confirmation prompts
+
+2.7.0 | 2021-01-25 12:05:08 -0800
+
+  * Release 2.7.0.
+
+2.6.1-7 | 2021-01-25 11:54:28 -0800
+
+  * Documentation updates for user mode (Christian Kreibich, Corelight)
+
+  * Expand use of environment variables to override internal settings (Christian Kreibich, Corelight)
+
+    - ZKG_DEFAULT_SOURCE allows setting an alternative default package
+      source when https://github.com/zeek/packages isn't desirable. An
+      empty value causes no source to be defined.
+
+    - ZEEK_ZKG_CONFIG_DIR and ZEEK_ZKG_STATE_DIR allow overriding internal
+      storage locations configured during a Zeek-bundled install. This is
+      mainly to aid testing, so the help output does not include these.
+
+  * Suggest use of --user when zkg detects write-permission problems (Christian Kreibich, Corelight)
+
+  * Add user mode to zkg (Christian Kreibich, Corelight)
+
+    The --user flag forces zkg to manage state, including scripts and
+    plugin directories, in ~/.zkg. --user is mutually exclusive to
+    --configfile, and also overrides any ZKG_CONFIG_FILE environment
+    variable.
+
+    The flag exists for all commands, so you can also use e.g. autoconfig
+    to write out a config file with those settings. As before, "zkg env"
+    reports the environment variables required for operating Zeek with
+    these settings.
+
+  * Avoid reporting repeated paths in "zkg env" (Christian Kreibich, Corelight)
+
+2.6.1 | 2021-01-06 21:35:39 -0800
+
+  * Release 2.6.1.
+
+2.6.0-8 | 2021-01-06 21:33:22 -0800
+
+  * Remove unneeded Python module imports (Jon Siwek, Corelight)
+
+  * Remove excess argument to a string format() (Jon Siwek, Corelight)
+
+  * Remove an unreachable return statement (Jon Siwek, Corelight)
+
+2.6.0-5 | 2021-01-06 21:02:09 -0800
+
+  * Fix missing argument to a function in dependency analysis logic (Jon Siwek, Corelight)
+
+2.6.0-4 | 2021-01-06 20:52:13 -0800
+
+  * When installed as a subproject of Zeek, automatically add its bin/ to PATH (Christian Kreibich, Corelight)
+
+    This helps package installations succeed that require executables from
+    that directory, such as zeek-config.
+
+2.6.0 | 2020-12-12 21:20:21 -0800
+
+  * Release 2.6.0.
+
+2.5.0-12 | 2020-12-12 21:18:34 -0800
+
+  * Update quickstart docs to note zkg comes installed with Zeek 4.0.0+ (Jon Siwek, Corelight)
+
+  * Install zkg.1 man page as part of CMake builds (Jon Siwek, Corelight)
+
+2.5.0-10 | 2020-12-12 20:21:32 -0800
+
+  * Support cmake-driven installation of zkg when bundled with Zeek (Christian Kreibich, Corelight)
+
+    This adds cmake-level templating of the toplevel zkg script to substitute
+    paths that let zkg find its own module. When installing independently,
+    this mechanism has no effect, since the zeekpkg module continues to be
+    found via usual PYTHONPATH mechanisms.
+
+    The templating also lets us adjust the default location of the config
+    and state directories, since in Zeek-bundled installs they are
+    separate.
+
+2.5.0-8 | 2020-12-10 15:25:50 -0800
+
+  * Add explanatory error message to zkg for failed imports of dependencies (Jon Siwek, Corelight)
+
+    If the external gitpython or semantic-version dependencies aren't
+    available when running `zkg`, it now shows an error messages to explain
+    what's required and an example of how to install them.
+
+2.5.0-7 | 2020-12-07 17:19:11 -0800
+
+  * Replace remaining use of Thread.isAlive with Thread.is_alive (Christian Kreibich, Corelight)
+
+    isAlive() has been deprecated for a while. Python 3.9 (Fedora 33's
+    default) no longer includes it, which broke the metadata-depends and
+    metadata-suggests tests.
+
+2.5.0-4 | 2020-12-04 12:43:42 -0800
+
+  * Remove deprecated bro-pkg script and bropkg module (Jon Siwek, Corelight)
+
+    The PyPI bro-pkg package will also no longer be kept in sync with zkg.
+
+  * Simplify configparser imports/usages (Jon Siwek, Corelight)
+
+  * Remove future print_function imports (Jon Siwek, Corelight)
+
+  * Remove configparser from requirements.txt (Jon Siwek, Corelight)
+
+2.5.0 | 2020-12-04 10:30:29 -0800
+
+  * Release 2.5.0.
+
+2.4.2-9 | 2020-12-04 10:28:22 -0800
+
+  * Extend test suite to cover a package with a "main" default branch (Jon Siwek, Corelight)
+
+    As opposed to historical default of "master" being the convention.
+
+  * GH-76: Detect default branch name of packages automatically (Jon Siwek, Corelight)
+
+    Rather than use the hardcoded 'master' branch as the conventional
+    default, zkg will now attempt to select a package's default branch as
+    follows:
+
+    If there is a remote named 'origin' and it has a HEAD reference,
+    whatever branch that points to is taken to be the default branch.
+
+    If there is not a remote named 'origin' or it does not have a HEAD,
+    then the default branch is selected in this order: 'main' if it exists,
+    'master' if it exists, the currently active branch (HEAD) if there is
+    one, else the commit hash of the current detached head.
+
+    Note that zkg still prioritized release version tags, like 'v1.0.0',
+    over branches and the default branch selection logic only applies
+    when no such release version tag exists.
+
+  * Make test cases resilient to non-master default git branch names (Jon Siwek, Corelight)
+
+2.4.2-5 | 2020-11-26 17:38:59 +0000
+
+  * Update pip invocations to use explicit `pip3` (Jon Siwek, Corelight)
+
+  * Remove Python compatibility logic for versions less than 3.5 (Jon Siwek, Corelight)
+
+  * Update Python invocations to use explicit `python3` (Jon Siwek, Corelight)
+
+  * Update documentation to reflect new minimum Python 3.5 requirement (Jon Siwek, Corelight)
+
+2.4.2 | 2020-11-10 15:18:54 -0800
+
+  * Release 2.4.2.
+
+2.4.1-5 | 2020-11-10 15:17:45 -0800
+
+  * Fix/improve dependency resolution failure messages (Jon Siwek, Corelight)
+
+    The no_best_version_string() function was incorrectly returning a tuple
+    instead of a string.
+
+  * GH-83: Fix branch-based dependency analysis for packages with no tags (Jon Siwek, Corelight)
+
+    Branch-based dependency analysis was incorrectly skipped for packages
+    that had no release version tags.
+
+  * GH-82: Enforce dependency requirements of already-installed packages (Jon Siwek, Corelight)
+
+    Treat as an error the installing a package that would break dependency
+    requirements of an already-installed package.
+
+2.4.1 | 2020-11-03 14:55:16 -0800
+
+  * Release 2.4.1.
+
+2.4.0-13 | 2020-11-03 14:52:09 -0800
+
+  * Improve "remove" operation to not unload already-unloaded dependencies (Jon Siwek, Corelight)
+
+  * Improve how "unload" operation manages dependencies (Jon Siwek, Corelight)
+
+    * Added a confirmation prompt for the "unload" operation
+      and a `--force` option to bypass it
+
+    * The confirmation prompt now lists all dependent packages that
+      will also be unloaded as part of the request
+
+  * Rename the "runtime dependency management" btest (Jon Siwek, Corelight)
+
+  * GH-78: Improve structure/output of "remove" operations (Jon Siwek, Corelight)
+
+    * Previously, the remove operation would indicate that all other
+      installed packages besides the one being removed were dependent
+      and needed to be unloaded.  No such action would ever happen, it
+      was just incorrect/extraneous output.
+
+    * Previously, a second "Proceed?" prompt would appear (as part of the
+      logic to ask if it's alright to unload dependers) even if there's
+      only a single, independent package being removed.
+
+    * With this change, the entire set of depender-packages is gathered
+      up front to display both packages-to-remove and packages-to-unload
+      within the a single "Proceed?" prompt.  This makes it clear what the
+      overall results of the remove operation will be right away rather than
+      prompt per package-to-remove asking just-in-time if it's ok to unload
+      dependers.  That is, easier for user to make a single decision at the
+      start rather than find out midway that something isn't to their liking
+      and abort then, possibly leaving things in an undesirable state that
+      still needs sorting out.
+
+      This is also helps streamline the final output of the resulting
+      unload/remove operations which was previously hard to parse since it
+      included redundant information about which were unloaded and also
+      unimportant errors like saying a package couldn't be unloaded at a
+      certain point because it was still in use by another package except
+      that other package was later scheduled to also be unloaded, making
+      that error moot.
+
+  * Fix various docstring typos/mistakes (Jon Siwek, Corelight)
+
+  * GH-79: fix dependency-aware (un)loading logic to ignore "reserved" names (Jon Siwek, Corelight)
+
+    Both `Manager.load_with_dependencies()` and
+    `Manger.unload_with_unused_dependers()` previously could find a package
+    depending on "zeek" (or "zkg") and consider that as the name of a
+    package to (un)load as part of the operation and fail since they're not
+    real packages that are installed.  Those operations now simply skip over
+    such reserved names when walking the dependency graph since there's
+    nothing to do for them.
+
+2.4.0-2 | 2020-11-02 13:38:01 -0800
+
+  * Remove superfluous "fetch" during git cloning (Jon Siwek, Corelight)
+
+    Fetching tags used to be necessary for shallow clones, but that now
+    happens implicitly since changing to use `git clone --no-single-branch`
+    (which is also needed for zkg's branch-based version tracking).
+
+    A secondary `git fetch` after doing a shallow clone also has negative
+    effect of causing errors on older git versions (e.g. v1.8.3.1, currently
+    found in CentOS 7) since they prohibit fetching from a shallow clone.
+
+2.4.0 | 2020-10-20 15:45:32 -0700
+
+  * Release 2.4.0.
+
+2.3.1-2 | 2020-10-20 14:26:32 -0700
+
+  * GH-74: handle `git checkout` failures during `zkg refresh --aggregate` (Jon Siwek, Corelight)
+
+    Previously, a checkout failure caused the entire aggregation process
+    to fail, now it will just skip the offending package and later emit
+    a warning that it could not collect its associated metadata.
+
+2.3.1-1 | 2020-10-20 13:37:16 -0700
+
+  * GH-75: show more warnings from `zkg refresh --aggregate` (Jon Siwek, Corelight)
+
+    Package metadata collection issues (e.g. missing metadata file) were not
+    previously surfaced (except when using `zkg -v` verbosity), but these
+    might always be interesting to know about for those performing the
+    aggregation themselves.
+
+2.3.1 | 2020-09-25 12:24:47 -0700
+
+  * Release 2.3.1.
+
+2.3.0-5 | 2020-09-25 12:22:22 -0700
+
+  * GH-70: When running tests, use any already installed dependencies (Robin Sommer, Corelight)
+
+    Rather than rebuilding them.
+
+  * Small tweak to -v to turn any count >= 3 into debug. (Robin Sommer, Corelight)
+
+  * Simplify installation thread "progress ticks" logic (Jon Siwek, Corelight)
+
+    And canonify the "runtime" test baseline to not depend on any particular
+    duration required to join() the installing-thread.
+
+2.3.0 | 2020-09-21 16:50:10 -0700
+
+  * Release 2.3.0.
+
+  * Add `package_base` as a pre-defined configuration key for value interpolation.
+
+    This enables a package to gain access to files from another package in
+    a well-defined manner. For example, if package `foo` wants to access
+    file `xyz.cfg` from package "bar", it can now declate `bar` as a
+    dependency and then use `%(package_base)s/bar/xyz.cfg` from its
+    `build_command`. (Robin Sommer, Corelight)
+
+2.2.1-2 | 2020-08-10 15:41:16 -0700
+
+  * Bump CI to use Zeek 3.2.0 (Jon Siwek, Corelight)
+
+2.2.1 | 2020-08-04 18:20:09 -0700
+
+  * Release 2.2.1.
+
+2.2.0-2 | 2020-08-04 17:56:08 -0700
+
+  * Improve zkg prompt for unloading of dependent packages (Jon Siwek, Corelight)
+
+  * Prevent a package that has no scripts from autoloading (Jon Siwek, Corelight)
+
+    If a package has no scripts, explicitly prevent it from being added to
+    the packages.zeek "autoloader" script since that won't ever work.
+
+2.2.0 | 2020-07-07 14:45:41 -0700
+
+  * Release 2.2.0.
+
+2.1.2-22 | 2020-07-07 14:44:57 -0700
+
+  * Fix Sphinx add_stylesheet deprecation (Jon Siwek, Corelight)
+
+  * Fix docstring for Manager.list_depender_pkgs() (Jon Siwek, Corelight)
+
+2.1.2-20 | 2020-07-07 14:30:45 -0700
+
+  * Add runtime dependency checks for zkg (Mohan Dhawan, Corelight)
+
+    The "load", "unload" and "remove" operations now all analyze package
+    dependencies and prompt to any load/unload additional packages as needed
+    to satisfy dependencies.
+
+2.1.2-2 | 2020-06-26 12:01:08 -0700
+
+  * Fix '"is" with a literal' warning in Python 3.8+ (Jon Siwek, Corelight)
+
+2.1.2-1 | 2020-06-04 11:53:04 -0700
+
+  * Update docs for name change of Zeek's aux/ dir (Jon Siwek, Corelight)
+
+2.1.2 | 2020-04-07 17:29:47 -0700
+
+  * Release 2.1.2.
+
+2.1.1-3 | 2020-04-07 17:28:27 -0700
+
+  * Introduce basic package name validation (Arne Welzel, Corelight)
+
+    Installing a package called 'packages' doesn't work because of
+    implementation details (and its not sensible anyway).
+
+    This patch adds some light validation of package names. Besides the
+    reserved names "packages" and "package", it also rejects package names
+    with fronting and trailing whitespace.
+
+2.1.1-1 | 2020-03-20 09:51:50 -0700
+
+  * GH-59: add note to quickstart doc about default pip user script dir (Jon Siwek, Corelight)
+
+2.1.1 | 2020-03-20 09:28:39 -0700
+
+  * Release 2.1.1.
+
+2.1.0-2 | 2020-03-20 09:26:02 -0700
+
+  * GH-60: Fixup urlparse() usage for Python 2 (Arne Welzel, Corelight)
+
+    (Support for end-of-life Python 2 is still planned to be removed shortly)
+
+2.1.0 | 2020-03-18 15:39:50 -0700
+
+  * Release 2.1.0.
+
+2.0.7-12 | 2020-03-18 15:37:52 -0700
+
+  * Add --extra-source command line parameter (Arne Welzel, Corelight)
+
+    Allow to specify sources without changing the config file. The current
+    approach allows overriding sources specified in the configuration file.
+
+    The option is added to the top-level parser, as a number of commands are
+    using the sources.
+
+  * Support `@` in source paths to denote branch/revision to use (Arne Welzel, Corelight)
+
+    Allow an `@` character in the path part of an URL to be used as a specifier
+    which branch/tag/commit to checkout. Shamelessly copied from `pip` where it
+    can be used to specify the revision of a dependency.
+
+  * Move git_checkout from manager to util (Arne Welzel, Corelight)
+
+  * Replace remove_trailing_slashes with rstrip('/') (Arne Welzel, Corelight)
+
+2.0.7-5 | 2020-03-16 15:53:08 -0700
+
+  * Add Cirrus CI config (Jon Siwek, Corelight)
+
+2.0.7-3 | 2020-02-24 10:12:39 -0800
+
+  * Add missing include header to plugin used for tests (Jon Siwek, Corelight)
+
+  * Do not expect SHELL in environment when running `zkg env` (Arne Welzel)
+
+2.0.7 | 2019-10-14 11:56:18 -0700
+
+  * Release 2.0.7.
+
+2.0.6-3 | 2019-10-14 11:53:46 -0700
+
+  * GH-55: Add fallback option to getting user_vars. (Vlad Grigorescu)
+
+    This generally fixes errors when installing packages that use "user_vars",
+    but the user's zkg config file doesn't have a corresponding key.  And that
+    can happen simply by (separately) installing multiple packages that each
+    use "user_vars".
+
+2.0.6 | 2019-09-20 13:06:48 -0700
+
+  * Release 2.0.6.
+
+2.0.5-2 | 2019-09-20 13:03:11 -0700
+
+  * GH-54: improve error message for package test failures (Jon Siwek, Corelight)
+
+  * Improve debug logging for test_command (Jon Siwek, Corelight)
+
+2.0.5 | 2019-09-18 16:16:21 -0700
+
+  * Release 2.0.5.
+
+2.0.4-1 | 2019-09-18 16:09:19 -0700
+
+  * Improve dependency handling (Jon Siwek, Corelight)
+
+    It now won't report unsatisfiable dependencies between two nodes in the
+    dependency graph that are already installed.  E.g. previously, if one
+    used the --nodeps flag to install package "foo" that had a failed
+    dependency on Zeek, then installing unrelated package "bar" without
+    --nodeps would emit an error about "foo" dependencies being
+    unsatisfiable even though that has no relation to the current operation.
+
+2.0.4 | 2019-08-28 15:50:13 -0700
+
+  * Release 2.0.4.
+
+2.0.3-2 | 2019-08-28 15:49:54 -0700
+
+  * Bugfix: incorrect arguments to Manager.has_plugin() (Christian Kreibich, Corelight)
+
+2.0.3 | 2019-08-26 14:18:12 -0700
+
+  * Release 2.0.3.
+
+2.0.2-2 | 2019-08-26 14:16:36 -0700
+
+  * When loading/unloading a Zeek package, also enable/disable any plugin (Christian Kreibich, Corelight)
+
+    This patch does this via renaming of the __bro_plugin__ magic file
+    that Zeek looks for when scanning ZEEK_PLUGIN_PATH. To disable a
+    plugin, zkg renames the file to __bro_plugin__.disabled, and renames
+    that file back to __bro_plugin__ when enabling.
+
+2.0.2 | 2019-07-17 10:46:14 -0700
+
+  * Release 2.0.2.
+
+2.0.1-2 | 2019-07-17 10:44:50 -0700
+
+  * Simplify how "current_hash" is determined for installed packages (Jon Siwek, Corelight)
+
+    For packages installed via version tag, this will also change the
+    meaning of "current_hash" from being the hexsha of the tag object itself
+    to the hexsha of the commit object pointed to by the tag.
+
+2.0.1 | 2019-07-09 10:37:20 -0700
+
+  * Release 2.0.1.
+
+2.0.0-1 | 2019-07-09 10:36:27 -0700
+
+  * Fix a broken link in docs (Jon Siwek, Corelight)
+
+2.0.0 | 2019-06-11 19:33:36 -0700
+
+  * Release 2.0.0.
+
+1.7.0-30 | 2019-06-11 19:33:13 -0700
+
+  * Fix version string replacement via update-changes (Jon Siwek, Corelight)
+
+1.7.0-29 | 2019-06-11 19:26:22 -0700
+
+  * Update packaging scripts (Jon Siwek, Corelight)
+
+    The new name on PyPi will be "zkg", but a duplicate package (with
+    the same version number) under the old "bro-pkg" name is still
+    built and uploaded along with it.
+
+  * Change name of "bro_dist" Manager ctor arg to "zeek_dist" (Jon Siwek, Corelight)
+
+    Note this is a breaking API change for those that were creating
+    Manager objects using "bro_dist" as a named parameter.
+
+  * Add manager.zeekpath and manager.zeek_plugin_path methods (Jon Siwek, Corelight)
+
+    Same as manager.bropath and manager.bro_plugin_path.
+
+  * Rename internal util functions that had "bro" in them (Jon Siwek, Corelight)
+
+  * Replace "Bro" with "Zeek" in all documentation (Jon Siwek, Corelight)
+
+  * Replace "bro" usages in unit tests (Jon Siwek, Corelight)
+
+  * Support zkg.index files within package sources (Jon Siwek, Corelight)
+
+    bro-pkg.index files, if they exist within a package source, are also
+    still accepted and treated in the same way as before.
+
+  * Allow "zeek" and "zkg" in the "depends" metadata field (Jon Siwek, Corelight)
+
+    These are equivalent to the "bro" and "bro-pkg" dependencies that
+    already existed.
+
+  * Add preference for zkg.meta over bro-pkg.meta files (Jon Siwek, Corelight)
+
+    The new, preferred package metadata file name is zkg.meta, but we'll
+    still accept a bro-pkg.meta if that's all that exists.
+
+  * Add zeek_dist config option (Jon Siwek, Corelight)
+
+    This is treated the same way "bro_dist" worked, which is also still
+    used as a fallback if no "zeek_dist" value is set.
+
+    Package metadata files also now allow either "%(bro_dist)s" or
+    "%(zeek_dist)s" substitutions.
+
+  * Rename example config file to zkg.config (Jon Siwek, Corelight)
+
+  * Change default package source name/url from bro to zeek (Jon Siwek, Corelight)
+
+  * Change default config and state dirs to ~/.zkg (Jon Siwek, Corelight)
+
+    The old, default ~/.bro-pkg will still be used if it already exists
+    so users will be able to keep their current configurations without
+    having to start over from scratch.
+
+  * Add support for using zeek-config script (Jon Siwek, Corelight)
+
+    With fallback to using bro-config if it exists.
+
+  * Support new Zeek environment variables (Jon Siwek, Corelight)
+
+    - ZEEKPATH (BROPATH still used as fallback)
+    - ZEEK_PLUGIN_PATH (BRO_PLUGIN_PATH still used as fallback)
+
+  * Rename bro-pkg man page to zkg (Jon Siwek, Corelight)
+
+  * Allow ZKG_CONFIG_FILE environment variable (Jon Siwek, Corelight)
+
+    Same functionality as the old BRO_PKG_CONFIG_FILE (which is still
+    used as a fallback).
+
+  * Rename internal env. var. used by setup.py (Jon Siwek, Corelight)
+
+  * Remove gh-pages Makefile target (Jon Siwek, Corelight)
+
+  * Add zeekpkg module (Jon Siwek, Corelight)
+
+    The old bropkg module now emits deprecation warnings.
+
+  * Add zkg executable file (Jon Siwek, Corelight)
+
+    The bro-pkg script still exists as a wrapper that prints a deprecation
+    warning by default.
+
+1.7.0-7 | 2019-05-03 19:59:57 -0700
+
+  * Improve test_command failure output (Jon Siwek, Corelight)
+
+1.7.0-6 | 2019-04-26 10:22:58 -0700
+
+  * Fix error when upgrading from older bro-pkg (Jon Siwek, Corelight)
+
+1.7.0-5 | 2019-04-25 18:20:58 -0700
+
+  * Fix unbundling packages that contain submodules (Jon Siwek, Corelight)
+
+  * Add more logging to unbundle process (Jon Siwek, Corelight)
+
+1.7.0-3 | 2019-04-16 11:42:43 -0700
+
+  * Support .zeek file extension for upcoming Zeek 3.0 release (Daniel Thayer)
+
+1.7.0 | 2019-04-12 09:27:36 -0700
+
+  * Release 1.7.0.
+
+1.6.0-1 | 2019-04-12 09:24:54 -0700
+
+  * Add support for packages containing git submodules (Jon Siwek, Corelight)
+
+1.6.0 | 2019-04-03 15:10:00 -0700
+
+  * Release 1.6.0.
+
+1.5.6-3 | 2019-04-03 15:09:23 -0700
+
+  * Include bro-pkg.meta file info in the "bro-pkg info" output. (Christian Kreibich, Corelight)
+
+  * Track the full bro-pkg.meta filename in package.PackageInfo. (Christian Kreibich, Corelight)
+
+1.5.6 | 2019-03-27 14:18:39 -0700
+
+  * Release 1.5.6.
+
+1.5.5-1 | 2019-03-27 14:16:40 -0700
+
+  * GH-47: give more bro-pkg commands a non-zero exit code on fail (Jon Siwek, Corelight)
+
+1.5.5 | 2019-03-27 13:53:59 -0700
+
+  * Release 1.5.5.
+
+1.5.4-2 | 2019-03-27 13:52:12 -0700
+
+  * GH-47: give `bro-pkg install` non-zero exit code on failure (Jon Siwek, Corelight)
+
+  * Update documentation regarding --bro-dist (Jon Siwek, Corelight)
+
+1.5.4 | 2019-03-21 20:17:31 -0700
+
+  * Release 1.5.4.
+
+1.5.3-1 | 2019-03-21 20:12:41 -0700
+
+  * GH-46: fix --version to be able to use commit hash (Jon Siwek, Corelight)
+
+1.5.3 | 2019-03-05 18:46:32 -0800
+
+  * Release 1.5.3.
+
+1.5.2-2 | 2019-03-05 18:43:19 -0800
+
+  * GH-45: improve compatibility with older git versions (Jon Siwek, Corelight)
+
+1.5.2-1 | 2019-02-13 17:26:48 -0800
+
+  * Use .bundle extension in bundle/unbundle docs per convention (Jon Siwek, Corelight)
+
+1.5.2 | 2019-01-11 13:18:51 -0600
+
+  * Release 1.5.2.
+
+1.5.1-5 | 2019-01-11 13:18:18 -0600
+
+  * Add docs for 'credits' metadata field (Jon Siwek, Corelight)
+
+1.5.1-4 | 2019-01-11 11:59:35 -0600
+
+  * Swap Zeek in for Bro in Sphinx config (Jon Siwek, Corelight)
+
+1.5.1-3 | 2019-01-10 17:59:09 -0600
+
+  * Fix RTD URL (Jon Siwek, Corelight)
+
+1.5.1-2 | 2019-01-10 17:18:58 -0600
+
+  * Update URLs and some simple s/Bro/Zeek in README (Jon Siwek, Corelight)
+
+1.5.1-1 | 2019-01-04 17:17:27 -0600
+
+  * GH-41: fix man page formatting of positional args (Jon Siwek, Corelight)
+
+1.5.1 | 2018-12-17 12:21:41 -0600
+
+  * Release 1.5.1.
+
+  * GH-40: improve `bro-pkg bundle --help` output (Jon Siwek, Corelight)
+
+1.5.0 | 2018-12-12 15:32:36 -0600
+
+  * Release 1.5.0.
+
+1.4.2-2 | 2018-12-12 15:31:47 -0600
+
+  * Add an 'aliases' package metadata field (Jon Siwek, Corelight)
+
+    This is used for specifying alternate package names that one may @load
+    it by, and may be generally useful when renaming package repositories
+    while still supporting existing package installations under the old name.
+
+  * Fix bro-pkg to be able to upgrade packages no longer in a source
+    (Jon Siwek, Corelight)
+
+1.4.2 | 2018-08-03 16:46:21 -0500
+
+  * Release 1.4.2.
+
+1.4.1-1 | 2018-08-03 16:44:45 -0500
+
+  * Fix SafeConfigParser deprecation warning (Jon Siwek, Corelight)
+
+1.4.1 | 2018-07-25 14:37:53 -0500
+
+  * Release 1.4.1.
+
+1.4.0-1 | 2018-07-25 14:36:23 -0500
+
+  * Improve error message for invalid bundle manifest files
+    (Jon Siwek, Corelight)
+
+1.4.0 | 2018-07-12 11:34:00 -0500
+
+  * Release 1.4.0.
+
+1.3.12-7 | 2018-07-12 11:31:14 -0500
+
+  * GH-35: allow category argument to `bro-pkg info` (Corelight)
+
+1.3.12-6 | 2018-07-12 10:40:13 -0500
+
+  * GH-34: exit non-zero from `bro-pkg info` on lookup failure (Corelight)
+
+1.3.12-5 | 2018-07-12 10:26:35 -0500
+
+  * Fix typos (Jon Zeolla)
+
+1.3.12-3 | 2018-07-12 10:15:57 -0500
+
+  * Refactor tracking method strings into variables (Corelight)
+
+  * Support installing packages via commit hash (Corelight)
+
+  * Stabilize a unit test (Corelight)
+
+1.3.12 | 2018-06-18 09:03:06 -0500
+
+  * Release 1.3.12.
+
+1.3.11-3 | 2018-06-18 09:02:39 -0500
+
+  * Improve default character encoding handling (Corelight)
+
+1.3.11-2 | 2018-06-18 08:22:17 -0500
+
+  * Fix --version for branch names containing a slash '/' (Michael Dopheide)
+
+1.3.11 | 2018-05-29 08:31:19 -0500
+
+  * Release 1.3.11.
+
+1.3.10-1 | 2018-05-29 08:29:54 -0500
+
+  * Fix invalid Package ctor syntax with Python 2 (Corelight)
+
+1.3.10 | 2018-05-25 14:57:09 -0500
+
+  * Release 1.3.10.
+
+1.3.9-1 | 2018-05-25 14:52:08 -0500
+
+  * Improve package info canonicalization (Corelight)
+
+1.3.9 | 2018-05-24 16:48:19 -0500
+
+  * Fix for packages storing a relative path as their git URL (Corelight)
+
+1.3.8-1 | 2018-05-23 16:00:10 -0500
+
+  * Fix typo in README (Corelight)
+
+1.3.8 | 2018-05-10 10:42:00 -0500
+
+  * Release 1.3.8.
+
+1.3.7-1 | 2018-05-10 10:39:18 -0500
+
+  * GH-32: support version tags prefixed by 'v' (e.g. vX.Y.Z) (Corelight)
+
+1.3.7 | 2018-05-05 08:10:54 -0500
+
+  * Release 1.3.7.
+
+1.3.6-1 | 2018-05-05 08:09:45 -0500
+
+  * GH-31: Improve error message when failing to find a usable git repo
+    (Corelight)
+
+1.3.6 | 2018-04-25 09:56:45 -0500
+
+  * Release 1.3.6.
+
+1.3.5-1 | 2018-04-25 09:56:07 -0500
+
+  * GH-30: ignore interpolation errors during metadata aggregation (Corelight)
+
+1.3.5 | 2018-03-28 14:13:29 -0500
+
+  * Release 1.3.5.
+
+1.3.4-1 | 2018-03-28 14:12:38 -0500
+
+  * GH-29: Move requirements.doc.txt to generalized requirements.txt
+    (Corelight)
+
+1.3.4 | 2018-03-05 09:53:23 -0600
+
+  * Release 1.3.4.
+
+1.3.3-2 | 2018-03-05 09:52:56 -0600
+
+  * Fix building docs on Sphinx 1.7+ (Corelight)
+
+1.3.3-1 | 2018-03-05 09:31:45 -0600
+
+  * Fix running install/test/bundle commands on detached git clones (Corelight)
+
+1.3.3 | 2018-02-15 11:04:09 -0600
+
+  * Release 1.3.3.
+
+1.3.2-1 | 2018-02-15 11:02:20 -0600
+
+  * GH-26: fix error when config_file is not in script_dir or plugin_dir
+    (Corelight)
+
+1.3.2 | 2018-02-01 17:38:15 -0600
+
+  * Release 1.3.2.
+
+1.3.1-5 | 2018-02-01 17:37:34 -0600
+
+  * Improve logging stream levels for a couple log messages (Corelight)
+
+  * Change default confirmation prompt answer to 'no' on test failures
+    (Corelight)
+
+1.3.1-3 | 2018-02-01 17:17:54 -0600
+
+  * Minor doc improvements (Corelight)
+
+1.3.1-2 | 2018-02-01 16:13:25 -0600
+
+  * Teach bro-pkg to emit an error when operating on dirty git clones
+
+    When trying to use the install, test, or bundle commands on local git
+    clones that have modifications or untracked files, bro-pkg now aborts
+    with an error message.  This is to help catch situations where one
+    thinks their uncommitted local changes will be installed by bro-pkg, but
+    actually will not be unless they are committed in the git repo. (Corelight)
+
+1.3.1-1 | 2018-02-01 15:43:19 -0600
+
+  * Fix install command to be able to re-install an existing package
+
+    Before, using 'install' on a previously-installed package would not
+    correctly update the cached git repository so if there were any changes
+    since the last installation they would not be seen after the operation
+    completed. (Corelight)
+
+1.3.1 | 2017-12-07 19:33:23 -0600
+
+  * Release 1.3.1.
+
+1.3-1 | 2017-12-07 19:29:35 -0600
+
+  * GH-22: fix 'suggests' field in json output to use key-value pairs
+    (Corelight)
+
+1.3 | 2017-11-28 19:34:15 -0600
+
+  * Release 1.3.
+
+1.2.6-2 | 2017-11-28 19:29:38 -0600
+
+  * GH-22: add a 'suggests' metadata field
+
+    This new field can be used in the same way as 'depends', but is used for
+    packages that are merely complementary and not strictly required for the
+    suggesting package to function.
+
+    A "(suggested)" indicator for install, bundle, and upgrade commands will
+    now appear during their bro-pkg confirmation prompts.  These commands
+    also now have a --nosuggestions flag to ignore all suggested packages.
+
+    This changes the bropkg.manager.validate_dependencies() API to return
+    an additional boolean indicating whether a package was included in the
+    list as a result of suggestions. (Corelight)
+
+1.2.6-1 | 2017-11-27 09:46:02 -0600
+
+  * GH-24: improve script_dir metadata field documentation (Corelight)
+
+1.2.6 | 2017-11-23 15:27:46 -0600
+
+  * Release 1.2.6.
+
+1.2.5-1 | 2017-11-23 15:27:12 -0600
+
+  * GH-23: more "Edit on GitHub" breadcrumb customization. (Corelight)
+
+1.2.5 | 2017-11-23 14:42:33 -0600
+
+  * Release 1.2.5.
+
+1.2.4-1 | 2017-11-23 14:41:09 -0600
+
+  * GH-23: one more "Edit on GitHub" link fix attempt. (Corelight)
+
+1.2.4 | 2017-11-23 13:57:00 -0600
+
+  * Release 1.2.4.
+
+1.2.3-1 | 2017-11-23 13:54:11 -0600
+
+  * GH-23: another attempt to remove "Edit on GitHub" link. (Corelight)
+
+1.2.3 | 2017-11-23 13:29:07 -0600
+
+  * Release 1.2.3.
+
+1.2.2-2 | 2017-11-23 13:28:15 -0600
+
+  * GH-23: remove broken "Edit on GitHub" link from stable version of docs.
+    (Corelight)
+
+1.2.2-1 | 2017-11-23 13:27:06 -0600
+
+  * Add a missing dependency for building docs. (Corelight)
+
+1.2.2 | 2017-10-16 16:14:02 -0500
+
+  * Release 1.2.2.
+
+1.2.1-1 | 2017-10-16 16:11:37 -0500
+
+  * GH-21: again trying to give aggregate metadata consistent ordering
+    (Jon Siwek)
+
+1.2.1 | 2017-10-11 15:03:56 -0500
+
+  * Release 1.2.1.
+
+1.2-1 | 2017-10-11 15:02:21 -0500
+
+  * Fix building PyPI distribution from Python 3+
+
+    It should now still include the configparser backport dependency.
+    (Jon Siwek)
+
+1.2 | 2017-09-29 13:15:37 -0500
+
+  * Release 1.2.
+
+1.1-1 | 2017-09-29 13:15:00 -0500
+
+  * BIT-1852: allow 'bro-pkg' as a 'depends' field value
+
+    This allows packages to depend on new features of bro-pkg not available
+    in previous version. (Jon Siwek)
+
+1.1 | 2017-09-28 18:46:30 -0500
+
+  * Release 1.1.
+
+1.0.4-32 | 2017-09-28 18:45:54 -0500
+
+  * BIT-1852: allow plugin_dir to also accept tarfiles
+
+    This allows packagers to specify a tarfile containing the Bro plugin
+    instead of a directory.  May be useful as the default Bro plugin
+    CMake skeleton will end up producing a tarfile as part of the plugin
+    build process that contains the minimal set of files comprising the
+    plugin. (Jon Siwek)
+
+1.0.4-31 | 2017-09-28 16:16:39 -0500
+
+  * GH-9: add new 'user_vars' bro-pkg.meta field and config file section
+
+    This field allows for packages to solicit users for extra configuration
+    settings which may then be referenced in that package's build_command.
+    Useful for asking users for installation paths of external dependencies,
+    which may differ between users/systems. (Jon Siwek)
+
+1.0.4-30 | 2017-09-27 11:14:52 -0500
+
+  * GH-9: show 'external_depends' metadata during 'unbundle' command (Jon Siwek)
+
+  * Add manager.bundle_info() to API.
+
+    It retrieves information on all packages in a bundle without installing
+    the bundle. (Jon Siwek)
+
+1.0.4-28 | 2017-09-27 10:14:16 -0500
+
+  * Remove an error msg when upgrading packages that have no test_command
+    (Jon Siwek)
+
+1.0.4-27 | 2017-09-26 13:27:53 -0500
+
+  * GH-9: allow 'external_depends' field in bro-pkg.meta.
+
+    The contents of this field get displayed to users in the install
+    and upgrade commands to indicate extra pre-requisite software their
+    OS should have installed. (Jon Siwek)
+
+1.0.4-26 | 2017-09-26 11:41:37 -0500
+
+  * Put install's "unit test skipped" msg into log stream instead of stdout.
+    (Jon Siwek)
+
+1.0.4-25 | 2017-09-22 12:26:56 -0500
+
+  * GH-15: add --nodeps to install, bundle, and upgrade commands
+
+    This option allows to bypasses dependency resolution/checking,
+    accepting risk of causing broken/unusable package state. (Jon Siwek)
+
+1.0.4-24 | 2017-09-20 13:11:48 -0500
+
+  * Code formatting. (Jon Siwek)
+
+1.0.4-23 | 2017-09-20 13:07:57 -0500
+
+  * Add '--allvers' option to output metadata for ALL versions when
+    outputting JSON. (Terry Fleury)
+
+  * Add JSON output as option to 'info' command. (Terry Fleury)
+
+1.0.4-18 | 2017-09-20 12:52:17 -0500
+
+  * Add 'info' option to force read metadata from remote GitHub. (Terry Fleury)
+
+1.0.4-16 | 2017-09-20 12:39:21 -0500
+
+  * Version numbers should be sorted naturally, e.g., 1.10.0 is newer
+    than 1.9.0. (Justin Azoff, Terry Fleury)
+
+1.0.4-14 | 2017-09-20 12:31:59 -0500
+
+  * Add option for 'list' command '--nodesc' to suppress description output.
+    (Terry Fleury)
+
+1.0.4-12 | 2017-09-16 13:36:53 -0500
+
+  * GH-13: emit an error when a package uses a malformed 'depends' field
+    (Jon Siwek)
+
+1.0.4-11 | 2017-09-16 12:44:50 -0500
+
+  * Fix a typo in an error message. (Jon Siwek)
+
+1.0.4-10 | 2017-09-15 13:04:46 -0500
+
+  * GH-12: use active branch as package version for local git repos (Jon Siwek)
+
+1.0.4-9 | 2017-09-15 11:47:09 -0500
+
+  * GH-10: add a cross-reference for metadata value interpolation in docs
+    (Jon Siwek)
+
+1.0.4-8 | 2017-09-15 11:39:24 -0500
+
+  * GH-10: improve docs regarding metadata value interpolation (Jon Siwek)
+
+1.0.4-6 | 2017-09-14 19:52:21 -0500
+
+  * Minor quickstart doc simplification. (Jon Siwek)
+
+1.0.4-5 | 2017-09-14 18:56:16 -0500
+
+  * Require extra configparser package only for Python < 3.5 
+    where it is not included (Hilko Bengen)
+
+  * Fix imports for python3 (Robert Haist)
+
+1.0.4-2 | 2017-09-14 15:05:36 -0500
+
+  * Add a docutils config file to prevent sphinx/smartypants "smart quotes"
+
+    Without it, later versions of sphinx are turning quote characters into
+    smart/curly quotes which breaks the generated man page. (Jon Siwek)
+
+1.0.4-1 | 2017-09-14 15:03:04 -0500
+
+  * Quickstart doc improvements, add missing links to dependencies (Jon Siwek)
+
+1.0.4 | 2017-07-18 11:41:56 -0500
+
+  * Release 1.0.4.
+
+1.0.3-1 | 2017-07-18 11:39:38 -0500
+
+  * Give aggregate metadata file a consistent ordering
+
+    Addresses https://github.com/bro/package-manager/issues/6 (Jon Siwek)
+
+1.0.3 | 2017-06-23 10:17:26 -0500
+
+  * Release 1.0.3.
+
+1.0.2-3 | 2017-06-23 10:15:41 -0500
+
+  * Install command now doesn't warn/prompt when package has no test_command.
+    (Jon Siwek)
+
+  * Fix a unit test. (Jon Siwek)
+
+  * Improve usage documentation: add offline usage example. (Jon Siwek)
+
+1.0.2 | 2017-06-07 22:11:20 -0500
+
+  * Release 1.0.2.
+
+1.0.1-1 | 2017-06-07 22:04:55 -0500
+
+  * Improve confirmation prompt behavior.
+
+    Just pressing enter defaults to "yes" and anything besides y/ye/yes
+    (case insensitive) is treated as "no" and aborts.
+
+    Addresses https://github.com/bro/package-manager/issues/5 (Jon Siwek)
+
+1.0.1 | 2017-06-05 09:54:59 -0500
+
+  * Release 1.0.1.
+
+1.0-3 | 2017-06-05 09:54:31 -0500
+
+  * Improved handling of packages without scripts.
+
+    The 'load' and 'unload' commands now return more precise messages if
+    used for packages without scripts. (Jan Grashoefer)
+
+1.0-1 | 2017-02-06 21:02:31 -0600
+
+  * Return a proper "bro-config not found" message when running tests.
+    (Jon Siwek)
+
+1.0 | 2017-01-24 19:53:49 -0600
+
+  * Release 1.0.
+
+0.9-24 | 2017-01-24 19:53:27 -0600
+
+  * Simply directions for uploading to PyPi. (Jon Siwek)
+
+0.9-23 | 2017-01-24 19:41:22 -0600
+
+  * Add dependency on btest. (Jon Siwek)
+
+0.9-22 | 2017-01-24 18:09:28 -0600
+
+  * Change manager.validate_dependencies API (Jon Siwek)
+
+0.9-21 | 2017-01-21 12:40:09 -0600
+
+  * Doc fixes. (Jon Siwek)
+
+0.9-20 | 2017-01-21 12:29:48 -0600
+
+  * Run package tests before install/upgrade. (Jon Siwek)
+
+  * Add 'test' command and 'test_command' metadata field. (Jon Siwek)
+
+0.9-16 | 2017-01-13 18:50:52 -0600
+
+  * Fix non-deterministic order of {installed,loaded}_packages() (Jon Siwek)
+
+  * Add unit tests. (Jon Siwek)
+
+  * Fix bundle/unbundle --help output. (Jon Siwek)
+
+  * Don't copy a package's .git or bro-pkg.meta when installing them.
+    (Jon Siwek)
+
+0.9-8 | 2017-01-12 10:23:26 -0600
+
+  * Add 'depends' bro-pkg.meta field. (Jon Siwek)
+
+  * Teach install/upgrade/bundle commands to operate on package dependencies.
+
+    These commands now construct a dependency graph based on the packages
+    the user has requested plus any already-installed packages and then
+    validates the graph to make sure there are no dependency conflicts.
+
+    If there are no conflicts, then the set of requested packages get
+    installed/bundled along with any additional packages that were required
+    to satisfy dependencies.  For those additional packages, bro-pkg always
+    tries to pick the latest release version that satisfies all dependency
+    specifications. (Jon Siwek)
+
+0.9-2 | 2017-01-09 11:16:43 -0600
+
+  * Improve 'info' output for packages w/ empty metadata files. (Jon Siwek)
+
+0.9-1 | 2016-12-09 11:52:23 -0600
+
+  * Fix doc typo. (Jon Siwek)
+
+0.9 | 2016-12-08 21:19:02 -0600
+
+  * Release 0.9.
+
+0.8-6 | 2016-12-08 21:15:06 -0600
+
+  * Fix tracking package versions/changes via branches.
+
+    A previous change to use shallow git clones broke the tracking of
+    package versioning via git branches. (Jon Siwek)
+
+0.8-5 | 2016-12-08 20:04:53 -0600
+
+  * Fix bundle/unbundle automatic lower-casing of urls in bundle manifest
+    (Jon Siwek)
+
+0.8-4 | 2016-12-08 19:50:49 -0600
+
+  * Add new bro-pkg.meta field: config_files
+
+    This allows package authors to specify a list of files that users may
+    directly modify.  The upgrade, remove, install, and bundle operations
+    all work in a way that attempts to either preserve a user's local
+    changes or save a backup of their version. (Jon Siwek)
+
+0.8-3 | 2016-12-07 22:54:49 -0600
+
+  * BIT-1768: improve handling of packages that have no Bro scripts (Jon Siwek)
+
+0.8-2 | 2016-12-07 20:46:44 -0600
+
+  * BIT-1766: add tags() and short_description() to PackageInfo API (Jon Siwek)
+
+0.8-1 | 2016-12-07 20:09:58 -0600
+
+  * BIT-1767: improve handling of non-ascii character encoding (Jon Siwek)
+
+0.8 | 2016-11-29 11:21:29 -0600
+
+  * Release 0.8.
+
+0.7-19 | 2016-11-29 11:19:17 -0600
+  * Improve output of info command and allow offline usage. (Jon Siwek)
+
+  * Update documentation related to metadata aggregation. (Jon Siwek)
+
+  * Metadata aggregation changes:
+
+    - bro-pkg.index is now expected to be a simple list of package urls
+
+    - add --aggregate flag to refresh command that will crawl packages and
+      aggregate their metadata into an aggregate.meta file within local
+      package source clones
+
+    - add --sources flag to refresh command to explicitly specify operation
+      on a specific set of package sources
+
+    - add --push flag to refresh command to push local package source
+      aggregate.meta changes to the remote repo (Jon Siwek)
+
+0.7-10 | 2016-11-21 18:04:08 -0600
+
+  * Package versioning doc improvements. (Jon Siwek)
+
+0.7-9 | 2016-11-21 12:15:14 -0600
+
+  * Update docs regarding package versioning. (Jon Siwek)
+
+0.7-8 | 2016-10-21 10:13:16 -0500
+
+  * Using shutil.move instead of os.rename, which works across file systems.
+    (Robin Sommer)
+
+0.7-6 | 2016-10-11 18:54:50 -0500
+
+  * BIT-1725: allow bundling on offline machines
+
+    When requesting to bundle the set of installed packages, they
+    are directly copied into the bundle instead of trying to clone
+    from the remote git repo. (Jon Siwek)
+
+0.7-5 | 2016-10-04 14:05:50 -0500
+
+  * BIT-1713: in python3, show usage info when bro-pkg is given no args
+    (Jon siwek)
+
+0.7-4 | 2016-10-03 18:20:57 -0500
+
+  * BIT-1716: do shallow git clones of packages to use less space (Jon Siwek)
+
+0.7-3 | 2016-10-03 17:08:31 -0500
+
+  * BIT-1715: improve message when failing to clone a package source
+
+    And make that situation a warning instead of a fatal error. (Jon Siwek)
+
+0.7-2 | 2016-10-03 16:49:24 -0500
+
+  * Allow empty values for paths in config file. (Jon Siwek)
+
+0.7-1 | 2016-10-03 15:55:00 -0500
+
+  * BIT-1714: expand '~' and env. vars in config file values.
+
+    And reject relative paths in [paths] section. (Jon Siwek)
+
+0.7 | 2016-09-29 15:26:14 -0500
+
+  * Release 0.7.
+
+0.6-14 | 2016-09-29 15:25:44 -0500
+
+  * Improve output of 'info' command. (Jon Siwek)
+
+0.6-13 | 2016-09-29 14:59:31 -0500
+
+  * Tweak output of bundle/unbundle. (Jon Siwek)
+
+0.6-12 | 2016-09-29 14:43:11 -0500
+
+  * Python 3 compatibility fixes. (Jon Siwek)
+
+0.6-11 | 2016-09-28 18:11:44 -0500
+
+  * Add 'bundle' and 'unbundle' commands. (Jon Siwek)
+
+0.6-10 | 2016-09-27 13:56:08 -0500
+
+  * Fix potential race condition in package installation. (Jon Siwek)
+
+0.6-9 | 2016-09-26 15:31:50 -0500
+
+  * Improve formatting of package short descriptions. (Jon Siwek)
+
+0.6-8 | 2016-09-26 15:15:18 -0500
+
+  * BIT-1699: improve package validation and format of output. (Jon Siwek)
+
+0.6-7 | 2016-09-26 13:40:26 -0500
+
+  * Add a 'purge' command that removes all installed packages. (Jon Siwek)
+
+0.6-6 | 2016-09-21 12:59:01 -0500
+
+  * BIT-1699: Add --force flag for install/remove/upgrade. (Jon Siwek)
+
+0.6-5 | 2016-09-21 12:22:18 -0500
+
+  * BIT-1699: Add confirmation prompts for install/upgrade/remove.
+
+    Removed the --all flag for upgrade command. (Jon Siwek)
+
+0.6-4 | 2016-09-21 10:47:53 -0500
+
+  * BIT-1697: Improve output format of list/search. (Jon Siwek)
+
+0.6-3 | 2016-09-19 13:29:27 -0500
+
+  * BIT-1698: autoconfig command now directly writes to config file.
+    (Jon Siwek)
+
+0.6-2 | 2016-09-19 12:09:52 -0500
+
+  * BIT-1697: Add description field to list/search output. (Jon Siwek)
+
+0.6-1 | 2016-09-19 10:52:51 -0500
+
+  * BIT-1701: Improve error message when 'install' can't create symlink.
+    (Jon Siwek)
+
+0.6 | 2016-09-14 15:16:30 -0500
+
+  * Release 0.6.
+
+0.5-2 | 2016-09-14 15:15:50 -0500
+
+  * Improve docs for script_dir/plugin_dir config file options. (Jon Siwek)
+
+0.5-1 | 2016-09-14 15:09:12 -0500
+
+  * Improve automatic relocation of script_dir.  (Jon Siwek)
+
+0.5 | 2016-09-05 15:03:14 -0500
+
+  * Release 0.5.
+
+0.4-2 | 2016-09-05 15:01:38 -0500
+
+  * Improve error message for insufficient permissions (Jon Siwek)
+
+0.4-1 | 2016-09-05 14:09:55 -0500
+
+  * Improve output of 'info' command. (Jon Siwek)
+
+0.4 | 2016-08-16 16:55:48 -0500
+
+  * Release 0.4.
+
+0.3-4 | 2016-08-16 16:55:20 -0500
+
+  * Docs: add 'autoconfig' command (Jon Siwek)
+
+0.3-3 | 2016-08-16 16:10:21 -0500
+
+  * Add 'autoconfig' command, remove 'bro_exe' option.
+
+    bro-pkg can now use bro-config to automatically determine paths.
+    (Jon Siwek)
+
+0.3-2 | 2016-08-15 13:32:18 -0500
+
+  * Docs: clarifications (Jon Siwek)
+
+0.3-1 | 2016-08-12 16:20:30 -0500
+
+  * Docs: add bro.org link in README (Jon Siwek)
+
+0.3 | 2016-08-12 15:54:18 -0500
+
+  * Release 0.3.
+
+0.2-47 | 2016-08-12 15:53:13 -0500
+
+  * Docs: add versioning/release guide for developers (Jon Siwek)
+
+0.2-46 | 2016-08-11 19:45:21 -0500
+
+  * setup.py packaging improvements (Jon Siwek)
+
+0.2-45 | 2016-08-11 14:35:06 -0500
+
+  * Docs: fix sphinx-argparse 'nosubcommands' option (Jon Siwek)
+
+0.2-44 | 2016-08-11 14:16:22 -0500
+
+  * Docs: adjust admonitions in README (Jon Siwek)
+
+0.2-43 | 2016-08-11 14:09:44 -0500
+
+  * Docs: organize external links (Jon Siwek)
+
+0.2-42 | 2016-08-10 19:58:15 -0500
+
+  * Fix `list all` to show installed packages that don't come from a source
+    (Jon Siwek)
+
+0.2-41 | 2016-08-10 19:35:53 -0500
+
+  * Docs: add package creation walkthroughs (Jon Siwek)
+
+  * Don't load packages unless they have a __load__.bro (Jon Siwek)
+
+  * Improve handling of relative paths in package urls (Jon Siwek)
+
+0.2-38 | 2016-08-10 14:29:30 -0500
+
+  * Teach search command to inspect package index tags (Jon Siwek)
+
+0.2-37 | 2016-08-09 18:55:30 -0500
+
+  * Delay printing installation activity ticks. (Jon Siwek)
+
+0.2-36 | 2016-08-09 18:41:54 -0500
+
+  * Change package sources to use index files instead of git submodules.
+    (Jon Siwek)
+
+0.2-35 | 2016-08-09 13:54:46 -0500
+
+  * Install packages in a thread.
+
+    So it doesn't look like bro-pkg is hanging when installing a package
+    that has to be built. (Jon Siwek)
+
+0.2-34 | 2016-08-09 13:06:24 -0500
+
+  * Using ``install --version`` now also pins the package. (Jon Siwek)
+
+0.2-33 | 2016-08-08 16:19:59 -0500
+
+  * info command can now take a --version flag. (Jon Siwek)
+
+0.2-32 | 2016-08-08 15:16:54 -0500
+
+  * Fix install command to use the right version of bro-pkg.meta. (Jon Siwek)
+
+0.2-31 | 2016-08-08 12:47:02 -0500
+
+  * Change config/metadata file option names. (Jon Siwek)
+
+    bro-pkg.meta:
+        scriptpath -> script_dir
+        pluginpath -> plugin_dir
+        buildcmd   -> build_command
+
+    bro-pkg config file:
+        statedir  -> state_dir
+        scriptdir -> script_dir
+        plugindir -> plugin_dir
+
+0.2-30 | 2016-08-07 13:45:00 -0500
+
+  * Rename pkg.meta to bro-pkg.meta. (Jon Siwek)
+
+0.2-29 | 2016-08-07 13:08:00 -0500
+
+  * upgrade command: require --all when omitting package list. (Jon Siwek)
+
+0.2-28 | 2016-08-07 12:51:20 -0500
+
+  * Docs: adjust bro-pkg --help output. (Jon Siwek)
+
+0.2-27 | 2016-08-07 12:35:40 -0500
+
+  * Add warnings to not directly modify certain files/dirs. (Jon Siwek)
+
+0.2-26 | 2016-08-07 12:05:40 -0500
+
+  * Docs: show actual version in sidebar. (Jon Siwek)
+
+0.2-25 | 2016-08-06 15:08:12 -0500
+
+  * Docs: don't restrict argparse-generated table widths. (Jon Siwek)
+
+  * Docs: misc. style fixes and clarifications. (Jon Siwek)
+
+  * Docs: switch theme (again) to Read the Docs theme.
+
+0.2-22 | 2016-08-06 13:12:26 -0500
+
+  * Docs: clarifications, organization, style. (Jon Siwek)
+
+0.2-21 | 2016-08-05 13:41:47 -0500
+
+  * Docs: change theme. (Jon Siwek)
+
+  * Docs: GitPython and semantic_version build requirements (Jon Siwek)
+
+0.2-19 | 2016-08-04 13:25:48 -0500
+
+  * Docs: add requirements file (Jon Siwek)
+
+0.2-18 | 2016-08-03 16:10:18 -0500
+
+  * Docs: fix Sphinx argparse extension to check for outdated modules.
+
+    Sphinx itself should now always be able to determine whether the
+    command-line bro-pkg documentation needs to be rebuilt. (Jon Siwek)
+
+0.2-17 | 2016-08-02 14:46:16 -0500
+
+  * Docs: rebuild docs on version string change. (Jon Siwek)
+
+0.2-16 | 2016-08-02 14:34:49 -0500
+
+  * Docs: give each bro-pkg command its own section (Jon Siwek)
+
+0.2-15 | 2016-08-01 14:34:06 -0500
+
+  * Documentation organization/layout/theming. (Jon Siwek)
+
+0.2-14 | 2016-07-24 14:55:28 -0500
+
+  * Clarification to installation doc. (Jon Siwek)
+
+0.2-13 | 2016-07-24 12:18:40 -0500
+
+  * Add a 'gh-pages' Makefile target. (Jon Siwek)
+
+  * Add .nojekyll file to built sphinx docs. (Jon Siwek)
+
+0.2-11 | 2016-07-23 15:32:24 -0500
+
+  * Add installation/setup docs. (Jon Siwek)
+
+0.2-10 | 2016-07-23 14:19:09 -0500
+
+  * Add a prebuilt man page. (Jon Siwek)
+
+0.2-9 | 2016-07-22 15:07:57 -0500
+
+  * Change bro-pkg to not require a config file and add setup.py. (Jon Siwek)
+
+0.2-8 | 2016-07-21 12:14:53 -0500
+
+  * Improve speed of checking for changed remote package sources. (Jon Siwek)
+
+  * Improve how 'info' command locates packages. (Jon Siwek)
+
+  * Emit an error when package has non-existant 'scriptpath'. (Jon Siwek)
+
+  * Documentation clarifications. (Jon Siwek)
+
+0.2-4 | 2016-07-21 09:49:15 -0500
+
+  * Make output of 'info' command have a stable order. (Jon Siwek)
+
+0.2-3 | 2016-07-21 09:44:42 -0500
+
+  * Python3 compatibility fixes. (Jon Siwek)
+
+0.2-2 | 2016-07-20 14:35:38 -0500
+
+  * Documentation and other clean up.
+
+    Sphinx is used docs: manual, api reference, man page. (Jon Siwek)
+
+0.2-1 | 2016-07-14 12:26:56 -0500
+
+  * Fix a mistake in --help output. (Jon Siwek)
+
+0.2 | 2016-07-14 10:51:11 -0500
+
+  * Release 0.2.

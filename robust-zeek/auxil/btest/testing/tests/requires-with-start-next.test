@@ -1,0 +1,18 @@
+# %TEST-EXEC: btest t1 t2 >output 2>&1
+# %TEST-EXEC: btest-diff output
+#
+# %TEST-DOC: Check that TEST-REQUIRES is applied to tests replicated with TEST-START-NEXT
+
+# We expect two succeeding test for t1.
+%TEST-START-FILE t1
+@TEST-REQUIRES: exit 0
+@TEST-EXEC: echo 0
+@TEST-START-NEXT
+%TEST-END-FILE
+
+# We expect two skipped tests for t2.:w
+%TEST-START-FILE t2
+@TEST-REQUIRES: exit 1
+@TEST-EXEC: echo 0
+@TEST-START-NEXT
+%TEST-END-FILE

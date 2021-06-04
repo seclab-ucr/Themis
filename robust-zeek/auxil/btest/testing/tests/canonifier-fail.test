@@ -1,0 +1,17 @@
+# Verify that btest-diff returns nonzero when a canonifier returns nonzero for
+# any reason, even if the canonified result matches the baseline.
+# %TEST-EXEC: chmod +x test-canonifier
+# %TEST-EXEC: btest -d %INPUT
+
+%TEST-START-FILE Baseline/canonifier-fail/output
+ABC 123 DEF
+%TEST-END-FILE
+
+%TEST-START-FILE test-canonifier
+awk 'NF == 3 { print $1,"XXX",$3; if($2 == "000") exit 1;}'
+%TEST-END-FILE
+
+@TEST-EXEC: echo ABC 000 DEF >output
+@TEST-EXEC-FAIL: TEST_DIFF_CANONIFIER="../../test-canonifier" btest-diff output
+@TEST-EXEC-FAIL: TEST_DIFF_CANONIFIER="./does-not-exist" btest-diff output
+

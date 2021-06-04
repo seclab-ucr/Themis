@@ -1,0 +1,6 @@
+# %TEST-EXEC: btest %INPUT >output 2>&1
+# %TEST-EXEC: btest-diff output
+
+@TEST-EXEC: echo Hello, World!
+@TEST-EXEC: exit 0
+@TEST-KNOWN-FAILURE: This test is expected to fail, but succeeds.

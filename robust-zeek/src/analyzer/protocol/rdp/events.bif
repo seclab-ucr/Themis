@@ -1,0 +1,128 @@
+## Generated for RDPEUDP SYN UDP Datagram
+##
+## c: The connection record for the underlying transport-layer session/flow.
+event rdpeudp_syn%(c: connection%);
+
+## Generated for RDPEUDP SYNACK UDP Datagram
+##
+## c: The connection record for the underlying transport-layer session/flow.
+event rdpeudp_synack%(c: connection%);
+
+## Generated when RDPEUDP connections are established (both sides SYN)
+##
+## c: The connection record for the underlying transport-layer session/flow.
+##
+## version: Whether the connection is RDPEUDP1 or RDPEUDP2
+event rdpeudp_established%(c: connection, version: count%);
+
+## Generated when for data messages exchanged after a RDPEUDP connection establishes
+##
+## c: The connection record for the underlying transport-layer session/flow.
+##
+## is_orig: Whether the data was sent by the originator or responder of the connection.
+##
+## version: Whether the connection is RDPEUDP1 or RDPEUDP2
+##
+## data: The payload of the packet. This is probably very non-performant.
+event rdpeudp_data%(c: connection, is_orig: bool, version: count, data: string%);
+
+## Generated for each packet after RDP native encryption begins
+##
+## c: The connection record for the underlying transport-layer session/flow.
+##
+## orig: True if the packet was sent by the originator of the connection.
+##
+## len: The length of the encrypted data.
+event rdp_native_encrypted_data%(c: connection, orig: bool, len: count%);
+
+## Generated for X.224 client requests.
+##
+## c: The connection record for the underlying transport-layer session/flow.
+##
+## cookie: The cookie included in the request.
+##
+## flags: The flags set by the client.
+event rdp_connect_request%(c: connection, cookie: string, flags: count%);
+event rdp_connect_request%(c: connection, cookie: string%);
+
+## Generated for RDP Negotiation Response messages.
+##
+## c: The connection record for the underlying transport-layer session/flow.
+##
+## security_protocol: The security protocol selected by the server.
+##
+## flags: The flags set by the server.
+event rdp_negotiation_response%(c: connection, security_protocol: count, flags: count%);
+event rdp_negotiation_response%(c: connection, security_protocol: count%);
+
+## Generated for RDP Negotiation Failure messages.
+##
+## c: The connection record for the underlying transport-layer session/flow.
+##
+## failure_code: The failure code sent by the server.
+##
+## flags: The flags set by the server.
+event rdp_negotiation_failure%(c: connection, failure_code: count, flags: count%);
+event rdp_negotiation_failure%(c: connection, failure_code: count%);
+
+## Generated for MCS client requests.
+##
+## c: The connection record for the underlying transport-layer session/flow.
+##
+## data: The data contained in the client core data structure.
+event rdp_client_core_data%(c: connection, data: RDP::ClientCoreData%);
+
+## Generated for client security data packets.
+##
+## c: The connection record for the underlying transport-layer session/flow.
+##
+## data: The data contained in the client security data structure.
+event rdp_client_security_data%(c: connection, data: RDP::ClientSecurityData%);
+
+## Generated for Client Network Data (TS_UD_CS_NET) packets
+##
+## c: The connection record for the underlying transport-layer session/flow.
+##
+## channels: The channels that were requested
+event rdp_client_network_data%(c: connection, channels: RDP::ClientChannelList%);
+
+## Generated for client cluster data packets.
+##
+## c: The connection record for the underlying transport-layer session/flow.
+##
+## data: The data contained in the client security data structure.
+event rdp_client_cluster_data%(c: connection, data: RDP::ClientClusterData%);
+
+## Generated for MCS server responses.
+##
+## c: The connection record for the underlying transport-layer session/flow.
+##
+## result: The 8-bit integer representing the GCC Conference Create Response result.
+event rdp_gcc_server_create_response%(c: connection, result: count%);
+
+## Generated for MCS server responses.
+##
+## c: The connection record for the underlying transport-layer session/flow.
+##
+## encryption_method: The 32-bit integer representing the encryption method used in the connection.
+##
+## encryption_level: The 32-bit integer representing the encryption level used in the connection.
+event rdp_server_security%(c: connection, encryption_method: count, encryption_level: count%);
+
+## Generated for a server certificate section.  If multiple X.509 
+## certificates are included in chain, this event will still
+## only be generated a single time.
+##
+## c: The connection record for the underlying transport-layer session/flow.
+##
+## cert_type: Indicates the type of certificate.
+##
+## permanently_issued: Value will be true is the certificate(s) is permanent on the server.
+event rdp_server_certificate%(c: connection, cert_type: count, permanently_issued: bool%);
+
+## Generated when an RDP session becomes encrypted.
+##
+## c: The connection record for the underlying transport-layer session/flow.
+##
+## security_protocol: The security protocol being used for the session.
+event rdp_begin_encryption%(c: connection, security_protocol: count%);

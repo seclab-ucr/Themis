@@ -1,0 +1,18 @@
+
+%%{
+#include <openssl/x509.h>
+#include "zeek/analyzer/protocol/ssl/SSL.h"
+#include "zeek/Reporter.h"
+%%}
+
+## Sets if the SSL analyzer should consider the connection established (handshake
+## finished succesfully).
+##
+## c: The SSL connection.
+function set_ssl_established%(c: connection%): any
+	%{
+	zeek::analyzer::Analyzer* sa = c->FindAnalyzer("SSL");
+	if ( sa )
+		static_cast<zeek::analyzer::ssl::SSL_Analyzer*>(sa)->StartEncryption();
+	return nullptr;
+	%}

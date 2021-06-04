@@ -1,0 +1,184 @@
+#! /usr/bin/env python3
+#
+# stats-to-csv <stats.log> <meta.dat> <wwwdir>
+#
+# Reads information from stats log and outputs csv files
+# <wwwdir>/<node>.<datatype>.csv.
+# If any of these files already exists, we append (without writing the header
+# line again).
+
+from __future__ import print_function
+import os
+import sys
+
+
+# Read the meta.dat file, and extract node names from it.
+def readNodes(meta):
+    manager = ""
+    loggers = set()
+    proxies = set()
+    workers = set()
+
+    with open(meta, "r") as f:
+        for line in f:
+            m = line.split()
+            if not m:
+                continue
+
+            if m[0] == "node":
+                if len(m) < 3:
+                    print("error: 'node' line in meta.dat is missing some fields")
+                    continue
+
+                if m[2] == "worker":
+                    workers.add(m[1])
+
+                if m[2] == "proxy":
+                    proxies.add(m[1])
+
+                if m[2] == "logger":
+                    loggers.add(m[1])
+
+                if m[2] == "manager":
+                    manager = m[1]
+
+    return (manager, loggers, proxies, workers)
+
+
+# Read the stats.log file, and create/append CSV files for one node.
+def processNode(stats, wwwdir, node, iface):
+
+    print("%s ..." % node)
+
+    def openFile(tag, columns):
+
+        name = os.path.join(wwwdir, "%s.%s.csv" % (node, tag))
+
+        if os.path.exists(name):
+            f = open(name, "a")
+        else:
+            f = open(name, "w")
+            f.write("time,%s\n" % ",".join(columns))
+
+        return f
+
+    cpu = openFile("cpu", ["CPU"])
+    mem = openFile("mem", ["Memory"])
+    if iface:
+        iface_mbps = openFile("mbps", ["MBits/sec"])
+        iface_pkts = openFile("pkts", ["TCP", "UDP", "ICMP", "Other"])
+
+    def printEntry(t, entry):
+        if not entry:
+            return
+
+        try:
+            val = int(entry["parent-cpu"])
+            if "child-cpu" in entry:
+                val += int(entry["child-cpu"])
+            cpu.write("%s,%s\n" % (t, val))
+        except (ValueError, KeyError):
+            pass
+
+        try:
+            val = int(entry["parent-vsize"])
+            if "child-vsize" in entry:
+                val += int(entry["child-vsize"])
+            mem.write("%s,%s\n" % (t, val))
+        except (ValueError, KeyError):
+            pass
+
+        if iface:
+            e = entry.get("interface-mbps")
+            if e:
+                iface_mbps.write("%s,%s\n" % (t, e))
+
+            try:
+                tc = entry["interface-t"]
+                ud = entry["interface-u"]
+                ic = entry["interface-i"]
+                ot = entry["interface-o"]
+                iface_pkts.write("%s,%s,%s,%s,%s\n" % (t, tc, ud, ic, ot))
+
+            except KeyError:
+                pass
+
+    entry = {}
+    first = -1
+
+    with open(stats, "r") as ff:
+        for line in ff:
+            m = line.split()
+
+            if len(m) < 2:
+                print("error: line in stats.log has less than two fields")
+                continue
+
+            if m[1] != node:
+                continue
+
+            try:
+                t = float(m[0])
+            except ValueError:
+                print("error: line in stats.log has no timestamp")
+                continue
+
+            # Write all available data for one time value.
+            if t != first and first >= 0:
+                printEntry(t, entry)
+                entry = {}
+
+            first = t
+
+            if len(m) > 4:
+                entry["%s-%s" % (m[2], m[3])] = m[4]
+
+    if first >= 0:
+        printEntry(t, entry)
+
+    cpu.close()
+    mem.close()
+    if iface:
+        iface_mbps.close()
+        iface_pkts.close()
+
+def main():
+    if len(sys.argv) != 4:
+        print("usage: %s <stats.log> <meta.dat> <www-dir>" % sys.argv[0])
+        sys.exit(1)
+
+    stats = sys.argv[1]
+    meta = sys.argv[2]
+    wwwdir = sys.argv[3]
+
+    try:
+        if not os.path.exists(wwwdir):
+            os.mkdir(wwwdir)
+    except OSError as err:
+        print("Error: failed to create directory: %s" % err)
+        sys.exit(1)
+
+    try:
+        manager, loggers, proxies, workers = readNodes(meta)
+    except IOError as err:
+        print("Error: failed to read file: %s" % err)
+        sys.exit(1)
+
+    try:
+        for w in workers:
+            processNode(stats, wwwdir, w, True)
+
+        for p in proxies:
+            processNode(stats, wwwdir, p, False)
+
+        for l in loggers:
+            processNode(stats, wwwdir, l, False)
+
+        if manager:
+            processNode(stats, wwwdir, manager, False)
+    except IOError as err:
+        print("Error: %s" % err)
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()

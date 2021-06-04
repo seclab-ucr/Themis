@@ -1,0 +1,11 @@
+
+module RDP;
+
+type EarlyCapabilityFlags: record;
+type ClientCoreData: record;
+
+type ClientSecurityData: record;
+type ClientClusterData: record;
+
+type ClientChannelList: vector;
+type ClientChannelDef: record;

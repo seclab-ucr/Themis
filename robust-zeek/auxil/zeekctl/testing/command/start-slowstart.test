@@ -1,0 +1,31 @@
+# Test that the start command can start a Zeek node that is slow to initialize,
+# and that the status command shows the status as "initializing".
+#
+# @TEST-EXEC: bash %INPUT
+# @TEST-EXEC: btest-diff start.out
+# @TEST-EXEC: TEST_DIFF_CANONIFIER=$SCRIPTS/diff-status-output btest-diff status.out
+
+. zeekctl-test-setup
+
+while read line; do installfile $line; done << EOF
+etc/zeekctl.cfg__no_email
+etc/node.cfg__cluster
+bin/zeek__test
+EOF
+
+cat > $ZEEKCTL_INSTALL_PREFIX/zeekctltest.cfg << EOF
+slowstart=worker-1
+EOF
+
+zeekctl install
+
+# start all nodes
+zeekctl start > start.out
+
+# verify that one node is still initializing
+! zeekctl status > status.out
+
+# Indicate to zeek that it should now finish initializing.
+touch $ZEEKCTL_INSTALL_PREFIX/spool/worker-1/.zeekctl_test_sync
+
+zeekctl stop

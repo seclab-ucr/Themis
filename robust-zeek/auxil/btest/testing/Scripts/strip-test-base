@@ -1,0 +1,6 @@
+#! /usr/bin/env bash
+#
+
+dir=`dirname $0`
+testbase=`cd $dir/.. && pwd`
+sed "s#${testbase}#<...>#g"

@@ -1,0 +1,86 @@
+#! /usr/bin/env bash
+#
+# Usage:
+#   send-mail subject [destination] < txt
+#
+# subject:  subject line for the email message.
+# destination:  recipient email address (optional).
+#
+# Sends stdin per mail to recipients, adding some common headers/footers
+
+. `dirname $0`/zeekctl-config.sh
+if [ $? -ne 0 ]; then
+    exit 1
+fi
+
+if [ -z "${sendmail}" ]; then
+    # If the "sendmail" config option has no value, then don't try to send mail
+    # (this is not an error).
+    exit 0
+fi
+
+if [ ! -f "${sendmail}" ]; then
+    echo "send-mail: ${sendmail} not found"
+    exit 1
+fi
+
+if [ $# -lt 1 ] || [ $# -gt 2 ]; then
+    echo "send-mail: wrong usage"
+    exit 1
+fi
+
+if [ $# -eq 2 ]; then
+    to=$2
+else
+    to=${mailto}
+fi
+
+if [ -z "$to" ]; then
+    echo "send-mail: no recipients"
+    exit 1
+fi
+
+from=${mailfrom}
+subject="${mailsubjectprefix} $1"
+
+if [ ! -d "${tmpdir}" ]; then
+    echo "send-mail: directory not found: ${tmpdir}"
+    exit 1
+fi
+
+tmp=${tmpdir}/mail.$$.tmp
+
+rm -f "$tmp"
+if [ $? -ne 0 ]; then
+    exit 1
+fi
+
+# Verify that we have write access to the directory
+touch "$tmp"
+if [ $? -ne 0 ]; then
+    exit 1
+fi
+
+cat >>"$tmp" <<_EOF_
+From: $from
+Subject: $subject
+To: $to
+User-Agent: ZeekControl ${version}
+_EOF_
+
+if [ -n "${mailreplyto}" ]; then
+    echo Reply-To: ${mailreplyto} >>"$tmp"
+fi
+
+echo >>"$tmp"
+
+cat >>"$tmp"
+
+cat >>"$tmp" <<EOF
+
+-- 
+[Automatically generated.]
+
+EOF
+
+${sendmail} -t -oi <"$tmp" && rm -f "$tmp"

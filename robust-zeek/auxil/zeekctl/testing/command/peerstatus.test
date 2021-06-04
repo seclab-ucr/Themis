@@ -1,0 +1,33 @@
+# Test that the peerstatus command can get status of all nodes, or just
+# a specified node.
+#
+# This test needs to be serialized because we are using the broker python
+# bindings.
+# @TEST-SERIALIZE: listen
+#
+# @TEST-EXEC: bash %INPUT
+# @TEST-EXEC: TEST_DIFF_CANONIFIER=$SCRIPTS/diff-peerstatus-output btest-diff all.out
+# @TEST-EXEC: TEST_DIFF_CANONIFIER=$SCRIPTS/diff-peerstatus-output btest-diff onenode.out
+
+. zeekctl-test-setup
+
+while read line; do installfile $line; done << EOF
+etc/zeekctl.cfg__no_email
+etc/node.cfg__no_netifs
+EOF
+
+zeekctl install
+zeekctl start
+
+# get status of all nodes
+zeekctl peerstatus > all.out
+
+# get status of one node
+zeekctl peerstatus worker-2 > onenode.out
+
+zeekctl stop
+
+# no nodes are running, so zeekctl cannot get any results
+! zeekctl peerstatus > stopped.out
+# the file size should be zero
+test ! -s stopped.out

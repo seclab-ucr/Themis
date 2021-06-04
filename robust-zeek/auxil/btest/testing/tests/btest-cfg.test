@@ -1,0 +1,17 @@
+# %TEST-EXEC: mv btest.cfg myfile
+# %TEST-EXEC: btest -c myfile %INPUT > nopath 2>&1
+# %TEST-EXEC: BTEST_CFG=myfile btest %INPUT >> nopath 2>&1
+# %TEST-EXEC: BTEST_CFG=notexist btest -c myfile %INPUT >> nopath 2>&1
+# %TEST-EXEC-FAIL: btest %INPUT >> nopath 2>&1
+# %TEST-EXEC: btest-diff nopath
+# %TEST-EXEC: mkdir z
+# %TEST-EXEC: mv myfile z/btest.cfg
+# %TEST-EXEC: btest -c z/btest.cfg %INPUT >> relpath 2>&1
+# %TEST-EXEC: BTEST_CFG=z/btest.cfg btest %INPUT >> relpath 2>&1
+# %TEST-EXEC: btest-diff relpath
+# %TEST-EXEC: btest -c `pwd`/z/btest.cfg %INPUT >> abspath 2>&1
+# %TEST-EXEC: BTEST_CFG=`pwd`/z/btest.cfg btest %INPUT >> abspath 2>&1
+# %TEST-EXEC: btest-diff abspath
+
+@TEST-EXEC: exit 0
+

@@ -1,0 +1,28 @@
+# Test that plugins can define new config options.
+#
+# @TEST-EXEC: bash %INPUT
+# @TEST-EXEC: btest-diff default.out
+# @TEST-EXEC: btest-diff custom.out
+
+. zeekctl-test-setup
+
+while read line; do installfile $line; done << EOF
+plugins/optionstest.py $ZEEKCTL_INSTALL_PYTHON_DIR/zeekctl/plugins --new
+EOF
+
+# Test that default values are recognized.
+
+zeekctl exit
+mv options.out default.out
+
+# Test that custom (user-specified) values override default values.
+
+# Specify values for options provided by optionstest.py plugin.
+cat >> $ZEEKCTL_INSTALL_PREFIX/etc/zeekctl.cfg << EOF
+optionstest.opt1=0
+optionstest.opt2=this is a test
+optionstest.opt3=123
+EOF
+
+zeekctl exit
+mv options.out custom.out

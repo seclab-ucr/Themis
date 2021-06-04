@@ -1,0 +1,9 @@
+# %TEST-EXEC-FAIL: btest -d %INPUT 2>>raw
+# %TEST-EXEC: mkdir Baseline/diag
+# %TEST-EXEC: echo Wrong baseline >Baseline/diag/output
+# %TEST-EXEC-FAIL: btest -d %INPUT 2>>raw
+# %TEST-EXEC: cat raw | egrep -v '\+\+\+|---' >output
+# %TEST-EXEC: btest-diff output
+
+@TEST-EXEC: echo Hello, World! >output
+@TEST-EXEC: btest-diff output

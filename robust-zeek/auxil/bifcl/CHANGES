@@ -1,0 +1,189 @@
+
+1.5.0 | 2020-12-04 11:14:48 -0800
+
+  * Release 1.5.0.
+
+1.4.0-19 | 2020-12-02 11:04:01 -0800
+
+  * Update minimum required CMake to 3.5 (Jon Siwek, Corelight)
+
+  * Postpone initialization of constants for subdir BIFs (Jon Siwek, Corelight)
+
+1.4.0-11 | 2020-08-26 11:20:13 -0700
+
+  * Rename bro-bif.h to zeek-bif.h (Tim Wojtulewicz, Corelight)
+
+1.4.0-9 | 2020-08-21 08:30:47 -0700
+
+  * Move __RegisterBif from zeek::detail::plugin to zeek::plugin::detail (Tim Wojtulewicz, Corelight)
+
+  * SOURCE_LOCAL is part of the zeek::util::detail namespace now (Tim Wojtulewicz, Corelight)
+
+1.4.0-6 | 2020-08-01 09:14:45 -0700
+
+  * Move Connection to zeek namespace (Tim Wojtulewicz, Corelight)
+
+  * Move BifReturnVal to zeek::detail namespace (Tim Wojtulewicz, Corelight)
+
+  * Move event code to zeek namespace, rename mgr to event_mgr (Tim Wojtulewicz, Corelight)
+
+  * Move BroFile to zeek namespace, rename to File (Tim Wojtulewicz, Corelight)
+
+  * Move base analyzer classes to zeek namespace (Tim Wojtulewicz, Corelight)
+
+1.4.0 | 2020-07-23 10:10:53 -0700
+
+  * Release 1.4.0
+
+1.3.0-54 | 2020-07-03 23:55:07 -0700
+
+  * Ensure strncpy null-termination (Jon Siwek, Corelight)
+
+  * Fix stringop-truncation compiler warning (Jon Siwek, Corelight)
+
+1.3.0-52 | 2020-07-02 19:22:22 -0700
+
+  * Add zeek:: namespace to val_mgr usage (Tim Wojtulewicz, Corelight)
+
+  * Move BuiltinFunc to zeek namespace (Tim Wojtulewicz, Corelight)
+
+  * Move Frame to the zeek::detail namespace (Tim Wojtulewicz, Corelight)
+
+  * Move all Val classes to the zeek namespaces (Tim Wojtulewicz, Corelight)
+
+  * Move IntrusivePtr to the zeek namespace (Tim Wojtulewicz, Corelight)
+
+1.3.0-44 | 2020-06-11 23:11:52 -0700
+
+  * Update namespace for *Type classes (Tim Wojtulewicz, Corelight)
+
+  * Update namespace for plugin::Plugin and plugin::BifItem classes (Tim Wojtulewicz, Corelight)
+
+  * Update namespace for __RegisterBif function (Tim Wojtulewicz, Corelight)
+
+1.3.0-39 | 2020-06-03 13:18:47 -0700
+
+  * Use new TimeVal/DoubleVal subclass ctors (Jon Siwek, Corelight)
+
+1.3.0-37 | 2020-06-01 19:24:32 -0700
+
+  * Include Func.h in files during build (Tim Wojtulewicz, Corelight)
+
+1.3.0-35 | 2020-06-01 10:58:45 -0700
+
+  * Change constructor for BroFile args (Jon Siwek, Corelight)
+
+  * Switch zeek::id::lookup to zeek::id::find (Jon Siwek, Corelight)
+
+  * Use zeek::BifEvent:: for enqueue_ functions instead of BifEvent::
+
+    The old BifEvent::generate_ functions were already deprecated (Jon Siwek, Corelight)
+
+  * Deprecate BifFunc:: declarations, replace with zeek::BifFunc::
+
+    Also changes name of function slightly, example: bro_fmt -> fmt_bif. (Jon Siwek, Corelight)
+
+  * Deprecate names in BifConst, replace with zeek::BifConst
+
+    Some Val* types are also replaced with IntrusivePtr (Jon Siwek, Corelight)
+
+  * Deprecate all BroType* in BifType:: namespace
+
+    Replaced with equivalently named IntrusivePtr in zeek::BifType:: (Jon Siwek, Corelight)
+
+  * Change internal_handler() usage (Jon Siwek, Corelight)
+
+  * Renaming/scoping of lookup functions (Jon Siwek, Corelight)
+
+  * Replace deprecated use of internal_const_val() (Jon Siwek, Corelight)
+
+  * Update deprecated use of internal_type() (Jon Siwek, Corelight)
+
+1.3.0-20 | 2020-04-24 16:17:33 -0700
+
+  * Deprecate BifEvent::generate_*, add BifEvent::enqueue_* (Jon Siwek, Corelight)
+
+  * Update deprecated Connection::BuildConnVal usage (Jon Siwek, Corelight)
+
+  * Return nullptr instead of 0 in BIF error conditions (Jon Siwek, Corelight)
+
+  * Update deprecated ValManager::Get usages (Jon Siwek, Corelight)
+
+  * Change BIFs to return a wrapper object
+
+    That allows implicit conversion from either Val* or IntrusivePtr<T> (Jon Siwek, Corelight)
+
+1.3.0-13 | 2020-04-16 13:50:22 -0700
+
+  * Remove use of Variable-Length-Arrays (Jon Siwek, Corelight)
+
+1.3.0-11 | 2020-04-13 14:53:11 -0700
+
+  * Support multiple/alternate event prototype definitions (Jon Siwek, Corelight)
+
+1.3.0-9 | 2020-04-01 13:13:23 -0700
+
+  * Don't pass a TimerMgr to EventMgr::Enqueue() (Jon Siwek, Corelight)
+
+  * Use EventMgr::Enqueue() instead of QueueEventFast() (Jon Siwek, Corelight)
+
+  * Move BIF function arguments from val_list to vector of IntrusivePtr (Jon Siwek, Corelight)
+
+1.3.0-1 | 2020-02-10 12:00:31 -0800
+
+  * Fix header include guards (Jon Siwek, Corelight)
+
+1.3.0 | 2020-02-05 21:28:12 -0800
+
+  * Release 1.3.0
+
+1.2-14 | 2020-01-03 09:53:56 -0700
+
+  * Disable LeakSanitizer
+
+    Related to https://github.com/zeek/zeek/issues/699 (Jon Siwek, Corelight)
+
+1.2-9 | 2019-10-28 17:58:16 -0700
+
+  * Move CMake project() after cmake_minimum_required() (Jon Siwek, Corelight)
+
+  * Move headers into include/ subdir (Jon Siwek, Corelight)
+
+    This avoids potential problems with libc++ 8+ on case-insensitive file
+    systems due to inclusion of a new header called <version> which will end
+    up conflicting with the VERSION file if the search path includes the
+    project root.
+
+1.2 | 2019-06-12 15:01:17 -0700
+
+  * Release 1.2.
+
+1.1-19 | 2019-06-12 15:01:04 -0700
+
+  * Rename directories from bro to zeek (Daniel Thayer)
+
+1.1-16 | 2019-05-20 19:38:17 -0700
+
+  * Rename Bro to Zeek (Daniel Thayer)
+
+  * Update codegen to use faster val_list and event queue API (Jon Siwek, Corelight)
+
+1.1-10 | 2019-04-16 11:48:09 -0700
+
+  * Change file extension of auto-generated script files to .zeek (Daniel Thayer)
+
+  * Use ValManager for creating Vals (Jon Siwek, Corelight)
+
+  * Update submodules to use github.com/zeek (Jon Siwek, Corelight)
+
+1.1 | 2018-08-31 15:23:21 -0500
+
+  * Add Makefile (Jon Siwek, Corelight)
+
+1.0-1 | 2018-07-24 01:58:34 +0000
+
+  * Fix compiler warning. (Robin Sommer, Corelight)
+
+1.0 | 2018-07-24 01:54:16 +0000
+
+  * bifcl is a now a separate project, starting CHANGES.

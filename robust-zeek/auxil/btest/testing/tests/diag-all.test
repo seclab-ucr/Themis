@@ -1,0 +1,12 @@
+# %TEST-EXEC: btest -D t1 t2 >output 2>&1
+# %TEST-EXEC: btest-diff output
+
+%TEST-START-FILE t1
+@TEST-EXEC: echo Hello, World!
+@TEST-EXEC: echo Stderr output >&2
+%TEST-END-FILE
+
+%TEST-START-FILE t2
+@TEST-EXEC: echo Hello, again!
+@TEST-EXEC: echo This is the contents of the .diag file > ${TEST_DIAGNOSTICS}
+%TEST-END-FILE

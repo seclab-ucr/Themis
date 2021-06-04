@@ -1,0 +1,25 @@
+# %TEST-REQUIRES: test "`uname`" = "Linux"
+# %TEST-REQUIRES: which perf
+# %TEST-REQUIRES: perf stat -o /dev/null true 2> /dev/null
+# %TEST-REQUIRES: perf stat -x " " -e instructions true 2>&1  | grep -vq "not supported"
+# %TEST-EXEC: btest -D %INPUT >>output 2>&1
+# %TEST-EXEC: echo ----- >>output
+# %TEST-EXEC: test '!' -e Baseline/_Timing
+# %TEST-EXEC: btest -DT %INPUT >>output 2>&1
+# %TEST-EXEC: echo ----- >>output
+# %TEST-EXEC: test -d Baseline/_Timing
+# %TEST-EXEC: btest -D %INPUT >>output 2>&1
+# %TEST-EXEC: echo ----- >>output
+# %TEST-EXEC: echo measure-time 42 >`echo Baseline/_Timing/*`
+# %TEST-EXEC-FAIL: btest -D %INPUT >>output 2>&1
+# %TEST-EXEC: echo ----- >>output
+# %TEST-EXEC: btest -DT %INPUT >>output 2>&1
+# %TEST-EXEC: echo ----- >>output
+# %TEST-EXEC: btest -D %INPUT >>output 2>&1
+# %TEST-EXEC: echo ----- >>output
+# %TEST-EXEC: cat output | sed 's/ ([-+%.0-9]*)/ (+xx.x%)/g' >tmp
+# %TEST-EXEC: mv tmp output
+# %TEST-EXEC: btest-diff output
+
+@TEST-MEASURE-TIME
+@TEST-EXEC: awk 'BEGIN { for ( i = 1; i < 100000; i++ ) x += i; print x; }; done' </dev/null

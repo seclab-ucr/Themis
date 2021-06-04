@@ -1,0 +1,145 @@
+#! /usr/bin/env bash
+#
+# Executes a command and formats the command and its stdout in reST.
+#
+
+trap cleanup INT TERM EXIT
+
+function usage()
+{
+    echo
+    echo "`basename $0` [options] <command line>"
+    echo
+    echo "    -d          Do not actually execute command; just format the command line."
+    echo "    -h          Show this help."
+    echo "    -r <file>   Insert <file> into output, rather than stdout."
+    echo "    -o          Do not include command into output."
+    echo "    -c <cmd>    Show <cmd> in output instead of the one actually executed."
+    echo "    -f <filter> Run <filter> command on command output (or file) before including."
+    echo "    -n <n>      Include only n lines of output, adding a [...] marker if there's more."
+    echo
+    exit 1
+}
+
+function apply_filter()
+{
+    eval $filter_env | eval $filter_opt
+}
+
+# Strip leading white-space and then indent to 6 space.
+function indent()
+{
+    python3 -c "
+from __future__ import print_function
+import sys
+input = sys.stdin.readlines()
+n = 1e10
+for i in input:
+    n = min(n, len(i) - len(i.lstrip()))
+
+for i in input:
+    print('      ' + i[n:], end='')
+"
+}
+
+function cleanup()
+{
+    rm -f $tmps
+    exit
+}
+
+stdout=`mktemp -t $(basename $0).XXXXXX`
+cmd_out=`mktemp -t $(basename $0).XXXXXX`
+filter_out=`mktemp -t $(basename $0).XXXXXX`
+tmps="$tmps $stdout $cmd_out $filter_out"
+
+include=$cmd_out
+show_command=1
+cmd_display=""
+dry=0
+lines=0
+
+filter_env=${BTEST_RST_FILTER}
+
+while getopts "odhr:f:c:n:" opt; do
+    case $opt in
+        h) usage;;
+        o) show_command=0;;
+        r) include=$OPTARG;;
+        d) dry=1; include="";;
+        c) cmd_display=$OPTARG;;
+        f) filter_opt=$OPTARG;;
+        n) lines=$OPTARG;;
+        *) exit 1;;
+    esac
+done
+
+shift $(($OPTIND - 1))
+
+cmd=$@
+test "$cmd_display" == "" && cmd_display=$cmd
+test "$filter_opt" == "" && filter_opt=cat
+test "$filter_env" == "" && filter_env=cat
+
+test "$cmd" == "" && usage;
+
+if [ "$dry" != "1" ]; then
+    if ! eval $cmd >$cmd_out; then
+        exit 1
+    fi
+fi
+
+
+# Generate reST output.
+
+if [ "$show_command" == "1" ]; then
+    echo ".. rst-class:: btest-cmd" >>$stdout
+    echo >>$stdout
+    echo "    .. code-block:: none" >>$stdout
+    echo "      :linenos:" >>$stdout
+    echo "      :emphasize-lines: 1,1" >>$stdout
+    echo >>$stdout
+    echo "      # $cmd_display" | apply_filter >>$stdout;
+else
+    echo ".. rst-class:: btest-include" >>$stdout
+    echo >>$stdout
+    echo "    .. code-block:: guess" >>$stdout
+    echo "      :linenos:" >>$stdout
+    echo >>$stdout
+fi
+
+for i in $include; do
+    echo "    `basename $i`" >>$filter_out
+    echo "" >>$filter_out
+    cat $i | apply_filter | indent >$filter_out
+
+    if [ $lines = 0 ]; then
+        cat $filter_out >>$stdout
+    else
+        cat $filter_out | head -n $lines >>$stdout
+        if [ `wc -l <$filter_out` -gt $lines ]; then
+            echo '      [...]' >>$stdout
+        fi
+    fi
+
+    rm -f $filter_out
+done
+
+echo >>$stdout
+
+# Branch depending on where this script was started from.
+
+if [ "$BTEST_RST_OUTPUT" != "" ]; then
+    # Running from inside Sphinx, just output to where it tells us.
+    cat $stdout >>"${BTEST_RST_OUTPUT}#${TEST_PART}"
+
+elif [ "$TEST_NAME" ]; then
+    # Running from inside BTest, output into file that btest-diff-rst will pickup.
+    cat $stdout >>"btest-${TEST_NAME}#${TEST_PART}"
+
+else
+    # Running from command line, just print out.
+    cat $stdout
+fi
+
+

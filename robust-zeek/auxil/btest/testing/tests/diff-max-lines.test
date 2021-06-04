@@ -1,0 +1,17 @@
+# Verify that when btest-diff fails due to a file not matching a baseline,
+# btest-diff will not show more than the first TEST_DIFF_FILE_MAX_LINES lines
+# of the file.  However, when there is no baseline, then the entire file is
+# shown.
+
+# %TEST-EXEC-FAIL: btest -d %INPUT >raw 2>&1
+# %TEST-EXEC: cat raw | grep -v '+++' | grep -v '\-\-\-' >output1
+# %TEST-EXEC: btest-diff output1
+
+# %TEST-EXEC: mkdir -p Baseline/diff-max-lines
+# %TEST-EXEC: echo "This is the baseline" >Baseline/diff-max-lines/child-output
+# %TEST-EXEC-FAIL: btest -d %INPUT >raw 2>&1
+# %TEST-EXEC: cat raw | grep -v '+++' | grep -v '\-\-\-' >output2
+# %TEST-EXEC: btest-diff output2
+
+@TEST-EXEC: awk 'BEGIN{for(i=1;i<=10;i++) print "Output line",i}' >child-output
+@TEST-EXEC: TEST_DIFF_FILE_MAX_LINES=2 btest-diff child-output

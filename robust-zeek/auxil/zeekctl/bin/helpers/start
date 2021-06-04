@@ -1,0 +1,84 @@
+#! /usr/bin/env bash
+#
+# Start Zeek, output the Zeek PID, and return zero.  Upon failure, output an
+# error message and return nonzero.
+#
+#  start [ -v var=value [ -v ...]] <cwd> <pin_cpu> <zeek_args>
+#
+# -v var=value...:  environment variables to set (optional).
+# cwd:  the node's working directory.
+# pin_cpu:  the CPU number to use, or -1 to not use CPU pinning.
+# zeek_args:  Zeek cmd-line arguments.
+
+. `dirname $0`/../zeekctl-config.sh
+
+while getopts 'v:' flag; do
+    case "$flag" in
+        v) export "$OPTARG"
+           if [ $? -ne 0 ]; then
+               echo "start: unable to set env. variable \"$OPTARG\" (check the env_vars zeekctl option)" >&2
+               exit 1
+           fi
+           ;;
+    esac
+done
+
+origopts="$@"
+shift $((OPTIND-1))
+
+if [ $# -lt 3 ]; then
+    echo "start: too few cmd-line options received: \"$origopts\" (this is usually caused by shell metacharacters in the env_vars zeekctl option)" >&2
+    exit 1
+fi
+
+workingdir="$1"
+
+cd "$workingdir"
+if [ $? -ne 0 ]; then
+    exit 1
+fi
+shift
+
+rm -f .pid
+
+# Make sure .test does not exist
+rm -f .test > /dev/null 2>&1
+if [ -e .test ]; then
+    echo "start: cannot remove files in Zeek working directory (try running zeekctl as a different user, or check permissions of Zeek working dir: $workingdir)" >&2
+    exit 1
+fi
+
+# Create and remove a test file to ensure that the run-zeek script will be able
+# to create a pid file.
+touch .test > /dev/null 2>&1
+rm .test > /dev/null 2>&1
+if [ $? -ne 0 ]; then
+    echo "start: problem with Zeek working directory (try running zeekctl as a different user, or check permissions of Zeek working dir: $workingdir)" >&2
+    exit 1
+fi
+
+if [ ! -f "${scriptsdir}"/run-zeek ]; then
+    echo "start: file not found: ${scriptsdir}/run-zeek" >&2
+    exit 1
+fi
+
+nohup "${scriptsdir}"/run-zeek "$@" >stdout.log 2>stderr.log &
+
+while [ ! -s .pid ]; do
+    sleep 1
+done
+
+pid=`cat .pid`
+
+if [ -z "$pid" ]; then
+    echo "start: failed to get PID of Zeek" >&2
+    exit 1
+fi
+
+# The "run-zeek" script uses a value of -1 to indicate an error occurred.
+if [ "$pid" = "-1" ]; then
+    exit 1
+fi
+
+echo $pid
+

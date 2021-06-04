@@ -1,0 +1,103 @@
+# @TEST-EXEC: btest-bg-run zeek zeek -b ../exectest.zeek
+# @TEST-EXEC: btest-bg-wait 15
+# @TEST-EXEC: TEST_DIFF_CANONIFIER=$SCRIPTS/diff-sort btest-diff zeek/.stdout
+
+@TEST-START-FILE exectest.zeek
+
+@load base/utils/exec
+redef exit_only_after_terminate = T;
+
+global c: count = 0;
+
+function check_exit_condition()
+	{
+	c += 1;
+
+	if ( c == 4 )
+		terminate();
+	}
+
+function test_cmd(label: string, cmd: Exec::Command)
+	{
+	when ( local result = Exec::run(cmd) )
+		{
+		local file_content = "";
+
+		if ( result?$files )
+			{
+			local which_test = "out1" in result$files;
+
+			if ( which_test )
+				file_content = fmt("out1 -> %s, out2 -> %s",
+				                   result$files["out1"],
+				                   result$files["out2"]);
+			else
+				file_content = fmt("out3 -> %s, out4 -> %s",
+				                   result$files["out3"],
+				                   result$files["out4"]);
+			}
+
+		print fmt("%s - exit: %s, signal: %s, stdout: %s, stderr: %s, files: %s",
+		          label, result$exit_code, result$signal_exit,
+		          result?$stdout ? cat(result$stdout) : "",
+		          result?$stderr ? cat(result$stderr) : "",
+		          file_content);
+
+		check_exit_condition();
+		}
+	}
+
+event zeek_init()
+	{
+	test_cmd("test1", [$cmd="bash ../somescript.sh",
+	                   $read_files=set("out1", "out2")]);
+	test_cmd("test2", [$cmd="bash ../nofiles.sh"]);
+	# Not sure of a portable way to test signals yet.
+	#test_cmd("test3", [$cmd="bash ../suicide.sh"]);
+	test_cmd("test4", [$cmd="bash ../stdin.sh", $stdin="hibye"]);
+	test_cmd("test5", [$cmd="bash ../empty_file.sh",
+	                   $read_files=set("out3", "out4")]);
+	}
+
+@TEST-END-FILE
+
+@TEST-START-FILE somescript.sh
+#! /usr/bin/env bash
+echo "insert text here" > out1
+echo "and here" >> out1
+echo "insert more text here" > out2
+echo "and there" >> out2
+echo "done"
+echo "exit"
+echo "stop"
+@TEST-END-FILE
+
+@TEST-START-FILE nofiles.sh
+#! /usr/bin/env bash
+echo "here's something on stdout"
+echo "some more stdout"
+echo "last stdout"
+echo "and some stderr" 1>&2
+echo "more stderr" 1>&2
+echo "last stderr" 1>&2
+exit 1
+@TEST-END-FILE
+
+@TEST-START-FILE suicide.sh
+#! /usr/bin/env bash
+echo "FML"
+kill -9 $$
+echo "nope"
+@TEST-END-FILE
+
+@TEST-START-FILE stdin.sh
+#! /usr/bin/env bash
+read -r line
+echo "$line"
+@TEST-END-FILE
+
+@TEST-START-FILE empty_file.sh
+#! /usr/bin/env bash
+touch out3
+echo "test" > out4
+@TEST-END-FILE

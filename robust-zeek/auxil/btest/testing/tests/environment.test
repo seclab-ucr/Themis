@@ -1,0 +1,22 @@
+# %TEST-EXEC: btest -d %INPUT
+# %TEST-EXEC: btest -U %INPUT
+# %TEST-EXEC: btest-diff output
+
+@TEST-REQUIRES: test -n "${ENV2}"
+@TEST-EXEC-FAIL: test -z "${ENV2}"
+
+@TEST-EXEC: echo ${ENV1} >>../../output
+@TEST-EXEC: echo ${ENV2} >1
+@TEST-EXEC: set >>1
+@TEST-EXEC: test "${ENV2}" = `cd ../.. && pwd` && echo "testbase is correct" >>../../output
+@TEST-EXEC: echo ${ENV3} >>../../output
+@TEST-EXEC: test "${ENV4}" = "(${TEST_BASE}=${TEST_BASE})" && echo "macro expansion within backticks is correct" >>../../output
+@TEST-EXEC: test "${ORIGPATH}" = "${PATH}" && echo "default_path is correct" >>../../output
+
+@TEST-EXEC: echo ${TEST_DIAGNOSTICS} | strip-test-base >>../../output
+@TEST-EXEC: echo ${TEST_MODE} >>../../output
+@TEST-EXEC: echo ${TEST_BASELINE} | strip-test-base >>../../output
+@TEST-EXEC: echo ${TEST_NAME} >>../../output
+@TEST-EXEC: echo ${TEST_VERBOSE} | strip-test-base >>../../output
+@TEST-EXEC: echo ${TEST_BASE} | strip-test-base >>../../output
+@TEST-EXEC: echo ${TEST_PART} >>../../output

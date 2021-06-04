@@ -1,0 +1,5 @@
+# We're just testing if we can find this test. The test itself will
+# always just return true.
+#
+# @TEST-EXEC: true
+

@@ -1,0 +1,23 @@
+#! /usr/bin/env bash
+#
+# Given a PID, check if it corresponds to a running Zeek process.
+#
+#  check-pid <pid>
+
+ps -p $1 -o args 2>/dev/null | grep -q zeek
+
+if [ $? -eq 0 ]; then
+    echo "running"
+else
+    if [ -f /proc/$1/cmdline ]; then
+        grep -q zeek /proc/$1/cmdline
+
+        if [ $? -eq 0 ]; then
+            echo "running"
+        else
+            echo "not running"
+        fi
+    else
+        echo "not running"
+    fi
+fi

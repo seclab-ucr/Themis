@@ -1,0 +1,29 @@
+#! /usr/bin/env bash
+
+force=""
+
+case "$1" in
+    install)
+        force="--force"
+    ;;
+    upgrade)
+        force="--force"
+    ;;
+    bundle)
+        force="--force"
+    ;;
+    unbundle)
+        force="--force"
+    ;;
+    remove)
+        force="--force"
+    ;;
+    unload)
+        force="--force"
+    ;;
+    purge)
+        force="--force"
+    ;;
+esac
+
+$TEST_BASE/../zkg --configfile=config "$@" $force

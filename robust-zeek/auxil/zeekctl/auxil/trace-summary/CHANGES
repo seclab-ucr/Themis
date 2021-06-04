@@ -1,0 +1,295 @@
+
+0.92 | 2020-12-12 20:20:06 -0800
+
+  * Release 0.92.
+
+0.91-16 | 2020-12-12 20:19:48 -0800
+
+  * Add Zeek's Python module directory to the search path (Christian Kreibich, Corelight)
+
+    Without this, the installation's trace-summary doesn't actually find
+    the SubnetTree module.
+
+0.91-14 | 2020-12-10 15:43:55 +0000
+
+  * Baseline refresh to reflect btest 0.64 (Christian Kreibich, Corelight)
+
+0.91-11 | 2020-12-02 11:10:21 -0800
+
+  * Update minimum required CMake to 3.5 (Jon Siwek, Corelight)
+
+0.91-9 | 2020-11-26 18:00:49 +0000
+
+  * Remove CI testing of older Python versions and add newer versions (Jon Siwek, Corelight)
+
+  * Remove empty/useless btest file (Jon Siwek, Corelight)
+
+  * Update trace-summary script to assume use of Python 3 (Jon Siwek, Corelight)
+
+  * Change Python invocations to the explicit `python3` (Jon Siwek, Corelight)
+
+  * Update README for new Python 3 requirement (Jon Siwek, Corelight)
+
+0.91 | 2020-07-23 10:12:38 -0700
+
+  * Release 0.91
+
+  * Update btest.cfg for aux/ to auxil/ rename (Jon Siwek, Corelight)
+
+0.90-2 | 2020-02-19 10:31:50 -0800
+
+  * Update link to ipsumdump (Jon Siwek, Corelight)
+
+0.90 | 2020-02-05 21:29:49 -0800
+
+  * Release 0.90
+
+0.89-9 | 2019-10-28 18:09:14 -0700
+
+  * Move CMake project() after cmake_minimum_required() (Jon Siwek, Corelight)
+
+0.89-3 | 2019-09-04 10:26:28 -0700
+
+  * Fix dead URL to pysubnettree (The Alchemist)
+
+0.89 | 2019-08-01 12:06:45 -0700
+
+  * Release 0.89.
+
+0.88-21 | 2019-08-01 12:06:17 -0700
+
+  * Drop use of Python 2.6 for Travis CI tests (Jon Siwek, Corelight)
+
+0.88-20 | 2019-08-01 11:09:51 -0700
+
+  * Change BRO_MAN_INSTALL_PATH CMake variable to ZEEK_MAN_INSTALL_PATH (Jon Siwek, Corelight)
+
+0.88-19 | 2019-06-17 20:15:18 -0700
+
+  * Update Travis config for bro to zeek renaming (Daniel Thayer)
+
+0.88-17 | 2019-06-12 15:07:07 -0700
+
+  * Update for a directory name change (Daniel Thayer)
+
+    Also a few other unrelated bro to zeek renaming changes.
+
+0.88-11 | 2019-04-16 18:03:50 -0700
+
+  * GH-3: Fix unicode equality comparison warning (Jon Siwek, Corelight)
+
+0.88-7 | 2019-03-07 12:17:53 -0800
+
+  * Allow for parsing JSON ISO8601 timestamp (Wes Lambert)
+
+0.88-2 | 2018-12-07 16:30:48 -0600
+
+  * Update github/download link (Jon Siwek, Corelight)
+
+  * Update submodules to use github.com/zeek (Jon Siwek, Corelight)
+
+0.88 | 2018-08-22 11:55:29 -0500
+
+  * Release v0.88.
+
+0.87-9 | 2018-05-15 15:37:49 +0000
+
+  * Updating submodule.
+
+0.87-6 | 2018-03-15 14:56:39 -0700
+
+  * Configure Travis CI email recipients and build branches. (Daniel Thayer)
+
+0.87-3 | 2018-02-05 15:06:53 -0800
+
+  * Add a .travis.yml file. (Daniel Thayer)
+
+0.87 | 2017-06-06 13:13:45 -0700
+
+  * Release 0.87.
+
+0.86-15 | 2017-05-19 14:01:03 -0500
+
+  * Fix to correctly identify JSON logs when "--conn-version=2" is specified.
+    Also fixed identification of non-default field scope separator for
+    non-json logs.  Minor cleanup of json and scope separator code, and
+    added test cases for json logs and logs with non-default scope
+    separator. (Daniel Thayer)
+
+0.86-14 | 2017-05-18 14:19:25 -0500
+
+  * Add ability to read json format logs and logs with a non-default field
+    scope separator. (Pierre Gaulon)
+
+0.86-11 | 2017-04-21 14:24:45 -0700
+
+  * Fix some failing tests on Python 3. (Daniel Thayer)
+
+  * Fix a minor bug when using Python 3, and improved the check to
+    detect if Python 3 is running. (Daniel Thayer)
+
+0.86-8 | 2017-03-20 12:12:06 -0700
+
+  * Extended trace-summary to interpret Bro 2.x-style log header
+    lines. (Daniel Thayer)
+
+  * Improve error handling and performance when reading conn.log by
+    skipping redundant operations removing unused variables and
+    unnecessary exception handlers. (Daniel Thayer)
+
+  * Improved a few error messages by showing more info. (Daniel
+    Thayer)
+
+0.86 | 2016-10-31 10:27:57 -0700
+
+  * Release 0.86.
+
+  * Update description of Bro in the README (Daniel Thayer)
+
+  * Let cmake put the python path in the hashbang line. (Daniel Thayer)
+
+  * Remove ipsumdump check. Addresses BIT-1736. (Johanna Amann)
+
+0.85-5 | 2016-10-20 11:50:23 -0400
+
+  * Fix test canonifier to work with FreeBSD/OSx sed. (Daniel Thayer).
+
+0.85-3 | 2016-10-10 08:15:55 -0700
+
+  * Python 3 compatibility fix. (Daniel Thayer)
+
+0.85 | 2016-08-12 13:20:06 -0700
+
+  * Release 0.85.
+
+0.84-16 | 2016-05-17 16:21:13 -0700
+
+  * Adjust IP address column widths as needed for IPv6 addrs to
+    improve readability of the output. Addresses BIT-1571. (Daniel
+    Thayer)
+
+  * Add README.rst -> README symlink. Addresses BIT-1413 (Johanna
+    Amann)
+
+0.84-2 | 2015-08-18 07:54:36 -0700
+
+  * Fix typo in a TEST_DIFF_CANONIFIER script name. (Daniel Thayer)
+
+0.84 | 2015-04-27 08:25:19 -0700
+
+  * Release 0.84
+
+0.83-19 | 2015-03-06 14:52:27 -0800
+
+  * Update code to work with Python 3. Bump minimum required Python
+    version to 2.6. (Daniel Thayer)
+
+  * Fix timestamps to not loose precision unnecessarily. (Daniel
+    Thayer)
+
+  * Add more error checks so errors are reported more clearly. (Daniel
+    Thayer)
+
+  * Add regression tests. (Daniel Thayer)
+
+0.83-9 | 2014-12-08 13:54:39 -0800
+
+  * Add man page for trace-summary. (Raúl Benencia)
+
+0.83 | 2014-04-03 15:53:51 -0700
+
+  * Release 0.83
+
+0.82 | 2013-10-14 09:24:55 -0700
+
+  * Updating copyright notice. (Robin Sommer)
+
+0.81 | 2013-09-23 20:24:46 -0700
+
+  * Fixing sampling in pcap mode. (Robin Sommer)
+
+  * s/bro-ids.org/bro.org/g (Robin Sommer)
+
+0.8 | 2012-07-05 12:54:50 -0700
+
+  * Fix typos. (Daniel Thayer)
+
+  * trace-summary now works with IPv6 traffic. It needs a current
+    pysubnettree for that. (Daniel Thayer)
+
+  * Raise minimum required CMake version to 2.6.3. (Jon Siwek)
+
+0.73 | 2012-01-09 16:11:02 -0800
+
+  * Submodule README conformity changes. (Jon Siwek)
+
+0.72 | 2011-10-25 17:57:00 -0700
+
+  * New make dist/distclean targets. (Jon Siwek)
+
+  * Adding executable permission back to script. (Robin Sommer)
+
+  * Cleaning up the distribution. (Robin Sommer)
+
+  * Updating README (Jon Siwek)
+
+0.71-19 | 2011-09-08 12:52:20 -0700
+
+  * Now ignoring all lines starting with a pound Closes #602. (Robin
+    Sommer)
+
+  * Install binaries with an RPATH (Jon Siwek)
+
+0.71-16 | 2011-08-03 16:18:15 -0700
+
+  * Switching to new update-changes script. (Robin Sommer)
+
+0.71-15 | 2011-08-03 16:02:14 -0700
+
+  * trace-summary now parses both Bro 1.x and 2.x conn.log formats.
+    The default setting is to make an educated guess at the format,
+    but can be explicitly set via the new --conn-version switch. (Jon
+    Siwek)
+
+0.71-6 | 2011-03-14 17:41:05 -0700
+
+  * CMake tweaks. (Jon Siwek)
+
+  * Prettyfing the message about sampling being in effect.
+
+0.71-3 | 2011-01-15 14:14:07 -0800
+
+  * Updating update-changes. (Robin Sommer)
+
+  * Let CMake infer install prefix (Jon Siwek)
+
+  * Add warning when building and installing are done by different users (Jon Siwek)
+
+0.71-1 | 2011-01-04 19:02:06 -0800
+
+  * Tweaking update-changes. (Robin Sommer)
+
+0.71 | 2011-01-04 18:36:36 -0800
+
+  * Better error message when missing Python package. (Jon Siwek)
+
+  * Better error message if ipsumdump not installed. (Jon Siwek)
+
+  * Migrated from os.popen (deprecated since Python 2.6) to
+    subprocess.Popen (available since Python 2.4). (Jon Siwek)
+
+  * Switch to CMake-based installation (Jon Siwek)
+
+0.7
+    - Repository switched to git, and README converted to reSt.
+
+    - Sample factor now included in output.
+
+    - Bugfix: Sample factor was not applied to local subnets
+      break-down.
+
+0.6
+    License changed to BSD-style.
+
+0.5
+    First release.

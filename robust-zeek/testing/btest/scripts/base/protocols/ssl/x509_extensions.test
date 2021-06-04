@@ -1,0 +1,13 @@
+# @TEST-EXEC: zeek -b -r $TRACES/tls/tls1.2.trace %INPUT
+# @TEST-EXEC: btest-diff .stdout
+
+@load base/protocols/ssl
+@load base/files/x509
+
+event x509_extension(f: fa_file, extension: X509::Extension)
+{
+	# The formatting of CRL Distribution Points varies between OpenSSL versions. Skip it
+	# for the test.
+	if ( extension$short_name != "crlDistributionPoints" ) 
+		print extension;
+}

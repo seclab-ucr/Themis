@@ -1,0 +1,2 @@
+# %TEST-EXEC: cp -r ../../Files/local_alternative .
+# %TEST-EXEC: btest -a local tests/local-alternative-found.test

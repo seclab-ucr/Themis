@@ -1,0 +1,15 @@
+# %TEST-EXEC-FAIL: btest %INPUT
+# %TEST-EXEC: test ! -e mydir/diff/output
+# %TEST-EXEC: btest -U %INPUT
+# %TEST-EXEC: test ! -e Baseline
+# %TEST-EXEC: test -f mydir/diff/output
+# %TEST-EXEC: btest %INPUT
+
+@TEST-EXEC: echo Hello, World! >output
+@TEST-EXEC: btest-diff output
+
+%TEST-START-FILE btest.cfg
+[btest]
+TmpDir      = .tmp
+BaselineDir = mydir
+%TEST-END-FILE

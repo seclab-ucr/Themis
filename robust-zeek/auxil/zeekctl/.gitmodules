@@ -1,0 +1,12 @@
+[submodule "auxil/capstats"]
+	path = auxil/capstats
+	url = https://github.com/zeek/capstats
+[submodule "auxil/pysubnettree"]
+	path = auxil/pysubnettree
+	url = https://github.com/zeek/pysubnettree
+[submodule "auxil/trace-summary"]
+	path = auxil/trace-summary
+	url = https://github.com/zeek/trace-summary
+[submodule "cmake"]
+	path = cmake
+	url = https://github.com/zeek/cmake

@@ -1,0 +1,298 @@
+##! The reporter built-in functions allow for the scripting layer to
+##! generate messages of varying severity.  If no event handlers
+##! exist for reporter messages, the messages are output to stderr.
+##! If event handlers do exist, it's assumed they take care of determining
+##! how/where to output the messages.
+##!
+##! See :doc:`/scripts/base/frameworks/reporter/main.zeek` for a convenient
+##! reporter message logging framework.
+
+module Reporter;
+
+%%{
+#include "zeek/NetVar.h"
+%%}
+
+## Generates an informational message.
+##
+## msg: The informational message to report.
+##
+## Returns: Always true.
+##
+## .. zeek:see:: reporter_info
+function Reporter::info%(msg: string%): bool
+	%{
+	reporter->PushLocation(frame->GetCall()->GetLocationInfo());
+	reporter->Info("%s", msg->CheckString());
+	reporter->PopLocation();
+	return zeek::val_mgr->True();
+	%}
+
+## Generates a message that warns of a potential problem.
+##
+## msg: The warning message to report.
+##
+## Returns: Always true.
+##
+## .. zeek:see:: reporter_warning
+function Reporter::warning%(msg: string%): bool
+	%{
+	reporter->PushLocation(frame->GetCall()->GetLocationInfo());
+	reporter->Warning("%s", msg->CheckString());
+	reporter->PopLocation();
+	return zeek::val_mgr->True();
+	%}
+
+## Generates a non-fatal error indicative of a definite problem that should
+## be addressed. Program execution does not terminate.
+##
+## msg: The error message to report.
+##
+## Returns: Always true.
+##
+## .. zeek:see:: reporter_error
+function Reporter::error%(msg: string%): bool
+	%{
+	reporter->PushLocation(frame->GetCall()->GetLocationInfo());
+	reporter->Error("%s", msg->CheckString());
+	reporter->PopLocation();
+	return zeek::val_mgr->True();
+	%}
+
+## Generates a fatal error on stderr and terminates program execution.
+##
+## msg: The error message to report.
+##
+## Returns: Always true.
+function Reporter::fatal%(msg: string%): bool
+	%{
+	reporter->PushLocation(frame->GetCall()->GetLocationInfo());
+	reporter->FatalError("%s", msg->CheckString());
+	reporter->PopLocation();
+	return zeek::val_mgr->True();
+	%}
+
+## Generates a fatal error on stderr and terminates program execution
+## after dumping a core file
+##
+## msg: The error message to report.
+##
+## Returns: Always true.
+function Reporter::fatal_error_with_core%(msg: string%): bool
+	%{
+	reporter->PushLocation(frame->GetCall()->GetLocationInfo());
+	reporter->FatalErrorWithCore("%s", msg->CheckString());
+	reporter->PopLocation();
+	return zeek::val_mgr->True();
+	%}
+
+## Generates a "net" weird.
+##
+## name: the name of the weird.
+##
+## Returns: Always true.
+function Reporter::net_weird%(name: string, addl: string &default="", source: string &default=""%): bool
+	%{
+	reporter->Weird(name->CheckString(), addl->CheckString(), source->CheckString());
+	return zeek::val_mgr->True();
+	%}
+
+## Generates a "flow" weird.
+##
+## name: the name of the weird.
+##
+## orig: the originator host associated with the weird.
+##
+## resp: the responder host associated with the weird.
+##
+## Returns: Always true.
+function Reporter::flow_weird%(name: string, orig: addr, resp: addr, addl: string &default="", source: string &default=""%): bool
+	%{
+	reporter->Weird(orig->AsAddr(), resp->AsAddr(), name->CheckString(), addl->CheckString(), source->CheckString());
+	return zeek::val_mgr->True();
+	%}
+
+## Generates a "conn" weird.
+##
+## name: the name of the weird.
+##
+## c: the connection associated with the weird.
+##
+## addl: additional information to accompany the weird.
+##
+## Returns: Always true.
+function Reporter::conn_weird%(name: string, c: connection, addl: string &default="", source: string &default=""%): bool
+	%{
+	if ( c )
+		reporter->Weird(c, name->CheckString(), addl->CheckString(), source->CheckString());
+	else
+		{
+		auto connection_record = @ARG@[1]->AsRecordVal();
+		auto conn_id_val = connection_record->GetField<RecordVal>("id");
+		auto uid_val = connection_record->GetField<StringVal>("uid");
+		reporter->Weird(conn_id_val, uid_val,
+		                name->CheckString(), addl->CheckString(), source->CheckString());
+		}
+
+	return zeek::val_mgr->True();
+	%}
+
+## Generates a "file" weird.
+##
+## name: the name of the weird.
+##
+## f: the file associated with the weird.
+##
+## addl: additional information to accompany the weird.
+##
+## Returns: true if the file was still valid, else false.
+function Reporter::file_weird%(name: string, f: fa_file, addl: string &default="", source: string&default=""%): bool
+	%{
+	auto fuid = f->AsRecordVal()->GetField(0)->AsStringVal();
+	auto file = zeek::file_mgr->LookupFile(fuid->CheckString());
+
+	if ( ! file )
+		return zeek::val_mgr->False();
+
+	reporter->Weird(file, name->CheckString(), addl->CheckString(), source->CheckString());
+	return zeek::val_mgr->True();
+	%}
+
+## Gets the weird sampling whitelist
+##
+## Returns: Current weird sampling whitelist
+function Reporter::get_weird_sampling_whitelist%(%): string_set
+	%{
+	auto set = zeek::make_intrusive<zeek::TableVal>(zeek::id::string_set);
+	for ( const auto& el : reporter->GetWeirdSamplingWhitelist() )
+		{
+		auto idx = zeek::make_intrusive<zeek::StringVal>(el);
+		set->Assign(std::move(idx), nullptr);
+		}
+	return set;
+	%}
+
+## Sets the weird sampling whitelist
+##
+## whitelist: New weird sampling rate.
+##
+## Returns: Always true.
+function Reporter::set_weird_sampling_whitelist%(weird_sampling_whitelist: string_set%) : bool
+	%{
+	auto wl_val = weird_sampling_whitelist->AsTableVal();
+	auto wl_table = wl_val->AsTable();
+	std::unordered_set<std::string> whitelist_set;
+
+	zeek::detail::HashKey* k;
+	IterCookie* c = wl_table->InitForIteration();
+	TableEntryVal* v;
+
+	while ( (v = wl_table->NextEntry(k, c)) )
+		{
+		auto index = wl_val->RecreateIndex(*k);
+		string key = index->Idx(0)->AsString()->CheckString();
+		whitelist_set.emplace(move(key));
+		delete k;
+		}
+	reporter->SetWeirdSamplingWhitelist(std::move(whitelist_set));
+	return zeek::val_mgr->True();
+	%}
+
+## Gets the weird sampling global list
+##
+## Returns: Current weird sampling global list
+function Reporter::get_weird_sampling_global_list%(%): string_set
+	%{
+	auto set = zeek::make_intrusive<zeek::TableVal>(zeek::id::string_set);
+	for ( const auto& el : reporter->GetWeirdSamplingGlobalList() )
+		{
+		auto idx = zeek::make_intrusive<zeek::StringVal>(el);
+		set->Assign(std::move(idx), nullptr);
+		}
+	return set;
+	%}
+
+## Sets the weird sampling global list
+##
+## global_list: New weird sampling rate.
+##
+## Returns: Always true.
+function Reporter::set_weird_sampling_global_list%(weird_sampling_global_list: string_set%) : bool
+	%{
+	auto wl_val = weird_sampling_global_list->AsTableVal();
+	auto wl_table = wl_val->AsTable();
+	std::unordered_set<std::string> global_list_set;
+
+	zeek::detail::HashKey* k;
+	IterCookie* c = wl_table->InitForIteration();
+	TableEntryVal* v;
+
+	while ( (v = wl_table->NextEntry(k, c)) )
+		{
+		auto index = wl_val->RecreateIndex(*k);
+		string key = index->Idx(0)->AsString()->CheckString();
+		global_list_set.emplace(move(key));
+		delete k;
+		}
+	reporter->SetWeirdSamplingGlobalList(std::move(global_list_set));
+	return zeek::val_mgr->True();
+	%}
+
+## Gets the current weird sampling threshold
+##
+## Returns: current weird sampling threshold.
+function Reporter::get_weird_sampling_threshold%(%) : count
+	%{
+	return zeek::val_mgr->Count(reporter->GetWeirdSamplingThreshold());
+	%}
+
+## Sets the current weird sampling threshold
+##
+## threshold: New weird sampling threshold.
+##
+## Returns: Always returns true;
+function Reporter::set_weird_sampling_threshold%(weird_sampling_threshold: count%) : bool
+	%{
+	reporter->SetWeirdSamplingThreshold(weird_sampling_threshold);
+	return zeek::val_mgr->True();
+	%}
+
+
+## Gets the current weird sampling rate.
+##
+## Returns: weird sampling rate.
+function Reporter::get_weird_sampling_rate%(%) : count
+	%{
+	return zeek::val_mgr->Count(reporter->GetWeirdSamplingRate());
+	%}
+
+## Sets the weird sampling rate.
+##
+## weird_sampling_rate: New weird sampling rate.
+##
+## Returns: Always returns true.
+function Reporter::set_weird_sampling_rate%(weird_sampling_rate: count%) : bool
+	%{
+	reporter->SetWeirdSamplingRate(weird_sampling_rate);
+	return zeek::val_mgr->True();
+	%}
+
+## Gets the current weird sampling duration.
+##
+## Returns: weird sampling duration.
+function Reporter::get_weird_sampling_duration%(%) : interval
+	%{
+	return zeek::make_intrusive<zeek::IntervalVal>(reporter->GetWeirdSamplingDuration());
+	%}
+
+## Sets the current weird sampling duration. Please note that
+## this will not delete already running timers.
+##
+## weird_sampling_duration: New weird sampling duration.
+##
+## Returns: always returns True
+function Reporter::set_weird_sampling_duration%(weird_sampling_duration: interval%) : bool
+	%{
+	reporter->SetWeirdSamplingDuration(weird_sampling_duration);
+	return zeek::val_mgr->True();
+	%}

@@ -1,0 +1,7 @@
+# %TEST-EXEC: mkdir -p x/y/z
+# %TEST-EXEC: mv %INPUT x/y/z/new-test
+# %TEST-EXEC: BTEST_TEST_BASE=x/y btest z/new-test
+# %TEST-EXEC: BTEST_TEST_BASE=`pwd`/x/y btest z/new-test
+
+@TEST-EXEC: echo Hello, World!
+@TEST-EXEC: exit 0

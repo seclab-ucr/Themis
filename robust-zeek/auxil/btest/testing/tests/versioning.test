@@ -1,0 +1,12 @@
+# This test verifies that btest correctly errors out when the minimum
+# version requested in the config file is greater than our current one.
+#
+# %TEST-EXEC-FAIL: btest -c btest.cfg 2>output.tmp
+# %TEST-EXEC: cat output.tmp | sed 's/this is .*Please/this is XXX. Please/' >output
+# %TEST-EXEC: btest-diff output
+
+%TEST-START-FILE btest.cfg
+[btest]
+TmpDir      = .tmp
+Minversion  = 99999.99
+%TEST-END-FILE

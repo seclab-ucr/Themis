@@ -1,0 +1,11 @@
+# Test the exit and quit commands.
+#
+# @TEST-EXEC: bash %INPUT
+
+. zeekctl-test-setup
+
+zeekctl install
+
+zeekctl exit
+
+zeekctl quit

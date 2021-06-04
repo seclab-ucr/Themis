@@ -1,0 +1,18 @@
+# %TEST-EXEC-FAIL: btest -d -x output.raw.xml t1 t2 t3
+# %TEST-EXEC: cat output.raw.xml | sed 's/hostname[^"]*"[^"]*"/XXX/g' | sed 's/time[^"]*"[^"]*"/XXX/g' | sed '/^$/d' | sed "s/> />~/" | tr '~' '\n' | sed 's/^[ ]*//' >output.xml
+# %TEST-EXEC: btest-diff output.xml
+# %TEST-EXEC-FAIL: btest -d -x output.raw.xml t1 t2 t3
+# %TEST-EXEC: cat output.raw.xml | sed 's/hostname[^"]*"[^"]*"/XXX/g' | sed 's/time[^"]*"[^"]*"/XXX/g' | sed '/^$/d' | sed "s/> />~/" | tr '~' '\n' | sed 's/^[ ]*//' >output-j2.xml
+# %TEST-EXEC: btest-diff output-j2.xml
+
+%TEST-START-FILE t1
+@TEST-EXEC: exit 0
+%TEST-END-FILE
+
+%TEST-START-FILE t2
+@TEST-EXEC: exit 1
+%TEST-END-FILE
+
+%TEST-START-FILE t3
+@TEST-EXEC: exit 0
+%TEST-END-FILE

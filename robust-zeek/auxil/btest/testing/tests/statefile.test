@@ -1,0 +1,27 @@
+# %TEST-EXEC: btest t1
+# %TEST-EXEC: test ! -e .btest.failed.dat
+# %TEST-EXEC: test -f mystate
+# %TEST-EXEC: mv mystate mystate1
+# %TEST-EXEC: btest-diff mystate1
+# %TEST-EXEC-FAIL: btest t1 t2 t3
+# %TEST-EXEC: mv mystate mystate2
+# %TEST-EXEC: btest-diff mystate2
+
+%TEST-START-FILE t1
+@TEST-EXEC: exit 0
+%TEST-END-FILE
+
+%TEST-START-FILE t2
+@TEST-EXEC: exit 1
+%TEST-END-FILE
+
+%TEST-START-FILE t3
+@TEST-EXEC: exit 1
+%TEST-END-FILE
+
+%TEST-START-FILE btest.cfg
+[btest]
+TmpDir      = .tmp
+BaselineDir = Baseline
+StateFile   = mystate
+%TEST-END-FILE

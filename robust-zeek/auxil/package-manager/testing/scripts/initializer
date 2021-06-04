@@ -1,0 +1,40 @@
+#! /usr/bin/env bash
+
+cp -R $PACKAGES .
+
+for p in packages/*; do
+    if [ $p = 'packages/foo' ]; then
+        # Use a different default branch than 'master' for testing purposes
+        ( cd $p && git init && git checkout -b main && git add * && git commit -m 'init' )
+    else
+        ( cd $p && git init && git add * && git commit -m 'init' )
+    fi
+done
+
+cp -R $SOURCES .
+
+find sources -name 'zkg.index' -exec sed -i -e "s#^#$(pwd)/packages/#" {} \;
+
+for s in sources/*; do
+    ( cd $s && git init && git add * && git commit -m 'init' )
+done
+
+# Create a branch drop-corge in source "one" to drop corge from index
+( cd sources/one &&
+  default_branch=$(git rev-parse --abbrev-ref HEAD) &&
+  git checkout -b drop-corge &&
+  sed -i -e '/corge/d' bob/zkg.index &&
+  git add ./bob/zkg.index &&
+  git commit -m 'Remove corge' &&
+  git checkout ${default_branch} )
+
+echo "\
+[sources]
+one = $(pwd)/sources/one
+[paths]
+state_dir = $(pwd)/state
+script_dir = $(pwd)/scripts
+plugin_dir = $(pwd)/plugins
+" >> config
+
+type zeek-config > /dev/null 2>&1 && echo "zeek_dist = $(zeek-config --zeek_dist)" >> config || true

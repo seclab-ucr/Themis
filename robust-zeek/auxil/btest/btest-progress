@@ -1,0 +1,50 @@
+#! /usr/bin/env bash
+
+function usage
+{
+    cat <<EOF >&2
+usage: $(basename $0) [-q] [-T] <message>
+
+         -q: Do not print message to standard output or standard error.
+         -T: Do not include timestamp on standard error message.
+
+EOF
+    exit 1
+}
+
+### Main.
+
+quiet=0
+time=1
+
+while getopts ":qT" opt; do
+  case $opt in
+    q)
+      quiet=1
+      shift
+      ;;
+    T)
+      time=0
+      shift
+      ;;
+    *)
+      usage
+      ;;
+  esac
+done
+
+test $# != 0 || usage
+
+msg="[btest] -- $@"
+
+if [ "${quiet}" -eq 0 ]; then
+    echo "${msg}"
+    if [ "${time}" -eq 0 ]; then
+        echo "${msg}" >&2
+    else
+        echo "${msg} -- $(date -u +'%Y-%m-%dT%H:%M:%S.%3NZ') " >&2
+    fi
+fi
+
+file=".progress.$(date +%s)"
+echo "$@" >>${file}

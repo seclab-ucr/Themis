@@ -1,0 +1,11 @@
+# %TEST-EXEC: btest -t %INPUT
+# %TEST-EXEC: test -f finalized
+
+@TEST-EXEC: rm -f ../../finalized
+
+%TEST-START-FILE btest.cfg
+[btest]
+TmpDir      = .tmp
+BaselineDir = Baseline
+Finalizer = touch ../../finalized
+%TEST-END-FILE

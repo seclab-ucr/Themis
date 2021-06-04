@@ -1,0 +1,12 @@
+include CHANGES
+include COPYING
+include MANIFEST
+include MANIFEST.in
+include Makefile
+include README
+include VERSION
+include btest.cfg.example
+include setup.py
+graft Baseline
+graft examples
+graft testing

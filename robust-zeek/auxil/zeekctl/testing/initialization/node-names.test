@@ -1,0 +1,29 @@
+# Test that nodes can have unusual names.
+#
+# @TEST-EXEC: bash %INPUT
+# @TEST-EXEC: TEST_DIFF_CANONIFIER=$SCRIPTS/diff-remove-localhost-values btest-diff out
+
+. zeekctl-test-setup
+
+cat > $ZEEKCTL_INSTALL_PREFIX/etc/node.cfg << EOF
+[logcollector]
+type=logger
+host=localhost
+
+[central]
+type=manager
+host=localhost
+
+[communicator]
+type=proxy
+host=localhost
+
+[gatherer]
+type=worker
+host=localhost
+interface=eth0
+EOF
+
+zeekctl install
+
+zeekctl nodes > out

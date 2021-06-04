@@ -1,0 +1,145 @@
+%%{
+#include "zeek/analyzer/protocol/conn-size/ConnSize.h"
+#include "zeek/Reporter.h"
+#include "zeek/Sessions.h"
+
+static zeek::analyzer::Analyzer* GetConnsizeAnalyzer(zeek::Val* cid)
+	{
+	zeek::Connection* c = zeek::sessions->FindConnection(cid);
+	if ( ! c )
+		return nullptr;
+
+	zeek::analyzer::Analyzer* a = c->FindAnalyzer("CONNSIZE");
+	if ( ! a )
+		zeek::reporter->Error("connection does not have ConnSize analyzer");
+
+	return a;
+	}
+
+%%}
+
+## Sets the current byte threshold for connection sizes, overwriting any potential old
+## threshold. Be aware that in nearly any case you will want to use the high level API
+## instead (:zeek:see:`ConnThreshold::set_bytes_threshold`).
+##
+## cid: The connection id.
+##
+## threshold: Threshold in bytes.
+##
+## is_orig: If true, threshold is set for bytes from originator, otherwhise for bytes from responder.
+##
+## .. zeek:see:: set_current_conn_packets_threshold conn_bytes_threshold_crossed conn_packets_threshold_crossed
+##               get_current_conn_bytes_threshold get_current_conn_packets_threshold
+##               set_current_conn_duration_threshold get_current_conn_duration_threshold
+function set_current_conn_bytes_threshold%(cid: conn_id, threshold: count, is_orig: bool%): bool
+	%{
+	zeek::analyzer::Analyzer* a = GetConnsizeAnalyzer(cid);
+	if ( ! a )
+		return zeek::val_mgr->False();
+
+	static_cast<zeek::analyzer::conn_size::ConnSize_Analyzer*>(a)->SetByteAndPacketThreshold(threshold, true, is_orig);
+
+	return zeek::val_mgr->True();
+	%}
+
+## Sets a threshold for connection packets, overwtiting any potential old thresholds.
+## Be aware that in nearly any case you will want to use the high level API
+## instead (:zeek:see:`ConnThreshold::set_packets_threshold`).
+##
+## cid: The connection id.
+##
+## threshold: Threshold in packets.
+##
+## is_orig: If true, threshold is set for packets from originator, otherwhise for packets from responder.
+##
+## .. zeek:see:: set_current_conn_bytes_threshold conn_bytes_threshold_crossed conn_packets_threshold_crossed
+##               get_current_conn_bytes_threshold get_current_conn_packets_threshold
+##               set_current_conn_duration_threshold get_current_conn_duration_threshold
+function set_current_conn_packets_threshold%(cid: conn_id, threshold: count, is_orig: bool%): bool
+	%{
+	zeek::analyzer::Analyzer* a = GetConnsizeAnalyzer(cid);
+	if ( ! a )
+		return zeek::val_mgr->False();
+
+	static_cast<zeek::analyzer::conn_size::ConnSize_Analyzer*>(a)->SetByteAndPacketThreshold(threshold, false, is_orig);
+
+	return zeek::val_mgr->True();
+	%}
+
+## Sets the current duration threshold for connection, overwriting any potential old
+## threshold. Be aware that in nearly any case you will want to use the high level API
+## instead (:zeek:see:`ConnThreshold::set_duration_threshold`).
+##
+## cid: The connection id.
+##
+## threshold: Threshold in seconds.
+##
+## .. zeek:see:: set_current_conn_packets_threshold conn_bytes_threshold_crossed conn_packets_threshold_crossed
+##               get_current_conn_bytes_threshold get_current_conn_packets_threshold
+##               get_current_conn_duration_threshold
+function set_current_conn_duration_threshold%(cid: conn_id, threshold: interval%): bool
+	%{
+	zeek::analyzer::Analyzer* a = GetConnsizeAnalyzer(cid);
+	if ( ! a )
+		return zeek::val_mgr->False();
+
+	static_cast<zeek::analyzer::conn_size::ConnSize_Analyzer*>(a)->SetDurationThreshold(threshold);
+
+	return zeek::val_mgr->True();
+	%}
+
+# Gets the current byte threshold size for a connection.
+##
+## cid: The connection id.
+##
+## is_orig: If true, threshold of originator, otherwhise threshold of responder.
+##
+## Returns: 0 if no threshold is set or the threshold in bytes
+##
+## .. zeek:see:: set_current_conn_packets_threshold conn_bytes_threshold_crossed conn_packets_threshold_crossed
+##               get_current_conn_packets_threshold set_current_conn_duration_threshold
+##               get_current_conn_duration_threshold
+function get_current_conn_bytes_threshold%(cid: conn_id, is_orig: bool%): count
+	%{
+	zeek::analyzer::Analyzer* a = GetConnsizeAnalyzer(cid);
+	if ( ! a )
+		return zeek::val_mgr->Count(0);
+
+	return zeek::val_mgr->Count(static_cast<zeek::analyzer::conn_size::ConnSize_Analyzer*>(a)->GetByteAndPacketThreshold(true, is_orig));
+	%}
+
+## Gets the current packet threshold size for a connection.
+##
+## cid: The connection id.
+##
+## is_orig: If true, threshold of originator, otherwhise threshold of responder.
+##
+## Returns: 0 if no threshold is set or the threshold in packets
+##
+## .. zeek:see:: set_current_conn_packets_threshold conn_bytes_threshold_crossed conn_packets_threshold_crossed
+##               get_current_conn_bytes_threshold set_current_conn_duration_threshold get_current_conn_duration_threshold
+function get_current_conn_packets_threshold%(cid: conn_id, is_orig: bool%): count
+	%{
+	zeek::analyzer::Analyzer* a = GetConnsizeAnalyzer(cid);
+	if ( ! a )
+		return zeek::val_mgr->Count(0);
+
+	return zeek::val_mgr->Count(static_cast<zeek::analyzer::conn_size::ConnSize_Analyzer*>(a)->GetByteAndPacketThreshold(false, is_orig));
+	%}
+
+## Gets the current duration threshold size for a connection.
+##
+## cid: The connection id.
+##
+## Returns: 0 if no threshold is set or the threshold in seconds
+##
+## .. zeek:see:: set_current_conn_packets_threshold conn_bytes_threshold_crossed conn_packets_threshold_crossed
+##               get_current_conn_packets_threshold set_current_conn_duration_threshold
+function get_current_conn_duration_threshold%(cid: conn_id%): interval
+	%{
+	zeek::analyzer::Analyzer* a = GetConnsizeAnalyzer(cid);
+	if ( ! a )
+		return zeek::make_intrusive<zeek::IntervalVal>(0.0);
+
+	return zeek::make_intrusive<zeek::IntervalVal>(static_cast<zeek::analyzer::conn_size::ConnSize_Analyzer*>(a)->GetDurationThreshold());
+	%}

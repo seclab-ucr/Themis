@@ -1,0 +1,16 @@
+# %TEST-EXEC: btest -q t1 t3 >out1 2>&1
+# %TEST-EXEC-FAIL: btest -q t1 t2 >out2 2>&1
+# %TEST-EXEC: btest-diff out1
+# %TEST-EXEC: btest-diff out2
+
+%TEST-START-FILE t1
+@TEST-EXEC: exit 0
+%TEST-END-FILE
+
+%TEST-START-FILE t2
+@TEST-EXEC: exit 1
+%TEST-END-FILE
+
+%TEST-START-FILE t3
+@TEST-EXEC: exit 0
+%TEST-END-FILE

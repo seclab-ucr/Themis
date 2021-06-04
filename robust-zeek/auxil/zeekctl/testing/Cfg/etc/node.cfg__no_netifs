@@ -1,0 +1,23 @@
+# Cluster configuration with one logger node.
+# Note that this config doesn't specify any network interfaces (this is
+# mainly useful because Zeek will not need any superuser privileges).
+
+[manager]
+type=manager
+host=localhost
+
+[logger]
+type=logger
+host=localhost
+
+[proxy-1]
+type=proxy
+host=localhost
+
+[worker-1]
+type=worker
+host=localhost
+
+[worker-2]
+type=worker
+host=localhost

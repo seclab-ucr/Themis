@@ -1,0 +1,45 @@
+#! /usr/bin/env python3
+
+from __future__ import print_function
+import sys
+
+import SubnetTree
+
+def readNetworks(file):
+
+    nets = SubnetTree.SubnetTree()
+
+    for line in open(file):
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+
+        fields = line.split()
+        cidr = fields[0]
+        descr = " ".join(fields[1:])
+
+        try:
+            nets[cidr] = descr
+        except KeyError:
+            print("cannot parse network specification '%s'" % cidr, file=sys.stderr)
+
+
+    return nets
+
+if len(sys.argv) != 2:
+    print("usage: %s networks.cfg <conn.log" % sys.argv[0], file=sys.stderr)
+    sys.exit(1)
+
+nets = readNetworks(sys.argv[1])
+
+for line in sys.stdin:
+    if line.startswith("#"):
+        continue
+
+    m = line.split()
+
+    if len(m) < 5:
+        continue
+
+    if m[2] in nets and m[4] in nets:
+        print(line, end="")

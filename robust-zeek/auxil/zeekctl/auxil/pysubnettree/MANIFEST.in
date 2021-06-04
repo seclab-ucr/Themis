@@ -1,0 +1,7 @@
+include COPYING
+include CHANGES
+include Makefile
+include VERSION
+include include/patricia.h
+include include/SubnetTree.h
+include SubnetTree.i

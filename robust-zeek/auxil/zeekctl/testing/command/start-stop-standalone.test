@@ -1,0 +1,54 @@
+# Test that the start command can start a standalone zeek and create certain
+# files, and test that the stop command can stop zeek and remove those files.
+#
+# @TEST-EXEC: bash %INPUT
+# @TEST-EXEC: btest-diff start.out
+# @TEST-EXEC: btest-diff stop.out
+
+. zeekctl-test-setup
+
+while read line; do installfile $line; done << EOF
+etc/zeekctl.cfg__no_email
+bin/zeek__test
+EOF
+
+zeekctl install
+
+# verify that these files don't already exist before the start command runs
+test ! -e $ZEEKCTL_INSTALL_PREFIX/spool/zeek
+test ! -e $ZEEKCTL_INSTALL_PREFIX/spool/stats.log
+
+zeekctl start > start.out
+
+# the start command creates some files (these are NOT created by zeek itself)
+while read line; do
+    test -e $ZEEKCTL_INSTALL_PREFIX/$line
+done << EOF
+spool/zeek/.cmdline
+spool/zeek/.env_vars
+spool/zeek/.pid
+spool/zeek/.startup
+spool/zeek/stderr.log
+spool/zeek/stdout.log
+EOF
+
+# verify that starting the node was logged in stats.log
+grep started $ZEEKCTL_INSTALL_PREFIX/spool/stats.log
+
+
+zeekctl stop > stop.out
+
+# the stop command should cleanup the node directory
+while read line; do
+    test ! -e $ZEEKCTL_INSTALL_PREFIX/$line
+done << EOF
+spool/zeek/.cmdline
+spool/zeek/.env_vars
+spool/zeek/.pid
+spool/zeek/.startup
+spool/zeek/stderr.log
+spool/zeek/stdout.log
+EOF
+
+# verify that stopping the node was logged in stats.log
+grep stopped $ZEEKCTL_INSTALL_PREFIX/spool/stats.log

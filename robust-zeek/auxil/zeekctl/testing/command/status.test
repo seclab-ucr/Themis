@@ -1,0 +1,40 @@
+# Test that the status command can get status of all nodes, or just a
+# specified node.  Also test that the exit status is zero if all nodes
+# are running, and nonzero otherwise.
+#
+# This test needs to be serialized because we are using the broker python
+# bindings.
+# @TEST-SERIALIZE: listen
+#
+# @TEST-EXEC: bash %INPUT
+# @TEST-EXEC: TEST_DIFF_CANONIFIER="$SCRIPTS/diff-status-output --peers" btest-diff all.out
+# @TEST-EXEC: TEST_DIFF_CANONIFIER="$SCRIPTS/diff-status-output --peers" btest-diff onenode.out
+# @TEST-EXEC: btest-diff stopped.out
+
+. zeekctl-test-setup
+
+while read line; do installfile $line; done << EOF
+etc/zeekctl.cfg__no_email
+etc/node.cfg__no_netifs
+EOF
+
+echo "statuscmdshowall=1" >> $ZEEKCTL_INSTALL_PREFIX/etc/zeekctl.cfg
+
+zeekctl install
+zeekctl start
+
+# get status of all nodes
+zeekctl status > all.out
+
+# get status of one node
+zeekctl status manager > onenode.out
+
+zeekctl stop worker-1
+
+# not all nodes are running
+! zeekctl status
+
+zeekctl stop
+
+# all nodes are stopped
+! zeekctl status > stopped.out

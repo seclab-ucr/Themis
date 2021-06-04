@@ -1,0 +1,159 @@
+#! /usr/bin/env bash
+#
+# Zeek postprocessor script to archive log files.
+#
+# archive-log <file_name> <base_name> <timestamp-when-opened> <timestamp-when-closed> <terminating> <writer>
+#
+#  file_name:  the rotated log filename that we need to archive (the filename
+#              format doesn't really matter).
+#  base_name:  base name of the log (e.g. "conn").
+#  timestamp-when-opened:  timestamp when log file was created (must be in the
+#                          format YY-MM-DD_HH.MM.SS).
+#  timestamp-when-closed:  timestamp when log file was finished (must be in the
+#                          format YY-MM-DD_HH.MM.SS).
+#  terminating:  0 during normal log rotation, or 1 if Zeek is shutting down.
+#  writer:  a string indicating the log writer type, such as "ascii".
+# 
+# Example:
+# archive-log conn.2015-01-20-15-23-42.log conn 15-01-20_15.23.42 15-01-20_16.00.00 0 ascii
+
+# Create a PID file so that the post-terminate script knows when we're done.
+echo $$ > .archive-log.running.$$.tmp
+
+sig_handler()
+{
+    rm .archive-log.running.$$.tmp
+}
+
+# Make sure PID file is removed upon exit from this script
+trap sig_handler 0
+
+# This timestamp will be used by the post-terminate script to give a start time
+# to archive-log.
+now=`date +%y-%m-%d_%H.%M.%S`
+
+. `dirname $0`/zeekctl-config.sh
+
+# Make sure all parameters are supplied.
+if [ $# -ne 6 ]; then
+    echo "Error: incorrect number of arguments provided.
+
+ archive-log:
+     Zeek postprocessor script to archive log files.
+
+ Usage:
+
+    $ archive-log file_name base_name start_timestamp end_timestamp terminating writer
+
+    file_name:        the rotated log filename that we need to archive
+    base_name:        base name of the log (e.g. 'conn').
+    start_timestamp:  timestamp when log file was created (format YY-MM-DD_HH.MM.SS).
+    end_timestamp:    timestamp when log file was finished (format YY-MM-DD_HH.MM.SS).
+    terminating:      0 during normal log rotation, or 1 if Zeek is shutting down.
+    writer:           a string indicating the log writer type, such as 'ascii'.
+
+ Example:
+
+   $ archive-log conn.2015-01-20-15-23-42.log conn 15-01-20_15.23.42 15-01-20_16.00.00 0 ascii"
+
+    exit 1
+fi
+
+file_name=$1
+base_name=$2
+from=$3
+to=$4
+terminating=$5
+writer=$6
+
+# Verify if the given timestamp is in the correct format (YY-MM-DD_HH.MM.SS).
+check_timestamp() {
+    res=`echo $2 | sed 's/[0-9][0-9]-[0-1][0-9]-[0-3][0-9]_[0-2][0-9][.][0-5][0-9][.][0-5][0-9]/VALID/'`
+    if [ "$res" != "VALID" ]; then
+        echo "archive-log: $1 time must be in format YY-MM-DD_HH.MM.SS: $2" >&2
+        exit 1
+    fi
+}
+
+check_timestamp start $from
+check_timestamp end $to
+
+# Convert timestamp format from YY-MM-DD_HH.MM.SS to YYYY-MM-DD-HH-MM-SS
+century=`date +%C`
+from=`echo $century$from | sed 's/[_.]/-/g'`
+to=`echo $century$to | sed 's/[_.]/-/g'`
+
+# Extract file extension from filename
+gzipped=0
+ext=`echo $file_name | sed 's/^.*\.//'`
+if [ "$ext" = "gz" ]; then
+    # Log file is compressed, so get file extension before the ".gz" extension
+    gzipped=1
+    fname=${file_name%.$ext}
+    ext=`echo $fname | sed 's/^.*\.//'`
+fi
+
+if [ ! -f "${makearchivename}" ]; then
+    echo "archive-log: zeekctl option makearchivename is not set correctly" >&2
+    exit 1
+fi
+# Compute the archived log filename
+dest=`"${makearchivename}" $base_name.$ext $writer $from $to`
+if [ -z "$dest" ]; then
+    echo "archive-log: ${makearchivename} did not return a file name" >&2
+    exit 1
+fi
+
+# If log is compressed, then preserve the ".gz" extension.
+if [ $gzipped -ne 0 ]; then
+    dest=$dest.gz
+fi
+
+# If $dest is a relative path, then add ${logdir}
+echo $dest | grep -q '^/'
+if [ $? -ne 0 ]; then
+    if [ -z "${logdir}" ]; then
+        echo "archive-log: zeekctl option logdir is not set" >&2
+        exit 1
+    fi
+    dest="${logdir}/$dest"
+fi
+
+dest_dir=`dirname "$dest"`
+
+mkdir -p "$dest_dir" # Makes sure all parent directories exist.
+if [ $? -ne 0 ]; then
+    echo "archive-log: failed to create log archive directory: $dest_dir" >&2
+    exit 1
+fi
+
+# Record time of last rotation (the post-terminate script passes this to
+# archive-log when Zeek crashes, so it must be in the format that archive-log
+# expects).
+echo $now > .rotated.$base_name
+
+# Run other postprocessors.
+if [ -d "${postprocdir}" ]; then
+    for pp in "${postprocdir}"/*; do
+        nice "$pp" $@
+    done
+fi
+
+# Test if the log still exists in case one of the postprocessors archived it.
+if [ ! -f $file_name ]; then
+    exit 0
+fi
+
+if [ "${compresslogsinflight}" = "0" ] && [ "${compresslogs}" = "1" ] && [ -n "${compresscmd}" ] && [ $gzipped -eq 0 ]; then
+    dest="$dest.${compressextension}"
+    nice ${compresscmd} < $file_name > "$dest"
+else
+    nice mv $file_name "$dest"
+fi
+
+if [ $? -ne 0 ]; then
+    echo "archive-log: possibly failed to archive log file $file_name to $dest" >&2
+    exit 1
+fi
+
+rm -f $file_name

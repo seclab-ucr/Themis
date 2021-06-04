@@ -1,0 +1,17 @@
+# Test that the nodes command lists all zeek nodes.
+#
+# @TEST-EXEC: bash %INPUT
+# @TEST-EXEC: TEST_DIFF_CANONIFIER=$SCRIPTS/diff-remove-localhost-values btest-diff standalone
+# @TEST-EXEC: TEST_DIFF_CANONIFIER=$SCRIPTS/diff-remove-localhost-values btest-diff cluster
+
+. zeekctl-test-setup
+
+zeekctl install
+zeekctl nodes > standalone
+
+while read line; do installfile $line; done << EOF
+etc/node.cfg__logger
+EOF
+
+zeekctl install
+zeekctl nodes > cluster

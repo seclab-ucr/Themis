@@ -1,0 +1,32 @@
+# Test that the initial default cron state is correct, and that the state
+# can be set to either disabled or enabled, and that cron doesn't do
+# anything when it is disabled.
+#
+# @TEST-EXEC: bash %INPUT
+# @TEST-EXEC: btest-diff disable.out
+# @TEST-EXEC: btest-diff enable.out
+# @TEST-EXEC: btest-diff out
+
+. zeekctl-test-setup
+
+while read line; do installfile $line; done << EOF
+etc/zeekctl.cfg__debug
+EOF
+
+zeekctl install
+
+# check the initial default state
+zeekctl cron ? > out
+
+# test that the state can be set to disabled
+zeekctl cron disable > disable.out
+zeekctl cron ? >> out
+
+# test that cron doesn't do anything
+rm $ZEEKCTL_INSTALL_PREFIX/spool/debug.log
+zeekctl cron
+grep -q "cron is disabled" $ZEEKCTL_INSTALL_PREFIX/spool/debug.log
+
+# test that the state can be set to enabled
+zeekctl cron enable > enable.out
+zeekctl cron ? >> out

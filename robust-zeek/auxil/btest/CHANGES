@@ -1,0 +1,1006 @@
+
+0.67 | 2021-01-21 13:27:20 -0800
+
+  * Release 0.67.
+
+0.66-2 | 2021-01-21 13:26:58 -0800
+
+  * Support BTest installation via CMake (Christian Kreibich, Corelight)
+
+    This copies the relevant files manually. Relying on setup.py is
+    feasible but requires careful separation of build and source
+    directories, so currently explicit file lists are easier to maintain.
+
+0.66 | 2021-01-08 12:14:24 +0000
+
+  * Bug fix to apply TEST-REQUIRES to tests duplicated with TEST-START-NEXT.
+    (Robin Sommer, Corelight)
+
+0.65 | 2020-12-07 09:32:03 +0000
+
+  * Release 0.65.
+
+0.64-21 | 2020-12-07 09:01:13 +0000
+
+  * Default to `-j 1` to make CTRL-C work consistently. We now always use
+    multiprocessing with a single process, with one exception: interactive
+    baseline updates still run directly. (Christian Kreibich, Corelight)
+
+  * Avoid leaking processes due to lacking sync manager shutdown.
+    (Christian Kreibich, Corelight)
+
+  * Speed up the threading test since its built-in delays weren't actually
+    required for the test. (Christian Kreibich, Corelight)
+
+0.64-18 | 2020-12-07 08:44:55 +0000
+
+  * Add "binary mode" to btest-diff. In binary mode, invoked with -b/--binary,
+    btest-diff compares test output and baselines for equality only, never
+    applies canonifiers, and doesn't apply our btest header when updating
+    baselines. (Christian Kreibich, Corelight)
+
+0.64-16 | 2020-12-07 08:35:25 +0000
+
+  * GH-36: Fix --abort-on-failure for expected failures. (Robin Sommer,
+    Corelight)
+
+0.64-14 | 2020-12-01 16:05:25 +0000
+
+  * Add support for multiple baseline directories. (Robin Sommer, Corelight)
+
+    This works be setting the environment variable BTEST_BASELINE_DIR to a
+    colon-separated list of directories. They will be searched in order when
+    looking a baseline file to compare against. Updating a baseline will always
+    put the new content into the first directory. One can now also generally
+    set a different baseline directory through BTEST_BASELINE_DIR. See the
+    README for more.
+
+  * Require Python >= 3.5. (Jon Siwek, Corelight)
+
+0.64-1 | 2020-11-11 12:57:12 +0000
+
+  * Fix for Python 3. (Robin Sommer, Corelight)
+
+0.64 | 2020-10-20 14:02:01 +0000
+
+  * Fix canonification problem. (Robin Sommer, Corelight)
+
+0.63 | 2020-10-20 08:32:28 +0000
+
+  * Add support for minimum BTest version requirement in the config
+    file. If an entry called "MinVersion" is present in the "btest"
+    section, it spells out a minimum version that BTest must have in
+    order to run. If that condition isn't fulfilled, we exit with
+    error code 1 and a corresponding error message on stderr.
+    (Christian Kreibich, Corelight)
+
+  * GH-29: Add new options -F/--abort-on-failure that will abort once
+    at least one test has failed. (Robin Sommer, Corelight)
+
+  * Documentation and code cleanup. (Christian Kreibich, Corelight)
+
+0.62-13 | 2020-10-09 07:33:49 +0000
+
+  * Canonify outputs when updating baselines via btest-diff.
+    (Christian Kreibich, Corelight)
+
+    This leverages the same canonicalization btest-diff already
+    applies during test output comparison against baselines also when
+    updating those baselines (usually via btest -U/-u). This removes a
+    bunch of noise from the baselines, including personal home
+    directories, timestamps, etc.
+
+    Since btest-diff doesn't know whether the baseline has undergone
+    this canonicalization, it continues to canonicalize the baseline
+    prior to diffing. To track whether it has canonicalized a baseline
+    when updating, btest-diff now also prepends a header to the
+    generated baseline that warns users about the fact that it is
+    auto-generated. The presence of this header doubles as a marker
+    for canonicalization.
+
+  * Clean up btest-diff's shell code. (Christian Kreibich, Corelight)
+
+0.62-7 | 2020-09-24 07:47:26 -0700
+
+  * GH-26: Explicitly use multiprocessing "fork" start-method (Jon Siwek, Corelight)
+
+    The default start-method on macOS in Python 3.8+ is "spawn", but that
+    emits a RuntimeError with current btest structuring.
+
+0.62-5 | 2020-08-25 07:57:23 +0000
+
+  * GH-11: Fix %DIR not being set correctly in cloned tests. (Jon
+    Siwek, Corelight)
+
+  * Sort XML attributes for more output stability across Python
+    versions. (Jon Siwek, Corelight)
+
+  * Use Sphinx logging API directly for compatibility with Sphinx
+    2.0+. (Jon Siwek, Corelight)
+
+0.62 | 2020-05-08 15:07:11 +0000
+
+  * Release 0.62.
+
+0.61-10 | 2020-05-08 15:05:46 +0000
+
+  * Catch keyboard interrupt to abort orderly and immediately. The
+    existing workers will still run to completion in the background.
+    (Benjamin Bannier, Corelight)
+
+0.61-8 | 2020-04-28 10:00:41 +0000
+
+  * Add `--trace-file` option for recording Chrome trace file.
+    (Benjamin Bannier, Corelight)
+
+0.61-2 | 2020-02-13 18:53:41 +0000
+
+  * Provide a more apt description for btest. (Christopher M. Hobbs,
+    Corelight)
+
+0.61 | 2020-02-07 10:19:25 +0000
+
+  * Release 0.61.
+
+0.6-4 | 2020-02-07 10:18:14 +0000
+
+  * Change --retries option to not increment test name on retries.
+    (Jon Siwek, Corelight)
+
+  * Fix retrying tests that use additional files. (Jon Siwek,
+    Corelight)
+
+0.60 | 2020-01-17 09:13:56 +0000
+
+  * Show diagnostics for expected failures when --diagnostics-all is
+    used. (Robin Sommer, Corelight)
+
+  * Fix btest exit code to indicate success if only tests are failing
+    that are expected to. (Robin Sommer, Corelight)
+
+  * Extend XML test case to cover -j flag. (Jon Siwek, Corelight)
+
+  * Fix XML output option -x to work with -j. (Jon Siwek, Corelight)
+
+0.59-12 | 2019-09-09 11:30:26 +0000
+
+  * Add timestamps to "btest-progress" output. They are added to
+    stderr only, so that they will get recorded but not displayed
+    during execution. The new option -T suppresses the timestamp. (DJ
+    Gregor, Corelight)
+
+0.59-8 | 2019-08-16 16:15:41 +0000
+
+  * New option -z <RETRIES> to retry any failed tests a few times to
+    see if they might just be unstable. (Dev Bali, Corelight)
+
+0.59-1 | 2019-08-09 09:11:32 -0700
+
+  * Update username in `make upload` target (Jon Siwek, Corelight)
+
+0.59 | 2019-08-01 12:04:06 -0700
+
+  * Release 0.59.
+
+0.58-12 | 2019-08-01 12:02:01 -0700
+
+  * Drop use of Python 2.6 for Travis CI tests (Jon Siwek, Corelight)
+
+0.58-11 | 2019-06-27 16:54:17 +0000
+
+  * Adding clarity to difficult to understand error message. (Sam
+    Zaydel, Corelight)
+
+0.58-9 | 2019-06-17 20:17:32 -0700
+
+  * Update Travis config for bro to zeek renaming (Daniel Thayer)
+
+0.58-7 | 2019-05-24 16:16:07 +0000
+
+  * Use more portable platform.system() for determining platform name.
+    (woot4moo)
+
+0.58-5 | 2018-12-07 16:32:52 -0600
+
+  * Update github/download link (Jon Siwek, Corelight)
+
+0.58-4 | 2018-11-29 16:55:33 -0600
+
+  * Add TEST-PORT command and PortRange option (Jon Siwek, Corelight)
+
+    These control assignment of TCP ports to environment variables for
+    use during test execution.  Helps in writing unit tests that can be
+    run concurrently or just in reducing the risk of a unit test failing
+    due to a port already being used by some external process.
+
+0.58 | 2018-05-21 22:32:21 +0000
+
+  * Release 0.58.
+
+0.57-32 | 2018-05-21 22:31:42 +0000
+
+  * Show number of skipped tests even when none fail. (Daniel Thayer)
+
+  * Delete a test's temporary directory if skipped, unless the user
+    wants these. (Corelight)
+
+0.57-28 | 2018-05-08 10:03:20 -0500
+
+  * BIT-1735: open btest files as utf-8 if locale has no default encoding
+    (Corelight)
+
+  * Normalize output of a sphinx-related unit test (Corelight)
+
+  * Improve a unicode decode error message (Daniel Thayer)
+
+0.57-24 | 2018-04-18 14:56:56 -0700
+
+  * Improving console output. (Robin Sommer)
+
+        - When showing a progress message, always clear to end of line
+          to delete any content that a previous, longer message may
+          have left.
+
+        - Ensure to turn the cursor back on at exit.
+
+0.57-23 | 2018-03-15 14:58:20 -0700
+
+  * Configure Travis CI email recipients and build branches. (Daniel
+    Thayer)
+
+0.57-21 | 2018-02-05 15:05:43 -0800
+
+  * Add a .travis.yml file. (Daniel Thayer)
+
+0.57-19 | 2018-01-19 15:14:02 -0800
+
+  * Fix a bug when setting base dir using a relative path. Addresses
+    BIT-1892. (Daniel Thayer)
+
+  * Improve testing of setting a non-default base directory. (Daniel
+    Thayer)
+
+0.57-16 | 2017-11-17 15:03:16 -0800
+
+  * Fix "btest -R" to preserve sorted output ordering. (Daniel Thayer)
+
+  * Add more tests to "doc.test". (Daniel Thayer)
+
+0.57-13 | 2017-10-23 15:35:21 -0700
+
+  * Tweak -A|--show-all to use only coloring, not cursor navigation.
+    (Christian Kreibich)
+
+  * Fix the doc.test. (Daniel Thayer)
+
+  * Improve the console.test and document "--show-all" option. (Daniel
+    Thayer)
+
+  * Added documentation of the "--show-all" option. (Daniel Thayer)
+
+  * Allow multiple TEST-DOC keywords in a test file. (Daniel Thayer)
+
+0.57-7 | 2017-10-16 12:18:28 -0700
+
+  * Fix the console.test to work on FreeBSD and macOS. (Christian
+    Kreibich/Daniel Thayer)
+
+0.57-5 | 2017-10-06 15:01:23 -0700
+
+  * Additional control over TTY-based output handling This adds
+    -A|--show-all, which makes console output preserve output lines
+    for passing/skipped tests.  (Christian Kreibich)
+
+  * Fix btest-rst-cmd script to remove tmp files. (Daniel Thayer)
+
+  * Added TMPDIR to btest.cfg so that temporary files are stored in a
+    local directory instead of a system-wide tmp directory. (Daniel
+    Thayer)
+
+0.57 | 2017-05-15 16:13:33 -0700
+
+  * Release 0.57.
+
+0.56-22 | 2017-05-15 16:13:23 -0700
+
+  * Fixing broken version numbers. (Robin Sommer)
+
+0.56-21 | 2017-05-15 16:05:18 -0700
+
+  * Catching CTRL-C and cleaning up. (Robin Sommer)
+
+0.56-20 | 2017-03-21 17:56:10 -0700
+
+  * Catching exception that wasn't caught. (Robin Sommer)
+
+0.56-19 | 2017-03-03 12:50:42 -0800
+
+  * Fix btest-progress output to stderr when run from btest. (Daniel
+    Thayer)
+
+0.56-17 | 2017-03-02 16:24:31 -0800
+
+  * Cosmectics for progress output: Delete it before asking for
+    baseline updates. (Robin Sommer)
+
+  * Fixing missing output for back-to-back btest-progress calls.
+    Addresses BIT-1800. (Robin Sommer)
+
+  * Fix for augmented output to console. (Robin Sommer)
+
+  * Send btest-progress output to stderr as well. (Robin Sommer)
+
+0.56-13 | 2017-02-23 10:14:56 -0800
+
+  * Prevent socket path length from exceeding system limits. Addresses
+    BIT-862. (Daniel Thayer)
+
+0.56-11 | 2017-02-03 12:38:01 -0800
+
+  * Adding btest-progress to setup.py. (Robin Sommer)
+
+0.56-10 | 2017-01-25 13:04:07 -0800
+
+  * Fix a failing test on FreeBSD. (Daniel Thayer)
+
+  * Fix a bug in btest-progress when using the "-q" option. (Daniel
+    Thayer)
+
+  * Fix some trivial errors in documentation and Makefile. (Daniel
+    Thayer)
+
+  * Add 'upload' Makefile target to upload to PyPi. (Jon Siwek)
+
+0.56-5 | 2017-01-24 08:45:29 -0800
+
+  * Bugfix for recent btest-progress changes. (Robin Sommer)
+
+0.56-4 | 2017-01-23 19:59:59 -0800
+
+  * New utility btest-progress to display progress messages while a
+    test is executing. These messages appear in real-time while the
+    rest is still running. When stdout is a tty, the progress messages
+    are incorporated into the colored one-line status message. By
+    default, btest-progress also prints the message to a test's
+    standard output. That can be suppressed by giving it an option -q.
+    (Robin Sommer)
+
+  * Experimental automatic generation of test reference documentation.
+    The new command-line option "-R <format>" prints out a list of all
+    tests in either Markdown (format 'md') or reStructuredText (format
+    'rst'). The list includes a documentation string with each test
+    that gets defined through a new "@TEST-DOC: <docstring>"
+    directive. This is experimental. (Robin Sommer)
+
+  * Fix pylint warnings. (Robin Sommer)
+
+0.56 | 2016-10-31 14:23:57 -0700
+
+  * Release 0.56.
+
+0.55-6 | 2016-10-31 14:23:24 -0700
+
+  * Python 3 compatibility fixes for btest-sphinx.py. (Daniel Thayer)
+
+0.55-4 | 2016-10-25 09:31:25 -0700
+
+  * Fix diff-max-lines.test to work on openbsd. (Daniel Thayer)
+
+0.55-2 | 2016-10-10 08:18:54 -0700
+
+  * Fix the btest-rst-cmd script to work with Python 3. (Daniel
+    Thayer)
+
+0.55 | 2016-02-23 14:02:35 -0800
+
+  * Release 0.55.
+
+0.54-65 | 2016-02-23 14:00:10 -0800
+
+  * Fine-tuning diagnostic output. It needlessly stripped leading
+    whitespace. (Robin Sommer)
+
+0.54-63 | 2016-02-07 19:39:54 -0800
+
+  * Extending --groups to allow running everything *except* a set of
+    groups. (Robin Sommer)
+
+  * Fix portability issue with use of mktemp. (Daniel Thayer)
+
+0.54-60 | 2015-11-16 07:30:38 -0800
+
+  * Updates for Python 3. (Fabian Affolter)
+
+0.54-58 | 2015-10-01 16:04:51 -0700
+
+  * Improved test of TEST_DIFF_FILE_MAX_LINES. (Daniel Thayer)
+
+  * Added ability for a user to override the default number of lines
+    to show for diffs by setting the environment variable
+    TEST_DIFF_FILE_MAX_LINES. Reduced the default to 100. (Daniel
+    Thayer)
+
+  * When no baseline exists, changed btest-diff to always just show
+    the entire file. (Daniel Thayer)
+
+0.54-55 | 2015-08-25 07:47:22 -0700
+
+  * Port to Python 3. (Daniel Thayer)
+
+  * Various cleanup, bug fix, simplifications, and smaller
+    improvements. (Daniel Thayer)
+
+  * Improve and extend test suite substantially. (Daniel Thayer)
+
+0.54-9 | 2015-07-03 18:21:52 -0700
+
+  * Make sure IgnoreDirs works with toplevel globbing. (Robin Sommer)
+
+0.54-8 | 2015-07-03 16:31:24 -0700
+
+  * Expanding globs in TestDirs, relative to TestBase. (Robin Sommer)
+
+0.54-7 | 2015-06-22 13:07:42 -0700
+
+  * Allow BTEST_TEST_BASE overriding in alternative configuration.
+    (Vlad Grigorescu)
+
+  * Create README symlink for GitHub rendering. (Vlad Grigorescu)
+
+0.54-1 | 2015-06-18 09:08:34 -0700
+
+  * Add support for BTEST_TEST_BASE environment variable for
+    overriding the test base directory. (Robin Sommer)
+
+0.54 | 2015-03-02 17:22:22 -0800
+
+  * Release 0.54.
+
+0.53-6 | 2015-03-02 17:21:26 -0800
+
+  * Improve documentation of timing functionality. (Daniel Thayer)
+
+  * Add a new section to documentation that lists the BTest
+    prerequisites. (Daniel Thayer)
+
+  * Add warning when btest cannot create timing baseline. (Daniel
+    Thayer)
+
+0.53-3 | 2015-01-22 07:25:01 -0800
+
+  * Fix some typos in the README. (Daniel Thayer)
+
+0.53-1 | 2014-11-11 13:21:10 -0800
+
+  * In diagnostics, do not show verbose output for tests known to
+    fail. (Robin Sommer)
+
+0.53 | 2014-07-22 17:36:24 -0700
+
+  * Release 0.53.
+
+0.52-2 | 2014-07-22 17:36:15 -0700
+
+  * Update MANIFEST.in and setup.py to fix packaging. (Jon Siwek)
+
+0.52 | 2014-03-13 14:05:44 -0700
+
+  * Release 0.52.
+
+0.51-14 | 2014-03-13 14:05:36 -0700
+
+  * Fix a link in the README. (Jon Siwek)
+
+0.51-12 | 2014-02-11 16:12:44 -0800
+
+  * Work-around for systems reporting that a socket path is too long.
+    Addresses BIT-862. (Robin Sommer)
+
+0.51-11 | 2014-02-11 15:37:40 -0800
+
+  * Fix for Linux systems that have the perf tool but don't support
+    measuring instructions. (Robin Sommer)
+
+  * No longer tracking tests that are expected to fail in state file.
+    (Robin Sommer)
+
+  * Refactoring the timing code to no longer execute at all when not
+    needed.(Robin Sommer)
+
+0.51-7 | 2014-02-06 21:06:40 -0800
+
+  * Fix for platforms that don't support timing measurements yet.
+    (Robin Sommer)
+
+0.51-6 | 2014-02-06 18:19:08 -0800
+
+  * Adding a timing mode that records test execution times per host.
+    This is for catching regressions (or improvements :) that lets
+    execution times divert significantly. Linux only for now. See the
+    README for more information. (Robin Sommer)
+
+  * Adding color to test status when writing to console. (Robin Sommer)
+
+  * A bit of refactoring to define the status messages ("ok", "failed")
+    only at a single location.
+
+    Also added a note when a test declared as expecting failure in fact
+    succeeds. (Robin Sommer)
+
+
+0.51-2 | 2013-11-17 20:21:08 -0800
+
+  * New keyword ``TEST-KNOWN-FAILURE`` to mark tests that are
+    currently known to fail. (Robin Sommer)
+
+0.51-1 | 2013-11-11 13:36:36 -0800
+
+  * Fixing bug with tests potentially being ignored when using
+    alternatives. (Robin Sommer)
+
+0.51 | 2013-10-07 17:29:50 -0700
+
+  * Updating copyright notice. (Robin Sommer)
+
+0.5-1 | 2013-10-07 17:26:30 -0700
+
+  * Polishing how included commands and files are shown. (Robin Sommer)
+
+        - Enabling CSS styling to command lines and shown file names
+          via the new "btest-include" and "btest-cmd" classes.
+
+        - Fix to enable showing line numbers in btest-sphinx generated
+          output.
+
+        - Fix to enable Pygments coloring in output.
+
+0.5 | 2013-09-20 14:48:01 -0700
+
+  * Fix the btest-rst-pipe script. (Daniel Thayer)
+
+  * A set of of documentation fixes, clarifications, and extensions.
+    (Daniel Thayer)
+
+  * A set of changes to Sphinx commands and directives. (Robin Sommer)
+
+    btest-rst-*:
+        - Always show line numbers.
+
+        - Highlight the command executed.
+
+        - rst-cmd-include gets an option -n <i> to include only upto i lines.
+
+        - rst-cmd-include prefixes output with "<file>" to show what we're
+          including.
+
+    btest-include:
+        - Set Pygments language automatically if we show a file with an
+          extension we know (in particular ".bro").
+
+        - Prefix output with "<file>" to show what we're including.
+
+0.4-63 | 2013-08-28 21:10:39 -0700
+
+  * btest-sphinx now provides a new directive btest-include. This
+    works like literalinclude (with all its options) but it also saves
+    a version of the included text as a test to detect changes. (Robin
+    Sommer)
+
+0.4-60 | 2013-08-28 18:54:51 -0700
+
+  * Fix typos and reST formatting in README (Daniel Thayer)
+
+  * Fix a couple of error messages. (Daniel Thayer)
+
+  * Fixed a reference to a non-existent variable which was causing the
+    "-w" option to have no effect. (Daniel Thayer)
+
+  * Test portability fix.  (Robin Sommer)
+
+0.4-55 | 2013-08-22 16:09:21 -0700
+
+  * New "Sphinx-mode" for BTest, activated with -S. This allows to
+    capture a test's diagnostic output when running from inside
+    Sphinx; the output will now be inserted into the generated
+    document. (Robin Sommer)
+
+  * Adding an option -n to btest-rst-cmd that truncates output longer
+    than N lines. (Robin Sommer)
+
+  * Adding a PartFinalizer that runs a commmand at the completion of
+    each test part. (Robin Sommer)
+
+0.4-51 | 2013-08-22 10:36:34 -0700
+
+  * Improve cleanup of processes that don't terminate with
+    btest-bg-wait. (Jon Siwek)
+
+0.4-49 | 2013-08-13 18:43:03 -0700
+
+  * Fixing test portability problems. (Daniel Thayer)
+
+  * Adding TEST_BASE environment variable. The existing TESTBASE isn't
+    always behaving as expected and wasn't documented to begin with.
+    (Robin Sommer)
+
+0.4-43 | 2013-08-12 16:04:53 -0700
+
+  * Bugfix for ignored tests. (Robin Sommer)
+
+0.4-42 | 2013-07-31 20:46:30 -0700
+
+  * Adding support for "parts": One can split a single test across
+    multiple files by adding a numerical ``#<n>`` postfix to their
+    names, where each ``<n>`` represents a separate part of the test.
+    ``btests`` will combine all of a test's parts in numerical order
+    and execute them subsequently within the same sandbox. Example in
+    the README. (Robin Sommer)
+
+  * When running a command, TEST_PART contains the current part
+    number. (Robin Sommer)
+
+  * Extending Sphinx support. (Robin Sommer)
+
+        * Adding tests for Sphinx functionality.
+
+        * Support for parts in Sphinx directives. If multiple btest
+          directives reference the same test name, each will turn into
+          a part of a single test.
+
+        * Internal change restructuring the btest Sphinx directive. We
+          now process it in two passes: one to save the test at parse
+          time, and one later to execute once everything has been
+          parsed.
+
+        * Adding Sphinx sandbox for testing.
+
+  * Fix for tests returning no output to render at all. (Robin Sommer)
+
+0.4-28 | 2013-07-17 21:56:18 -0700
+
+  * btest-diff now passes the name of the file under consideration on to
+    canonifiers. (Robin Sommer)
+
+0.4-27 | 2013-07-14 21:19:59 -0700
+
+  * When searching for tests, BTest now ignores a directories if it finds
+    a file ".btest-ignore" in there. (Robin Sommer)
+
+0.4-26 | 2013-07-08 20:46:22 -0700
+
+  * Fixing bug with @TEST-START-NEXT naming. (Robin Sommer)
+
+0.4-25 | 2013-07-08 13:25:50 -0700
+
+  * A test-suite for btest. Using, of course, btest. "make test" will
+    test most of btest's features. The main missing piece is testing
+    the Sphinx support, we will add that next. (Robin Sommer)
+
+  * When creating directories, we know also create intermediaries.
+    That in particular means that "@TEST-START-FILE a/b/c" now creates
+    a directory "a/b" automatically and puts the file in there. (Robin
+    Sommer)
+
+  * IgnoreDirs now also works for sub directories. (Robin Sommer)
+
+  * Documentation updates. (Robin Sommer)
+
+  * Adding "Initializer" option, which runs a command before each
+    test. (Robin Sommer)
+
+  * Adding "CommandPrefix" option that changes the naming of all btest
+    commands by replacing the "@TEST-" prefix with a custom string.
+    (Robin Sommer)
+
+  * Default configuration file can be overriden via BTEST_CFG
+    environment variable. (Robin Sommer)
+
+  * s/bro-ids.org/bro.org/g (Robin Sommer)
+
+  * Bugfix for -j without number. (Robin Sommer)
+
+  * New @TEST-ALTERNATIVE that activates tests only for the given
+    alternative. Renamed @TEST-NO-ALTERNATIVE to
+    @TEST-NOT-ALTERNATIVE, and allowing "default" for both
+    @TEST-ALTERNATIVE and @TEST-NOTALTERNATIVE to specify the case
+    that BTest runs without any alternative given. (Robin Sommer)
+
+  * Fix for alternative names containing white spaces. (Robin Sommer)
+
+0.4-14 | 2013-01-23 18:11:22 -0800
+
+  * Fixing links in README and removing TODOs. (Robin Sommer)
+
+0.4-13 | 2013-01-23 14:33:23 -0800
+
+  * Allowing use of -j without a value. BTest then uses the number of
+    CPU cores as reported by the OS. (Robin Sommer)
+
+0.4-11 | 2013-01-21 17:50:40 -0800
+
+  * Adding a new "alternative" concept that combines filters and
+    substitutions, and adds per-alternative environment variables.
+    (Robin Sommer)
+
+    Instead of defining filters and substitutions separately, one now
+    specifies an alternative configuration to run with "-A <name>" and
+    that then checks for both "[substitutions-<name>]" and
+    "[filter-<name>]" section. In addition, "[environment-<name>]"
+    allows to define alternative-specific environment variables.
+
+    The old filter/substitutions options -F and -s are gone. The
+    sections for substitutions are renamed to "[substitutions-<name>]"
+    from "[subst-<name>]".
+
+0.4-10 | 2013-01-07 09:45:35 -0800
+
+  * btest now sets a new environment variable TEST_VERBOSE, giving the
+    path of a file where a test can record further information about
+    its execution that will be included with btest's ``--verbose``
+    output. (Robin Sommer)
+
+0.4-9 | 2012-12-20 12:20:44 -0800
+
+  * Documentation fixes/clarifications. (Daniel Thayer)
+
+  * Fix the btest "-c" option, which didn't work when the specified
+    config file was not in the current working directory. (Daniel
+    Thayer)
+
+0.4-6 | 2012-11-08 16:33:51 -0800
+
+  * Putting a limit on how many input line btest-diff shows. (Robin
+    Sommer)
+
+0.4-5 | 2012-11-01 16:14:29 -0700
+
+  * Making Sphinx module tolerant against docutils version change.
+    (Robin Sommer)
+
+0.4-4 | 2012-09-25 06:24:59 -0700
+
+  * Fix a couple of reST formatting problems. (Daniel Thayer)
+
+0.4-2 | 2012-09-24 11:41:06 -0700
+
+  * Add option -x to output test results in an XML (JUnit-like)
+    format. (Jon Siwek)
+
+0.4 | 2012-06-15 15:15:13 -0700
+
+  * Remove code to expand environment variables on command line. (Not
+    needed because the command line is just passed to the shell.)
+    (Daniel Thayer)
+
+  * Clarify explanation about expansion of environment variables.
+    (Daniel Thayer)
+
+  * Fix errors in README and btest help output; added documentation
+    for the -q option. (Daniel Thayer)
+
+  * Fixed a bug in btest where it was looking for "filters-" (instead
+    of "filter-") in the btest config file. (Daniel Thayer)
+
+0.31-45 | 2012-05-24 16:43:14 -0700
+
+  * Correct typos in documentation. (Daniel Thayer)
+
+  * Failed tests are now only recorded into the state file when we're
+    not updating. That allows to run "btest -r" repeatedly while
+    updating baselines in between. (Robin Sommer)
+
+  * Experimentation Sphinx directive to write a btest with a Sphinx
+    document. See README for more information.
+
+  * Fixing typos, plus an console output tweak. (Robin Sommer)
+
+  * Option -q now implies -b as well. (Robin Sommer)
+
+0.31-33 | 2012-05-13 17:08:15 -0700
+
+  * New command to copy a file into a test's directory.
+
+    ``@TEST-COPY-FILE: <file>``
+        Copy the given file into the test's directory before the test is
+        run. If ``<file>`` is a relative path, it's interpreted relative
+        to the BTest's base directory. Environment variables in ``<file>``
+        will be replaced if enclosed in ``${..}``. This command can be
+        given multiple times. (Robin Sommer)
+
+  * Suppressing error messages when btest-diff can't remove diag file.
+    (Robin Sommer)
+
+  * Adding option -q/--quiet to suppress informational non-error
+    output. (Robin Sommer)
+
+  * Option -F also takes a comma-separated list to specify multiple
+    filters , rather than having to give -F multiple times. (Robin
+    Sommer)
+
+0.31-28 | 2012-05-06 21:27:15 -0700
+
+  * Separating semantics of groups and thread serialization into
+    separate options. -g still specifices @TEST-GROUPs that are to be
+    executed, but these groups don't any longer control which tests
+    get serialized in a parallel execution. For that, there's a new
+    "@TEST-SERIALIZE: <tag>" command that takes a tag and then makes
+    sure all tests with the same tag are run within the same thread.
+    (Robin Sommer)
+
+  * TEST-GROUPS can now be given multiple times now to assign a test
+    to a set of groups. (Robin Sommer)
+
+  * Extended -g to accept a comma-separated list of groups names to
+    run more than one test group. (Robin Sommer)
+
+  * New output handler for console output. This output is now the
+    default when stdout is a terminal. It prints out a compressed
+    output that updates as btest goes through; it also indicates the
+    progress so far. If btest's output is redirected to a
+    non-terminal, is switches back to the old style. (Robin Sommer)
+
+  * New test command @TEST-NO-FILTER: <filter>
+
+    This allows to ignore a test when running a specific filter. (Robin Sommer)
+
+  * Changing the way filters are activated.
+
+    -F <filter> now activates only the given filter, but doesn't run
+    the standard tests in addition. But one can now give -F a
+    command-separated list of filters to activate them all, and refer
+    to the standard tests without filter as ``-``. (Robin Sommer)
+
+  * Fix to allow numbered test to be given individually on the command
+    line. (E.g., integer.geq-3 for a file that contains three tests).
+    (Robin Sommer)
+
+
+0.31-23 | 2012-04-16 18:10:02 -0700
+
+  * A number of smaller fixes for bugs, plus polishing, caused by the
+    recent restructuring. (Robin Sommer)
+
+  * Removing the error given when using -r with tests on the command
+    line. It's unnessary and confusing compared to when listing tests
+    in btest.cfg. (Robin Sommer)
+
+  * Adding a new "finalizer" option.
+
+    ``Finalizer``
+        An executable that will be executed each time any test has
+        succesfully run. It runs in the same directory as the test itself
+        and receives the name of the test as its parameter. The return
+        value indicates whether the test should indeed be considered
+        succeeded. By default, there's no finalizer set. (Robin Sommer)
+
+  * btest is now again overwriting old diag files instead of appending
+    (i.e., back to as it used to be). (Robin Sommer)
+
+  * Diag output is now line-buffered. (Daniel Thayer)
+
+
+0.31-13 | 2012-03-13 15:59:51 -0700
+
+  * Adding new option -r that reruns all tests that failed last time.
+    btest now always records all failed tests in a file called. (Robin
+    Sommer)
+
+  * Internal restructuring to factor output out into sublcasses.
+    (Robin Sommer)
+
+  * Adding parallel test execution to btest. (Robin Sommer)
+
+        - A new option "-j <n>" allows to run up to <n> tests in
+          parallel.
+
+        - A new @TEST-GROUP directive allows to group tests that can't
+          be parallelized. All tests of the same group will be
+          executed sequentially.
+
+        - A new option "-g <group>" allows to run only tests of a
+          certain group, or with "-g -" all tests that don't have a
+          group.
+
+
+0.31-2 | 2012-01-25 16:58:29 -0800
+
+  * Don't add btest's path to PATH anymore. (Jon Siwek)
+
+0.31 | 2011-11-29 12:11:49 -0600
+
+  * Submodule README conformity changes. (Jon Siwek)
+
+0.3 | 2011-10-25 19:58:26 -0700
+
+  * More graceful error handling at startup if btest.cfg not found.
+    (Robin Sommer)
+
+  * Python 2.4 compat changes. (Jon Siwek)
+
+  * When in brief mode, btest-diff now shows full output if we don't
+    have a baseline yet. (Robin Sommer)
+
+  * Adding executable permission back to script. (Robin Sommer)
+
+  * Cleaning up distribution. (Robin Sommer)
+
+0.22-28 | 2011-09-15 15:18:11 -0700
+
+  * New environment variable TEST_DIFF_BRIEF. If set btest-diff no
+    longer includes a mismatching file's full content it the
+    diagnostic output. This can be useful if the file being compared
+    is very large. (Robin Sommer)
+
+0.22-27 | 2011-08-12 22:56:12 -0700
+
+  * Fix btest-bg-wait's kill trap and -k option. (Jon Siwek)
+
+0.22-18 | 2011-07-23 11:54:07 -0700
+
+  * A new option -u for interactively updating baselines.
+
+  * Teach btest's TEST-START-FILE to make subdirectories (Jon Siwek)
+
+  * Output polishing. (Robin Sommer)
+
+  * Have distutils install 'btest-setsid' script. (Jon Siwek)
+
+  * A portable setsid. (Robin Sommer)
+
+  * Fixes for background execution of processes.
+
+  * Fixing exit codes. (Robin Sommer)
+
+0.22-6 | 2011-07-19 17:38:03 -0700
+
+  * Teach btest's TEST-START-FILE to make subdirectories (Jon Siwek)
+
+0.22-5 | 2011-05-02 08:41:34 -0700
+
+  * A number of bug fixes, and output polishing. (Robin Sommer)
+
+  * More robust background execution by btest-bg-*. (Robin Sommer)
+
+0.22-4 | 2011-03-29 21:38:13 -0700
+
+  * A test command can now signal to btest that even if it fails
+    subsequent test commands should still run by returning exit code 100.
+    btest-diff uses this to continue in the case that no baseline has
+    yet been established.
+
+  * New test option @TEST-REQUIRES for running a test conditionally.
+    See the README for more information.
+
+0.22-2 | 2011-03-03 21:44:18 -0800
+
+  * Two new helper scripts for spawning processes in the background.
+    See README for more information.
+
+  * btest-diff can now deal with files specificied with paths.
+
+0.22 | 2011-02-08 14:06:13 -0800
+
+  * BTest is now hosted along with the other Bro repositories on
+    git.bro-ids.org.
+
+0.21 | 2011-01-09 21:29:18 -0800
+
+  * In btest.cfg, option values can now include commands to execute in
+    backticks.
+
+    Example:
+
+        [environment]
+        CC=clang -emit-llvm -g `hilti-config --cflags`
+
+  * Limiting substitutions to replacing whole words.
+
+  * Adding "substitutions". Substitutions are similar to filters, yet
+    they do not adapt the input but the command line being exectued.
+    See README for more information.
+
+  * Instead of giving a test's file name on the command line, one can
+    now also use its "dotted" name as it's printed out when btest is
+    running (e.g., "foo.bar"). That allows for easier copy/paste.
+
+  * Starting CHANGES.

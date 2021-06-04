@@ -1,0 +1,12 @@
+## Generated for all NTP messages. Different from many other of Zeek's events,
+## this one is generated for both client-side and server-side messages.
+##
+## See `Wikipedia <http://en.wikipedia.org/wiki/Network_Time_Protocol>`__ for
+## more information about the NTP protocol.
+##
+## c: The connection record describing the corresponding UDP flow.
+##
+## is_orig: True if the message was sent by the originator.
+##
+## msg: The parsed NTP message.
+event ntp_message%(c: connection, is_orig: bool, msg: NTP::Message%);

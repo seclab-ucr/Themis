@@ -1,0 +1,35 @@
+# %TEST-DOC: Test the "--show-all" option.
+#
+# %TEST-REQUIRES: which script
+#
+# This test doesn't work on OpenBSD, because the "script" command lacks the
+# necessary options.
+# %TEST-REQUIRES: test `uname` != "OpenBSD"
+#
+# The following uses the "script" command for two btest invocations, in order
+# to verify that "btest --show-all" works correctly when btest's stdout is
+# a TTY.
+#
+# With one failing test, one succeeding, and one skipped, plus an additional
+# summary line, this makes two lines of output for the first invocation and
+# four for the second.
+#
+# %TEST-EXEC: script-command "btest t1 t2 t3" | wc -l | awk '{print $1}' >output 2>&1
+# %TEST-EXEC: script-command "btest --show-all t1 t2 t3" | wc -l | awk '{print $1}' >>output 2>&1
+# %TEST-EXEC: btest-diff output
+
+%TEST-START-FILE t1
+@TEST-EXEC: echo "A successful dummy test"
+@TEST-EXEC: exit 0
+%TEST-END-FILE
+
+%TEST-START-FILE t2
+@TEST-EXEC: echo "A failing dummy test"
+@TEST-EXEC: exit 1
+%TEST-END-FILE
+
+%TEST-START-FILE t3
+@TEST-REQUIRES: false
+@TEST-EXEC: echo "A skipped dummy test"
+@TEST-EXEC: exit 0
+%TEST-END-FILE

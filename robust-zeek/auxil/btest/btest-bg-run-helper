@@ -1,0 +1,28 @@
+#! /usr/bin/env bash
+#
+# Internal helper for btest-bg-run.
+
+cleanup ()
+    {
+    if [ ! -e .exitcode ]; then
+        echo 15 >.exitcode
+        kill 0 &>/dev/null
+
+        if [ ! -z "$pid" ]; then
+            kill -0 $pid &>/dev/null && kill $pid
+            sleep 1
+            kill -0 $pid &>/dev/null && kill -9 $pid && echo 9 >.exitcode
+        fi
+    fi
+    }
+
+trap "cleanup" EXIT
+
+eval "$@ &"
+
+pid=$!
+echo $$ >.pid
+
+wait $pid
+echo $? >.exitcode
+pid=""

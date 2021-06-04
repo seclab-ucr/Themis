@@ -1,0 +1,45 @@
+# %TEST-REQUIRES: test "`uname`" = "Linux"
+# %TEST-REQUIRES: which perf
+# %TEST-REQUIRES: perf stat -o /dev/null true 2> /dev/null
+# %TEST-REQUIRES: perf stat -x " " -e instructions true 2>&1  | grep -vq "not supported"
+
+# Tests of TimingBaselineDir
+# %TEST-EXEC: btest -D %INPUT >>output 2>&1
+# %TEST-EXEC: echo ----- >>output
+# %TEST-EXEC: test '!' -e Baseline/_Timing
+# %TEST-EXEC: test '!' -e mytimings
+# %TEST-EXEC: btest -DT %INPUT >>output 2>&1
+# %TEST-EXEC: echo ----- >>output
+# %TEST-EXEC: test '!' -e Baseline/_Timing
+# %TEST-EXEC: test -d mytimings
+
+# Tests of TimingDeltaPerc and PerfPath (for all of these, the runtime is 1000)
+# %TEST-EXEC: echo measure-time-options 897 >`echo mytimings/*`
+# %TEST-EXEC: btest -D %INPUT >>output 2>&1
+# %TEST-EXEC: echo ----- >>output
+# %TEST-EXEC: echo measure-time-options 895 >`echo mytimings/*`
+# %TEST-EXEC-FAIL: btest -D %INPUT >>output 2>&1
+# %TEST-EXEC: echo ----- >>output
+# %TEST-EXEC: echo measure-time-options 1128 >`echo mytimings/*`
+# %TEST-EXEC: btest -D %INPUT >>output 2>&1
+# %TEST-EXEC: echo ----- >>output
+# %TEST-EXEC: echo measure-time-options 1131 >`echo mytimings/*`
+# %TEST-EXEC-FAIL: btest -D %INPUT >>output 2>&1
+# %TEST-EXEC: echo ----- >>output
+
+# %TEST-EXEC: cat output | sed 's/ ([-+%.0-9]*)/ (+xx.x%)/g' >tmp
+# %TEST-EXEC: mv tmp output
+# %TEST-EXEC: btest-diff output
+
+@TEST-MEASURE-TIME
+@TEST-EXEC: awk 'BEGIN { for ( i = 1; i < 100000; i++ ) x += i; print x; }; done' </dev/null
+
+%TEST-START-FILE btest.cfg
+[btest]
+TmpDir      = .tmp
+BaselineDir = Baseline
+TimingBaselineDir = mytimings
+TimingDeltaPerc = 11.5
+PerfPath    = %(testbase)s/../../Scripts/test-perf
+%TEST-END-FILE
+

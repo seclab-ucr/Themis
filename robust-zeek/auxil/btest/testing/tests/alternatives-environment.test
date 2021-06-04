@@ -1,0 +1,10 @@
+# %TEST-EXEC: btest %INPUT >>output 2>&1
+# %TEST-EXEC: btest -a foo %INPUT >>output 2>&1
+# %TEST-EXEC: btest -a foo,foo2 %INPUT >>output 2>&1
+# %TEST-EXEC: btest -a foo,-,foo2 %INPUT >>output 2>&1
+# %TEST-EXEC: btest-diff output
+# %TEST-EXEC: btest-diff child-output
+
+@TEST-EXEC: echo "Foo: ${FOO}" >>../../child-output
+@TEST-EXEC: echo "Foo2: ${FOO2}" >>../../child-output
+@TEST-EXEC: echo "-------------" >>../../child-output

@@ -1,0 +1,20 @@
+# @TEST-EXEC: zeek -b -r $TRACES/wikipedia.trace %INPUT >output
+# @TEST-EXEC: btest-diff output
+
+@load base/protocols/http
+@load base/utils/files
+
+event connection_established(c: connection)
+	{
+	print generate_extraction_filename("test-prefix", c, "test-suffix");
+	print generate_extraction_filename("test-prefix", c, "");
+	print generate_extraction_filename("", c, "test-suffix");
+	print generate_extraction_filename("", c, "");
+	}
+
+event zeek_init()
+	{
+	print extract_filename_from_content_disposition("attachment; filename=Economy");
+	print extract_filename_from_content_disposition("attachment; name=\"US-$ rates\"");
+	print extract_filename_from_content_disposition("attachment; filename*=iso-8859-1'en'%A3%20rates");
+	}

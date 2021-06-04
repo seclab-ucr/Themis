@@ -1,0 +1,21 @@
+# %TEST-DOC: Check that we can change the baseline directory from inside an alternative by setting BTEST_BASELINE_DIR there.
+#
+# %TEST-EXEC-FAIL: btest -a baseline %INPUT
+# %TEST-EXEC: test ! -f mydir/alternatives-baseline-dir/output
+# %TEST-EXEC: btest -a baseline -U %INPUT
+# %TEST-EXEC: test ! -e Baseline
+# %TEST-EXEC: test -f mydir/alternatives-baseline-dir/output
+# %TEST-EXEC: btest -a baseline %INPUT
+
+@TEST-EXEC: echo Hello, World! >output
+@TEST-EXEC: btest-diff output
+
+%TEST-START-FILE btest.cfg
+[btest]
+TmpDir      = .tmp
+
+[environment-baseline]
+BTEST_BASELINE_DIR=mydir
+
+%TEST-END-FILE
+

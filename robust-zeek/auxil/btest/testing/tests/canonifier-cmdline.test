@@ -1,0 +1,19 @@
+# Verify that btest-diff returns nonzero when a file differs from the baseline
+# when a canonifier is applied.  Two types of canonifiers are tested: one that
+# reads input only from stdin, and one that ignores stdin when a filename is
+# provided as a cmd-line argument.
+# %TEST-EXEC: chmod +x ignore-cmdline-args
+# %TEST-EXEC: btest -d %INPUT
+
+%TEST-START-FILE Baseline/canonifier-cmdline/output
+ABC 123 DEF
+%TEST-END-FILE
+
+%TEST-START-FILE ignore-cmdline-args
+sed 's/[0-9][0-9][0-9]/XXX/'
+%TEST-END-FILE
+
+@TEST-EXEC: echo ABC DEF >output
+@TEST-EXEC-FAIL: TEST_DIFF_CANONIFIER="../../ignore-cmdline-args" btest-diff output
+@TEST-EXEC-FAIL: TEST_DIFF_CANONIFIER="sed 's/[0-9][0-9][0-9]/XXX/'" btest-diff output
+

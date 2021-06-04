@@ -1,0 +1,17 @@
+# %TEST-DOC: Ensures that "btest-progress" functions correctly.
+# %TEST-EXEC: btest %INPUT >output 2>&1
+# %TEST-EXEC: echo --- >>output
+# %TEST-EXEC: btest -bD %INPUT >>output 2>&1
+# %TEST-EXEC: echo --- >>output
+# %TEST-EXEC: btest -v %INPUT >>output 2>&1
+# %TEST-EXEC: echo --- >>output
+# %TEST-EXEC: btest -q %INPUT >>output 2>&1
+# %TEST-EXEC: echo --- >>output
+# %TEST-EXEC: TEST_DIFF_CANONIFIER=%DIR/../Scripts/strip-iso8601-date btest-diff output
+
+# @TEST-EXEC: bash %INPUT >&2
+
+btest-progress Foo 1
+btest-progress Foo 2
+btest-progress Foo 3
+btest-progress Foo 4

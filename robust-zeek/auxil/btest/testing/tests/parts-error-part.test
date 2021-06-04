@@ -1,0 +1,7 @@
+# %TEST-EXEC-FAIL: btest test#3 >output 2>&1 
+# %TEST-EXEC: btest-diff output
+
+# %TEST-START-FILE test
+@TEST-EXEC: echo "Hello, world!." >>../../output
+# %TEST-END-FILE
+

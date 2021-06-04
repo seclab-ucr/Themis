@@ -1,0 +1,81 @@
+# %TEST-DOC: Test the --documentation option and @TEST-DOC.
+# %TEST-EXEC: btest -R rst >rst
+# %TEST-EXEC: btest-diff rst
+# %TEST-EXEC: btest -R md >md
+# %TEST-EXEC: btest-diff md
+
+%TEST-START-FILE btest.cfg
+[btest]
+TestDirs    = testdoc misc multipart emptydir alternatives
+TmpDir      = .tmp
+BaselineDir = Baseline
+%TEST-END-FILE
+
+%TEST-START-FILE testdoc/singleline
+@TEST-DOC: This is a single-line TEST-DOC comment.
+@TEST-EXEC: exit 0
+%TEST-END-FILE
+
+%TEST-START-FILE testdoc/testdocmissing
+# This test does not have a TEST-DOC keyword.
+@TEST-EXEC: exit 0
+%TEST-END-FILE
+
+%TEST-START-FILE testdoc/multiline
+@TEST-DOC: This is a multi-line TEST-DOC comment.
+@TEST-DOC: This is the 2nd line.
+@TEST-EXEC: exit 0
+@TEST-DOC: This is the 3rd line.
+%TEST-END-FILE
+
+%TEST-START-FILE testdoc/badtestdoc
+@TEST-DOC This comment will not appear in output (missing colon after TEST-DOC).
+@TEST-EXEC: exit 0
+%TEST-END-FILE
+
+%TEST-START-FILE misc/requires.test
+# This test will not run due to TEST-REQUIRES, but is always documented.
+@TEST-REQUIRES: false
+@TEST-DOC: This is a skipped test.
+@TEST-EXEC: exit 0
+%TEST-END-FILE
+
+%TEST-START-FILE misc/subdir/subtest.test
+@TEST-DOC: This test is in a subdirectory.
+@TEST-EXEC: exit 0
+%TEST-END-FILE
+
+%TEST-START-FILE multipart/multi.test
+# Test if TEST-DOC works for a multi-part test.
+@TEST-DOC: 1st test part.
+@TEST-EXEC: exit 0
+%TEST-END-FILE
+
+%TEST-START-FILE multipart/multi.test#2
+@TEST-DOC: 2nd test part.
+@TEST-EXEC: exit 0
+%TEST-END-FILE
+
+%TEST-START-FILE multipart/multi.test#3
+@TEST-DOC: 3rd test part.
+@TEST-EXEC: exit 0
+%TEST-END-FILE
+
+%TEST-START-FILE emptydir/ignoretest
+@TEST-DOC: This file is ignored (and does not appear in documentation output).
+@TEST-IGNORE
+@TEST-EXEC: exit 0
+%TEST-END-FILE
+
+%TEST-START-FILE alternatives/myalternate
+@TEST-DOC: This test runs only for the given alternative, but it will always
+@TEST-DOC: appear in the documentation output.
+@TEST-ALTERNATIVE: myalternative
+@TEST-EXEC: exit 0
+%TEST-END-FILE
+
+%TEST-START-FILE alternatives/default
+@TEST-DOC: This test runs if no alternative is given.
+@TEST-ALTERNATIVE: default
+@TEST-EXEC: exit 0
+%TEST-END-FILE

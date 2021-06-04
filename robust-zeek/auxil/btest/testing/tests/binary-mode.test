@@ -1,0 +1,38 @@
+# This tests btest-diff's binary mode. In binary mode we treat test
+# outputs and baselines as blobs, compare them only byte-by-byte,
+# don't canonify them, and don't prefix our baseline header.
+#
+# Running the below directly should fail: there's no baseline yet.
+# %TEST-EXEC-FAIL: btest %INPUT
+#
+# Verify that none got created either:
+# %TEST-EXEC: test ! -e mydir/binary-mode/output
+#
+# Now update the baseline:
+# %TEST-EXEC: btest -U %INPUT
+#
+# Verify it exists:
+# %TEST-EXEC: test -f mydir/binary-mode/output
+#
+# btest should now successfully compare against the baseline:
+# %TEST-EXEC: btest %INPUT
+#
+# And finally, verify that the updated baseline hasn't changed:
+# %TEST-EXEC: printf "\00\01\02" >output
+# %TEST-EXEC: diff -s output mydir/binary-mode/output
+#
+# Update once more, to ensure we refresh the baseline properly
+# %TEST-EXEC: btest -U %INPUT
+# %TEST-EXEC: diff -s output mydir/binary-mode/output
+
+@TEST-EXEC: printf "\00\01\02" >output
+
+# Setting a non-existant canonifier here verifies that binary mode
+# indeed does not canonify.
+@TEST-EXEC: TEST_DIFF_CANONIFIER=doesnotexist btest-diff --binary output
+
+%TEST-START-FILE btest.cfg
+[btest]
+TmpDir      = .tmp
+BaselineDir = mydir
+%TEST-END-FILE

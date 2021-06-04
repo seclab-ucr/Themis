@@ -1,0 +1,2 @@
+# Test filter used by the alternatives-filter test.
+sed 's/E/*/g' <$1 >$2

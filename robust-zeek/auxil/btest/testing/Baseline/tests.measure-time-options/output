@@ -1,0 +1,32 @@
+measure-time-options ... ok
+  % cat .stderr
+
+all 1 tests successful
+-----
+measure-time-options ... ok
+  % cat .stderr
+
+all 1 tests successful
+-----
+measure-time-options ... ok (+xx.x%)
+  % cat .stderr
+
+all 1 tests successful
+-----
+measure-time-options ... failed (+xx.x%)
+  % 'measure-time-options' exceeded permitted execution time deviation (+xx.x%)
+  % cat .stderr
+
+1 of 1 test failed
+-----
+measure-time-options ... ok (+xx.x%)
+  % cat .stderr
+
+all 1 tests successful
+-----
+measure-time-options ... failed (+xx.x%)
+  % 'measure-time-options' exceeded permitted execution time deviation (+xx.x%)
+  % cat .stderr
+
+1 of 1 test failed
+-----

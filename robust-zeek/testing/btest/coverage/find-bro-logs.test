@@ -1,0 +1,72 @@
+# This test is intended to help keep the "Log Files" documentation page
+# up-to-date.  The output of this test should match all the log filenames
+# listed on the "Log Files" page in the documentation.
+#
+# If this test fails, then the "Log Files" documentation page should be updated.
+
+# @TEST-REQUIRES: which python3
+# @TEST-EXEC: bash %INPUT
+# @TEST-EXEC: btest-diff out
+
+BROSCRIPTS=${DIST}/scripts
+
+if [ ! -d "${BROSCRIPTS}" ]; then
+    echo "Directory not found: ${BROSCRIPTS}" 1>&2
+    exit 1
+fi
+
+python3 find_logs.py "${BROSCRIPTS}" | sort > out
+
+@TEST-START-FILE find_logs.py
+import os, sys
+import re
+
+scriptdir = sys.argv[1]
+
+# Return a list of all zeek script files.
+def find_scripts():
+    scripts = []
+
+    for r, d, f in os.walk(scriptdir):
+        for fname in f:
+            if fname.endswith(".zeek") or fname.endswith(".bro"):
+                scripts.append(os.path.join(r, fname))
+
+    return scripts
+
+# For a given script file, return a list of all "Log::create_stream" lines.
+def find_log(fname):
+    f = open(fname, "r")
+
+    lines = []
+    get_semicolon = False
+
+    for line in f:
+        line = line.strip()
+        if not line:
+            continue
+        if line.startswith("#"):
+            continue
+
+        if get_semicolon:
+            lines[-1] += line
+            if line.endswith(";"):
+                get_semicolon = False
+        elif line.startswith("Log::create_stream"):
+            lines.append(line)
+            if not line.endswith(";"):
+                get_semicolon = True
+
+    f.close()
+
+    return lines
+
+for fname in find_scripts():
+    lines = find_log(fname)
+    for line in lines:
+        # Print the value of the "$path" field.
+        idx = line.find("$path")
+        if idx > 0:
+            m = re.match('.*\$path\s*=\s*"?(\w+)"?.*', line[idx:])
+            print(m.group(1))
+@TEST-END-FILE

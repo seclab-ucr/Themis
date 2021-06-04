@@ -1,0 +1,8 @@
+# %TEST-EXEC: btest mydir/mytest
+# %TEST-EXEC: btest-diff output
+
+%TEST-START-FILE mydir/mytest
+@TEST-EXEC: echo $(basename $(dirname %DIR))/$(basename %DIR) >>../../output
+@TEST-START-NEXT
+@TEST-START-NEXT
+%TEST-END-FILE

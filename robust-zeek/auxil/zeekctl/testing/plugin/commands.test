@@ -1,0 +1,20 @@
+# Test that commands can be added by a plugin.
+#
+# @TEST-EXEC: bash %INPUT
+# @TEST-EXEC: btest-diff help.out
+# @TEST-EXEC: btest-diff cmd.out
+# @TEST-EXEC: btest-diff testcmd.out
+
+. zeekctl-test-setup
+
+while read line; do installfile $line; done << EOF
+etc/zeekctl.cfg__debug
+plugins/commandtest.py $ZEEKCTL_INSTALL_PYTHON_DIR/zeekctl/plugins --new
+EOF
+
+zeekctl install
+zeekctl help | grep commandtest > help.out
+
+zeekctl commandtest > cmd.out
+zeekctl commandtest.testcmd manager worker > testcmd.out
+! zeekctl commandtest.testcmd fail

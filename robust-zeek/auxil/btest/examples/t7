@@ -1,0 +1,2 @@
+@TEST-EXEC: echo "Foo" | grep -q Foo
+@TEST-EXEC: awk 'BEGIN{for(i=0; i < 50000000; i++){}}'

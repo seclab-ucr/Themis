@@ -1,0 +1,11 @@
+# Verify that setting TEST_DIFF_BRIEF causes btest-diff to not show the
+# file contents when it doesn't match the baseline (but the diff is still
+# shown).
+# %TEST-EXEC: mkdir -p Baseline/diff-brief
+# %TEST-EXEC: echo "This is the baseline" > Baseline/diff-brief/child-output
+# %TEST-EXEC-FAIL: btest -d %INPUT >raw 2>&1
+# %TEST-EXEC: cat raw | grep -v '+++' | grep -v '\-\-\-' >output
+# %TEST-EXEC: btest-diff output
+
+@TEST-EXEC: echo "Hello world" > child-output
+@TEST-EXEC: TEST_DIFF_BRIEF=1 btest-diff child-output

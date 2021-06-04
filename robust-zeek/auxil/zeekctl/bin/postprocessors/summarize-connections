@@ -1,0 +1,86 @@
+#! /usr/bin/env bash
+#
+# Zeek postprocessor script to create connection summary log file.
+#
+# Needs trace-summary script.
+#
+# summarize-connections <rotated-file-name> <base-name> <timestamp-when-opened> <timestamp-when-closed> <terminating> <writer>
+#
+# For an explanation of the command-line options, see the "archive-log" script.
+#
+# Example:
+# summarize-connections conn.2015-01-20-15-23-42.log conn 15-01-20_15.23.42 15-01-20_16.00.00 0 ascii
+
+if [ $# -ne 6 ]; then
+    echo "summarize-connections: wrong usage"
+    exit 1
+fi
+
+input=$1
+base=$2
+open=$3
+close=$4
+terminating=$5
+writer=$6
+
+# Only process ASCII conn.log.
+if [ "$base" != "conn" ] || [ "$writer" != "ascii" ]; then
+    exit 0
+fi
+
+. `dirname $0`/../zeekctl-config.sh
+if [ $? -ne 0 ]; then
+    exit 1
+fi
+
+# If the tracesummary zeekctl config option is not defined, then exit (this is
+# not an error).
+if [ -z "${tracesummary}" ]; then
+    exit 0
+fi
+
+# GNU's time can do memory as well.
+export TIME="%E real, %U user, %S sys, %KK total memory"
+
+# trace-summary needs to import SubnetTree
+export PYTHONPATH=${libdirinternal}:$PYTHONPATH
+
+# If ${memlimit} is not set, then use 1.5GB.
+LIMIT=${memlimit:-1572864}
+ulimit -m $LIMIT
+# Note: on OpenBSD, attempting to adjust virtual memory size always fails.
+if [ "${os}" != "OpenBSD" ]; then
+    ulimit -v $LIMIT
+fi
+
+summary_options="-c -r"
+
+# If we're a cluster installation, we assume we have lots of traffic and
+# activate sampling.
+if [ "${standalone}" = "0" ]; then
+    summary_options="$summary_options -S 0.01"
+fi
+
+if [ -f "${localnetscfg}" ]; then
+    summary_options="$summary_options -l ${localnetscfg}"
+fi
+
+output=conn-summary.$open.log
+output_basename=conn-summary
+
+# Don't bother checking for errors here, because the log file will
+# contain the error messages.
+nice ${time} "${tracesummary}" $summary_options $input 2>&1 | grep -v "exceeds bandwidth" >$output
+
+if [ "${mailconnectionsummary}" = "1" ]; then
+    # Convert timestamps to the format HH:MM:SS, and build the subject line.
+    start=`echo $open | sed 's/^..-..-.._//' | sed 's/\./:/g'`
+    end=`echo $close | sed 's/^..-..-.._//' | sed 's/\./:/g'`
+    subject="Connection summary from $start-$end"
+
+    "${scriptsdir}"/send-mail "$subject" <$output
+fi
+
+# Archive the conn-summary log file.
+"${scriptsdir}"/archive-log $output $output_basename $open $close $terminating ascii
+

@@ -1,0 +1,54 @@
+:orphan:
+
+Package: base/frameworks/sumstats/plugins
+=========================================
+
+Plugins for the summary statistics framework.
+
+:doc:`/scripts/base/frameworks/sumstats/plugins/__load__.zeek`
+
+
+:doc:`/scripts/base/frameworks/sumstats/plugins/average.zeek`
+
+   Calculate the average.
+
+:doc:`/scripts/base/frameworks/sumstats/plugins/hll_unique.zeek`
+
+   Calculate the number of unique values (using the HyperLogLog algorithm).
+
+:doc:`/scripts/base/frameworks/sumstats/plugins/last.zeek`
+
+   Keep the last X observations.
+
+:doc:`/scripts/base/frameworks/sumstats/plugins/max.zeek`
+
+   Find the maximum value.
+
+:doc:`/scripts/base/frameworks/sumstats/plugins/min.zeek`
+
+   Find the minimum value.
+
+:doc:`/scripts/base/frameworks/sumstats/plugins/sample.zeek`
+
+   Keep a random sample of values.
+
+:doc:`/scripts/base/frameworks/sumstats/plugins/std-dev.zeek`
+
+   Calculate the standard deviation.
+
+:doc:`/scripts/base/frameworks/sumstats/plugins/variance.zeek`
+
+   Calculate the variance.
+
+:doc:`/scripts/base/frameworks/sumstats/plugins/sum.zeek`
+
+   Calculate the sum.
+
+:doc:`/scripts/base/frameworks/sumstats/plugins/topk.zeek`
+
+   Keep the top-k (i.e., most frequently occurring) observations.
+
+:doc:`/scripts/base/frameworks/sumstats/plugins/unique.zeek`
+
+   Calculate the number of unique values.
+

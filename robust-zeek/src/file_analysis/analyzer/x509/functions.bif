@@ -1,0 +1,926 @@
+%%{
+#include <openssl/x509.h>
+#include <openssl/asn1.h>
+#include <openssl/x509_vfy.h>
+#include <openssl/ocsp.h>
+#include <openssl/pem.h>
+#include <openssl/err.h>
+
+#include "zeek/file_analysis/analyzer/x509/X509.h"
+#include "zeek/net_util.h"
+
+#include "file_analysis/analyzer/x509/types.bif.h"
+
+// construct an error record
+static zeek::RecordValPtr x509_result_record(uint64_t num, const char* reason, zeek::ValPtr chainVector = nullptr)
+	{
+	auto rrecord = zeek::make_intrusive<zeek::RecordVal>(zeek::BifType::Record::X509::Result);
+
+	rrecord->Assign(0, zeek::val_mgr->Int(num));
+	rrecord->Assign(1, zeek::make_intrusive<zeek::StringVal>(reason));
+	if ( chainVector )
+		rrecord->Assign(2, std::move(chainVector));
+
+	return rrecord;
+	}
+
+// get all cretificates starting at the second one (assuming the first one is the host certificate)
+STACK_OF(X509)* x509_get_untrusted_stack(zeek::VectorVal* certs_vec)
+	{
+	STACK_OF(X509)* untrusted_certs = sk_X509_new_null();
+	if ( ! untrusted_certs )
+		{
+		zeek::emit_builtin_error(zeek::util::fmt("Untrusted certificate stack initialization error: %s",
+		                       ERR_error_string(ERR_get_error(),NULL)));
+		return 0;
+		}
+
+	for ( int i = 1; i < (int) certs_vec->Size(); ++i ) // start at 1 - 0 is host cert
+		{
+		const auto& sv = certs_vec->At(i);
+
+		if ( ! sv )
+			continue;
+
+		// Fixme: check type
+		X509* x = ((zeek::file_analysis::detail::X509Val*) sv.get())->GetCertificate();
+		if ( ! x )
+			{
+			sk_X509_free(untrusted_certs);
+			zeek::emit_builtin_error(zeek::util::fmt("No certificate in opaque in stack"));
+			return 0;
+			}
+
+		sk_X509_push(untrusted_certs, x);
+		}
+
+	return untrusted_certs;
+	}
+
+// We need this function to be able to identify the signer certificate of an
+// OCSP request out of a list of possible certificates.
+X509* x509_get_ocsp_signer(const STACK_OF(X509)* certs,
+                           OCSP_BASICRESP* basic_resp)
+	{
+	const ASN1_OCTET_STRING* key  = nullptr;
+	const X509_NAME*         name = nullptr;
+
+#if ( OPENSSL_VERSION_NUMBER < 0x10100000L ) || defined(LIBRESSL_VERSION_NUMBER)
+	OCSP_RESPID* resp_id = basic_resp->tbsResponseData->responderId;
+
+	if ( resp_id->type == V_OCSP_RESPID_NAME )
+		name = resp_id->value.byName;
+	else if ( resp_id->type == V_OCSP_RESPID_KEY )
+		key = resp_id->value.byKey;
+	else
+		return 0;
+#else
+	if ( ! OCSP_resp_get0_id(basic_resp, &key, &name) )
+		return 0;
+#endif
+
+	if ( name )
+		return X509_find_by_subject(const_cast<STACK_OF(X509)*>(certs),
+									const_cast<X509_NAME*>(name));
+
+	// Just like OpenSSL, we just support SHA-1 lookups and bail out otherwhise.
+	if ( key->length != SHA_DIGEST_LENGTH )
+		return 0;
+
+	unsigned char* key_hash = key->data;
+
+	for ( int i = 0; i < sk_X509_num(certs); ++i )
+		{
+		unsigned char digest[SHA_DIGEST_LENGTH];
+		X509* cert = sk_X509_value(certs, i);
+		if ( ! X509_pubkey_digest(cert, EVP_sha1(), digest, NULL) )
+			// digest failed for this certificate, try with next
+			continue;
+
+		if ( memcmp(digest, key_hash, SHA_DIGEST_LENGTH) == 0 )
+			// keys match, return certificate
+			return cert;
+		}
+
+	return 0;
+	}
+
+// Convert hash algorithm registry numbers to the OpenSSL EVP_MD.
+// Mapping at https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-18
+const EVP_MD* hash_to_evp(int hash)
+	{
+	switch ( hash )
+		{
+		case 1:
+			return EVP_md5();
+			break;
+		case 2:
+			return EVP_sha1();
+			break;
+		case 3:
+			return EVP_sha224();
+			break;
+		case 4:
+			return EVP_sha256();
+			break;
+		case 5:
+			return EVP_sha384();
+			break;
+		case 6:
+			return EVP_sha512();
+			break;
+		default:
+			return nullptr;
+		}
+	}
+
+%%}
+
+## Parses a certificate into an X509::Certificate structure.
+##
+## cert: The X509 certificate opaque handle.
+##
+## Returns: A X509::Certificate structure.
+##
+## .. zeek:see:: x509_certificate x509_extension x509_ext_basic_constraints
+##              x509_ext_subject_alternative_name x509_verify
+##              x509_get_certificate_string
+function x509_parse%(cert: opaque of x509%): X509::Certificate
+	%{
+	assert(cert);
+	auto* h = (zeek::file_analysis::detail::X509Val*) cert;
+
+	return zeek::file_analysis::detail::X509::ParseCertificate(h);
+	%}
+
+## Constructs an opaque of X509 from a der-formatted string.
+##
+## Note: this function is mostly meant for testing purposes
+##
+## .. zeek:see:: x509_certificate x509_extension x509_ext_basic_constraints
+##              x509_ext_subject_alternative_name x509_verify
+##              x509_get_certificate_string x509_parse
+function x509_from_der%(der: string%): opaque of x509
+    %{
+    const u_char* data = der->Bytes();
+    return zeek::make_intrusive<zeek::file_analysis::detail::X509Val>(d2i_X509(nullptr, &data, der->Len()));
+    %}
+
+## Returns the string form of a certificate.
+##
+## cert: The X509 certificate opaque handle.
+##
+## pem: A boolean that specifies if the certificate is returned
+##      in pem-form (true), or as the raw ASN1 encoded binary
+##      (false).
+##
+## Returns: X509 certificate as a string.
+##
+## .. zeek:see:: x509_certificate x509_extension x509_ext_basic_constraints
+##              x509_ext_subject_alternative_name x509_parse x509_verify
+function x509_get_certificate_string%(cert: opaque of x509, pem: bool &default=F%): string
+	%{
+	assert(cert);
+	auto* h = (zeek::file_analysis::detail::X509Val*) cert;
+
+	BIO *bio = BIO_new(BIO_s_mem());
+
+	if ( pem )
+		PEM_write_bio_X509(bio, h->GetCertificate());
+
+	else
+		i2d_X509_bio(bio, h->GetCertificate());
+
+	auto ext_val = zeek::file_analysis::detail::X509::GetExtensionFromBIO(bio);
+
+	if ( ! ext_val )
+		ext_val = zeek::val_mgr->EmptyString();
+
+	return ext_val;
+	%}
+
+## Verifies an OCSP reply.
+##
+## certs: Specifies the certificate chain to use. Server certificate first.
+##
+## ocsp_reply: the ocsp reply to validate.
+##
+## root_certs: A list of root certificates to validate the certificate chain.
+##
+## verify_time: Time for the validity check of the certificates.
+##
+## Returns: A record of type X509::Result containing the result code of the
+##          verify operation.
+##
+## .. zeek:see:: x509_certificate x509_extension x509_ext_basic_constraints
+##              x509_ext_subject_alternative_name x509_parse
+##              x509_get_certificate_string x509_verify
+function x509_ocsp_verify%(certs: x509_opaque_vector, ocsp_reply: string, root_certs: table_string_of_string, verify_time: time &default=network_time()%): X509::Result
+	%{
+	zeek::RecordValPtr rval;
+	X509_STORE* ctx = zeek::file_analysis::detail::X509::GetRootStore(root_certs->AsTableVal());
+	if ( ! ctx )
+		return x509_result_record(-1, "Problem initializing root store");
+
+
+	zeek::VectorVal *certs_vec = certs->AsVectorVal();
+	if ( certs_vec->Size() < 1 )
+		{
+		zeek::reporter->Error("No certificates given in vector");
+		return x509_result_record(-1, "no certificates");
+		}
+
+	// host certificate
+	unsigned int index = 0; // to prevent overloading to 0pointer
+	const auto& sv = certs_vec->At(index);
+	if ( ! sv )
+		{
+		zeek::emit_builtin_error("undefined value in certificate vector");
+		return x509_result_record(-1, "undefined value in certificate vector");
+		}
+
+	auto* cert_handle = (zeek::file_analysis::detail::X509Val*) sv.get();
+
+	X509* cert = cert_handle->GetCertificate();
+	if ( ! cert )
+		{
+		zeek::emit_builtin_error(zeek::util::fmt("No certificate in opaque"));
+		return x509_result_record(-1, "No certificate in opaque");
+		}
+
+	const unsigned char* start = ocsp_reply->Bytes();
+
+	STACK_OF(X509)* untrusted_certs = x509_get_untrusted_stack(certs_vec);
+	if ( ! untrusted_certs )
+		return x509_result_record(-1, "Problem initializing list of untrusted certificates");
+
+	// from here, always goto cleanup. Initialize all other required variables...
+	time_t vtime = (time_t) verify_time;
+	OCSP_BASICRESP *basic = 0;
+	OCSP_SINGLERESP *single = 0;
+	X509_STORE_CTX *csc = 0;
+	OCSP_CERTID *certid = 0;
+	stack_st_X509* ocsp_certs = nullptr;
+	int status = -1;
+	int out = -1;
+	int result = -1;
+	X509* issuer_certificate = 0;
+	X509* signer = 0;
+	ASN1_GENERALIZEDTIME* thisUpdate = nullptr;
+	ASN1_GENERALIZEDTIME* nextUpdate = nullptr;
+	int type = -1;
+
+	OCSP_RESPONSE *resp = d2i_OCSP_RESPONSE(NULL, &start, ocsp_reply->Len());
+
+	if ( ! resp )
+		{
+		rval = x509_result_record(-1, "Could not parse OCSP response");
+		goto x509_ocsp_cleanup;
+		}
+
+	status = OCSP_response_status(resp);
+	if ( status != OCSP_RESPONSE_STATUS_SUCCESSFUL )
+		{
+		rval = x509_result_record(-2, OCSP_response_status_str(status));
+		goto x509_ocsp_cleanup;
+		}
+
+	basic = OCSP_response_get1_basic(resp);
+	if ( ! basic )
+		{
+		rval = x509_result_record(-1, "Could not parse OCSP response");
+		goto x509_ocsp_cleanup;
+		}
+
+	// the following code took me _forever_ to get right.
+	// The OCSP_basic_verify command takes a list of certificates. However (which is not immediately
+	// visible or understandable), those are only used to find the signer certificate. They are _not_
+	// used for chain building during the actual verification (this would be stupid). But - if we sneakily
+	// inject the certificates in the certificate list of the OCSP reply, they actually are used during
+	// the lookup.
+	// Yay.
+
+	issuer_certificate = 0;
+	for ( int i = 0; i < sk_X509_num(untrusted_certs); i++)
+		{
+		OCSP_basic_add1_cert(basic, sk_X509_value(untrusted_certs, i));
+
+		if ( X509_NAME_cmp(X509_get_issuer_name(cert), X509_get_subject_name(sk_X509_value(untrusted_certs, i))) == 0 )
+			issuer_certificate = sk_X509_value(untrusted_certs, i);
+		}
+
+	// Because we actually want to be able to give nice error messages that show why we were
+	// not able to verify the OCSP response - do our own verification logic first.
+#if ( OPENSSL_VERSION_NUMBER < 0x10100000L ) || defined(LIBRESSL_VERSION_NUMBER)
+	signer = x509_get_ocsp_signer(basic->certs, basic);
+#else
+	signer = x509_get_ocsp_signer(OCSP_resp_get0_certs(basic), basic);
+#endif
+
+	/*
+	Do this perhaps - OpenSSL also cannot do it, so I do not really feel bad about it.
+	Needs a different lookup because the root store is no stack of X509 certs
+
+	if ( ! signer )
+		// if we did not find it in the certificates that were sent, search in the root store
+		signer = x509_get_ocsp_signer(ocsp_certs, basic);
+	*/
+
+	if ( ! signer )
+		{
+		rval = x509_result_record(-1, "Could not find OCSP responder certificate");
+		goto x509_ocsp_cleanup;
+		}
+
+		{
+		auto basic_certs = OCSP_resp_get0_certs(basic);
+		if ( basic_certs )
+			ocsp_certs = sk_X509_dup(basic_certs);
+
+		assert(ocsp_certs);
+		}
+
+	csc = X509_STORE_CTX_new();
+	X509_STORE_CTX_init(csc, ctx, signer, ocsp_certs);
+	X509_STORE_CTX_set_time(csc, 0, (time_t) verify_time);
+	X509_STORE_CTX_set_purpose(csc, X509_PURPOSE_OCSP_HELPER);
+
+	result = X509_verify_cert(csc);
+	if ( result != 1 )
+		{
+		const char *reason = X509_verify_cert_error_string(X509_STORE_CTX_get_error(csc));
+		rval = x509_result_record(result, X509_verify_cert_error_string(X509_STORE_CTX_get_error(csc)));
+		goto x509_ocsp_cleanup;
+		}
+
+	// We pass OCSP_NOVERIFY to let OCSP_basic_verify skip the chain verification.
+	// With that, it only verifies the signature of the basic response and we are responsible
+	// for the chain ourselves. We have to do that since we cannot get OCSP_basic_verify to use our timestamp.
+	out = OCSP_basic_verify(basic, NULL, ctx, OCSP_NOVERIFY);
+	if ( out < 1 )
+		{
+		rval = x509_result_record(out, ERR_error_string(ERR_get_error(),NULL));
+		goto x509_ocsp_cleanup;
+		}
+
+	// ok, now we verified the OCSP response. This means that we have a valid chain tying it
+	// to a root that we trust and that the signature also hopefully is valid. This does not yet
+	// mean that the ocsp response actually matches the certificate the server sent us or that
+	// the OCSP response even says that the certificate is valid.
+
+	// let's start this out by checking that the response is actually for the certificate we want
+	// to validate and not for something completely unrelated that the server is trying to trick us
+	// into accepting.
+
+	if ( issuer_certificate )
+		certid = OCSP_cert_to_id(NULL, cert, issuer_certificate);
+	else
+		{
+		// issuer not in list sent by server, check store
+		X509_OBJECT *obj = X509_OBJECT_new();
+		int lookup = X509_STORE_get_by_subject(csc, X509_LU_X509, X509_get_subject_name(cert), obj);
+		if ( lookup <= 0)
+			{
+			rval = x509_result_record(lookup, "Could not find issuer of host certificate");
+			X509_OBJECT_free(obj);
+			goto x509_ocsp_cleanup;
+			}
+
+		certid = OCSP_cert_to_id(NULL, cert,X509_OBJECT_get0_X509( obj));
+		X509_OBJECT_free(obj);
+		}
+
+
+	if ( ! certid )
+		{
+		rval = x509_result_record(-1, "Certificate ID construction failed");
+		goto x509_ocsp_cleanup;
+		}
+
+	// for now, assume we have one reply...
+	single = OCSP_resp_get0(basic, 0);
+	if ( ! single )
+		{
+		rval = x509_result_record(-1, "Could not lookup OCSP response information");
+		goto x509_ocsp_cleanup;
+		}
+
+	if ( OCSP_id_cmp(certid, (OCSP_CERTID*)OCSP_SINGLERESP_get0_id(single)) != 0 )
+		return x509_result_record(-1, "OCSP reply is not for host certificate");
+
+	// next - check freshness of proof...
+	type = OCSP_single_get0_status(single, NULL, NULL, &thisUpdate, &nextUpdate);
+
+	if ( type == -1 )
+		{
+		rval = x509_result_record(-1, "OCSP reply failed to retrieve update times");
+		goto x509_ocsp_cleanup;
+		}
+
+	if ( ! thisUpdate )
+		{
+		rval = x509_result_record(-1, "OCSP reply missing thisUpdate field");
+		goto x509_ocsp_cleanup;
+		}
+
+	if ( ! nextUpdate )
+		{
+		rval = x509_result_record(-1, "OCSP reply missing nextUpdate field");
+		goto x509_ocsp_cleanup;
+		}
+
+	if ( ! ASN1_GENERALIZEDTIME_check(thisUpdate) )
+		{
+		rval = x509_result_record(-1, "OCSP reply contains invalid thisUpdate field");
+		goto x509_ocsp_cleanup;
+		}
+
+	if ( ! ASN1_GENERALIZEDTIME_check(nextUpdate) )
+		{
+		rval = x509_result_record(-1, "OCSP reply contains invalid nextUpdate field");
+		goto x509_ocsp_cleanup;
+		}
+
+	// now - nearly done. Check freshness and status code.
+	// There is a function to check the freshness of the ocsp reply in the ocsp code of OpenSSL. But - it only
+	// supports comparing it against the current time, not against arbitrary times. Hence it is kind of unusable
+	// for us...
+	// Well, we will do it manually.
+
+
+	if ( X509_cmp_time(thisUpdate, &vtime) > 0 )
+		rval = x509_result_record(-1, "OCSP reply specifies time in future");
+	else if ( X509_cmp_time(nextUpdate, &vtime) < 0 )
+		rval = x509_result_record(-1, "OCSP reply expired");
+	else if ( type != V_OCSP_CERTSTATUS_GOOD )
+		rval = x509_result_record(-1, OCSP_cert_status_str(type));
+
+	// if we have no error so far, we are done.
+	if ( !rval )
+		rval = x509_result_record(1, OCSP_cert_status_str(type));
+
+x509_ocsp_cleanup:
+
+	if ( ocsp_certs )
+		sk_X509_free(ocsp_certs);
+
+	if ( untrusted_certs )
+		sk_X509_free(untrusted_certs);
+
+	if ( resp )
+		OCSP_RESPONSE_free(resp);
+
+	if ( basic )
+		OCSP_BASICRESP_free(basic);
+
+	if ( csc )
+		{
+		X509_STORE_CTX_cleanup(csc);
+		X509_STORE_CTX_free(csc);
+		}
+
+	if ( certid )
+		OCSP_CERTID_free(certid);
+
+	return rval;
+	%}
+
+## Verifies a certificate.
+##
+## certs: Specifies a certificate chain that is being used to validate
+##        the given certificate against the root store given in *root_certs*.
+##        The host certificate has to be at index 0.
+##
+## root_certs: A list of root certificates to validate the certificate chain.
+##
+## verify_time: Time for the validity check of the certificates.
+##
+## Returns: A record of type X509::Result containing the result code of the
+##          verify operation. In case of success also returns the full
+##          certificate chain.
+##
+## .. zeek:see:: x509_certificate x509_extension x509_ext_basic_constraints
+##              x509_ext_subject_alternative_name x509_parse
+##              x509_get_certificate_string x509_ocsp_verify sct_verify
+function x509_verify%(certs: x509_opaque_vector, root_certs: table_string_of_string, verify_time: time &default=network_time()%): X509::Result
+	%{
+	X509_STORE* ctx = zeek::file_analysis::detail::X509::GetRootStore(root_certs->AsTableVal());
+	if ( ! ctx )
+		return x509_result_record(-1, "Problem initializing root store");
+
+
+	zeek::VectorVal *certs_vec = certs->AsVectorVal();
+	if ( ! certs_vec || certs_vec->Size() < 1 )
+		{
+		zeek::reporter->Error("No certificates given in vector");
+		return x509_result_record(-1, "no certificates");
+		}
+
+	// host certificate
+	unsigned int index = 0; // to prevent overloading to 0pointer
+	const auto& sv = certs_vec->At(index);
+	if ( !sv )
+		{
+		zeek::emit_builtin_error("undefined value in certificate vector");
+		return x509_result_record(-1, "undefined value in certificate vector");
+		}
+	auto* cert_handle = (zeek::file_analysis::detail::X509Val*) sv.get();
+
+	X509* cert = cert_handle->GetCertificate();
+	if ( ! cert )
+		{
+		zeek::emit_builtin_error(zeek::util::fmt("No certificate in opaque"));
+		return x509_result_record(-1, "No certificate in opaque");
+		}
+
+	STACK_OF(X509)* untrusted_certs = x509_get_untrusted_stack(certs_vec);
+	if ( ! untrusted_certs )
+		return x509_result_record(-1, "Problem initializing list of untrusted certificates");
+
+	X509_STORE_CTX *csc = X509_STORE_CTX_new();
+	X509_STORE_CTX_init(csc, ctx, cert, untrusted_certs);
+	X509_STORE_CTX_set_time(csc, 0, (time_t) verify_time);
+	X509_STORE_CTX_set_flags(csc, X509_V_FLAG_USE_CHECK_TIME);
+
+	int result = X509_verify_cert(csc);
+
+	zeek::VectorValPtr chainVector;
+
+	if ( result == 1 ) // we have a valid chain. try to get it...
+		{
+		STACK_OF(X509)* chain = X509_STORE_CTX_get1_chain(csc); // get1 = deep copy
+
+		if ( ! chain )
+			{
+			zeek::reporter->Error("Encountered valid chain that could not be resolved");
+			sk_X509_pop_free(chain, X509_free);
+			goto x509_verify_chainerror;
+			}
+
+		int num_certs = sk_X509_num(chain);
+		chainVector = zeek::make_intrusive<zeek::VectorVal>(zeek::id::find_type<VectorType>("x509_opaque_vector"));
+
+		for ( int i = 0; i < num_certs; i++ )
+			{
+			X509* currcert = sk_X509_value(chain, i);
+
+			if ( currcert )
+				// X509Val takes ownership of currcert.
+				chainVector->Assign(i, zeek::make_intrusive<zeek::file_analysis::detail::X509Val>(currcert));
+			else
+				{
+				zeek::reporter->InternalWarning("OpenSSL returned null certificate");
+				sk_X509_pop_free(chain, X509_free);
+				goto x509_verify_chainerror;
+				}
+			}
+
+		sk_X509_free(chain);
+		}
+
+x509_verify_chainerror:
+
+	auto rrecord = x509_result_record(X509_STORE_CTX_get_error(csc), X509_verify_cert_error_string(X509_STORE_CTX_get_error(csc)), std::move(chainVector));
+
+	X509_STORE_CTX_cleanup(csc);
+	X509_STORE_CTX_free(csc);
+
+	sk_X509_free(untrusted_certs);
+
+	return rrecord;
+	%}
+
+## Verifies a Signed Certificate Timestamp as used for Certificate Transparency.
+## See RFC6962 for more details.
+##
+## cert: Certificate against which the SCT should be validated.
+##
+## logid: Log id of the SCT.
+##
+## log_key: Public key of the Log that issued the SCT proof.
+##
+## timestamp: Timestamp at which the proof was generated.
+##
+## hash_algorithm: Hash algorithm that was used for the SCT proof.
+##
+## issuer_key_hash: The SHA-256 hash of the certificate issuer's public key.
+##                  This only has to be provided if the SCT was encountered in an X.509
+##                  certificate extension; in that case, it is necessary for validation.
+##
+## Returns: T if the validation could be performed succesfully, F otherwhise.
+##
+## .. zeek:see:: ssl_extension_signed_certificate_timestamp
+##              x509_ocsp_ext_signed_certificate_timestamp
+##              x509_verify
+function sct_verify%(cert: opaque of x509, logid: string, log_key: string, signature: string, timestamp: count, hash_algorithm: count, issuer_key_hash: string &default=""%): bool
+	%{
+	assert(cert);
+	auto* h = (zeek::file_analysis::detail::X509Val*) cert;
+	X509* x = ((zeek::file_analysis::detail::X509Val*) h)->GetCertificate();
+
+	assert(sizeof(timestamp) >= 8);
+	uint64_t timestamp_network = htonll(timestamp);
+
+	bool precert = issuer_key_hash->Len() > 0;
+	if ( precert && issuer_key_hash->Len() != 32)
+		{
+		zeek::reporter->Error("Invalid issuer_key_hash length");
+		return zeek::val_mgr->False();
+		}
+
+	std::string data;
+	data.push_back(0); // version
+	data.push_back(0); // signature_type -> certificate_timestamp
+	data.append(reinterpret_cast<const char*>(&timestamp_network), sizeof(timestamp_network)); // timestamp -> 64 bits
+	if ( precert )
+		data.append("\0\1", 2); // entry-type: precert_entry
+	else
+		data.append("\0\0", 2); // entry-type: x509_entry
+
+	if ( precert )
+		{
+		x = X509_dup(x);
+		assert(x);
+		// In OpenSSL 1.0.2+, we can get the extension by using NID_ct_precert_scts.
+		// In OpenSSL <= 1.0.1, this is not yet defined yet, so we have to manually
+		// look it up by performing a string comparison on the oid.
+#ifdef NID_ct_precert_scts
+		int pos = X509_get_ext_by_NID(x, NID_ct_precert_scts, -1);
+		if ( pos < 0 )
+			{
+			zeek::reporter->Error("NID_ct_precert_scts not found");
+			return zeek::val_mgr->False();
+			}
+#else
+		int num_ext = X509_get_ext_count(x);
+		int pos = -1;
+		for ( int k = 0; k < num_ext; ++k )
+			{
+			char oid[256];
+			X509_EXTENSION* ex = X509_get_ext(x, k);
+			ASN1_OBJECT* ext_asn = X509_EXTENSION_get_object(ex);
+			OBJ_obj2txt(oid, 255, ext_asn, 1);
+			if ( strcmp(oid, "1.3.6.1.4.1.11129.2.4.2") == 0 )
+				{
+				pos = k;
+				break;
+				}
+			}
+#endif
+		X509_EXTENSION_free(X509_delete_ext(x, pos));
+#ifdef NID_ct_precert_scts
+		assert( X509_get_ext_by_NID(x, NID_ct_precert_scts, -1) == -1 );
+#endif
+		}
+
+	unsigned char *cert_out = nullptr;
+	uint32_t cert_length;
+	if ( precert )
+		{
+#if ( OPENSSL_VERSION_NUMBER < 0x10002000L ) || defined(LIBRESSL_VERSION_NUMBER)
+		x->cert_info->enc.modified = 1;
+		cert_length = i2d_X509_CINF(x->cert_info, &cert_out);
+#else
+		cert_length = i2d_re_X509_tbs(x, &cert_out);
+#endif
+		data.append(reinterpret_cast<const char*>(issuer_key_hash->Bytes()), issuer_key_hash->Len());
+		}
+	else
+		cert_length = i2d_X509(x, &cert_out);
+	assert( cert_out );
+	uint32_t cert_length_network = htonl(cert_length);
+	assert( sizeof(cert_length_network) == 4);
+
+	data.append(reinterpret_cast<const char*>(&cert_length_network)+1, 3); // 3 bytes certificate length
+	data.append(reinterpret_cast<const char*>(cert_out), cert_length); // der-encoded certificate
+	OPENSSL_free(cert_out);
+	if ( precert )
+		X509_free(x);
+	data.append("\0\0", 2); // no extensions
+
+	// key is given as a DER-encoded SubjectPublicKeyInfo.
+	const unsigned char *key_char = log_key->Bytes();
+	EVP_PKEY* key = d2i_PUBKEY(nullptr, &key_char, log_key->Len());
+
+	EVP_MD_CTX *mdctx = EVP_MD_CTX_create();
+	assert(mdctx);
+
+	std::string errstr;
+	int success = 0;
+
+	const EVP_MD* hash = hash_to_evp(hash_algorithm);
+	if ( ! hash )
+		{
+		errstr = "Unknown hash algorithm";
+		goto sct_verify_err;
+		}
+
+	if ( ! key )
+		{
+		errstr = "Could not load log key";
+		goto sct_verify_err;
+		}
+
+	if ( ! EVP_DigestVerifyInit(mdctx, NULL, hash, NULL, key) )
+		{
+		errstr = "Could not init signature verification";
+		goto sct_verify_err;
+		}
+
+	if ( ! EVP_DigestVerifyUpdate(mdctx, data.data(), data.size()) )
+		{
+		errstr = "Could not update digest for verification";
+		goto sct_verify_err;
+		}
+
+#ifdef NID_ct_precert_scts
+	success = EVP_DigestVerifyFinal(mdctx, signature->Bytes(), signature->Len());
+#else
+	// older versions of OpenSSL use a non-const-char *sigh*
+	// I don't think they actually manipulate the value though.
+	// todo - this needs a cmake test
+	success = EVP_DigestVerifyFinal(mdctx, (unsigned char*) signature->Bytes(), signature->Len());
+#endif
+	EVP_MD_CTX_destroy(mdctx);
+	EVP_PKEY_free(key);
+
+	return zeek::val_mgr->Bool(success);
+
+sct_verify_err:
+	if (mdctx)
+		EVP_MD_CTX_destroy(mdctx);
+	if (key)
+		EVP_PKEY_free(key);
+
+	zeek::reporter->Error("%s", errstr.c_str());
+	return zeek::val_mgr->False();
+	%}
+
+
+%%{
+/**
+ * 0 -> subject name
+ * 1 -> issuer name
+ * 2 -> pubkey
+ */
+zeek::StringValPtr x509_entity_hash(zeek::file_analysis::detail::X509Val *cert_handle, unsigned int hash_alg, unsigned int type)
+	{
+	assert(cert_handle);
+
+	if ( type > 2 )
+		{
+		zeek::reporter->InternalError("Unknown type in x509_entity_hash");
+		return nullptr;
+		}
+
+	X509 *cert_x509 = cert_handle->GetCertificate();
+	if ( cert_x509 == nullptr )
+		{
+		zeek::emit_builtin_error("cannot get cert from opaque");
+		return nullptr;
+		}
+
+	X509_NAME *subject_name = X509_get_subject_name(cert_x509);
+	X509_NAME *issuer_name = X509_get_issuer_name(cert_x509);
+	if ( subject_name == nullptr || issuer_name == nullptr )
+		{
+		zeek::emit_builtin_error("fail to get subject/issuer name from certificate");
+		return nullptr;
+		}
+
+	const EVP_MD *dgst = hash_to_evp(hash_alg);
+	if ( dgst == nullptr )
+		{
+		zeek::emit_builtin_error("Unknown hash algorithm.");
+		return nullptr;
+		}
+
+	unsigned char md[EVP_MAX_MD_SIZE];
+	memset(md, 0, sizeof(md));
+	unsigned int len = 0;
+
+	int res = 0;
+
+	if ( type == 0 )
+		res = X509_NAME_digest(subject_name, dgst, md, &len);
+	else if ( type == 1 )
+		res = X509_NAME_digest(issuer_name, dgst, md, &len);
+	else if ( type == 2 )
+		{
+		unsigned char *spki = nullptr;
+		int pklen = i2d_X509_PUBKEY(X509_get_X509_PUBKEY(cert_x509), &spki);
+		if ( ! pklen )
+			{
+			zeek::emit_builtin_error("Could not get SPKI");
+			return nullptr;
+			}
+		res = EVP_Digest(spki, pklen, md, &len, dgst, nullptr);
+		OPENSSL_free(spki);
+		}
+
+	if ( ! res )
+		{
+		zeek::emit_builtin_error("Could not perform hash");
+		return nullptr;
+		}
+
+	assert( len <= sizeof(md) );
+
+	return zeek::make_intrusive<zeek::StringVal>(len, reinterpret_cast<const char*>(md));
+	}
+%%}
+
+## Get the hash of the subject's distinguished name.
+##
+## cert: The X509 certificate opaque handle.
+##
+## hash_alg: the hash algorithm to use, according to the IANA mapping at
+##           https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-18
+##
+## Returns: The hash as a string.
+##
+## .. zeek:see:: x509_issuer_name_hash x509_spki_hash
+##              x509_verify sct_verify
+function x509_subject_name_hash%(cert: opaque of x509, hash_alg: count%): string
+	%{
+	auto* cert_handle = (zeek::file_analysis::detail::X509Val *) cert;
+
+	return x509_entity_hash(cert_handle, hash_alg, 0);
+	%}
+
+## Get the hash of the issuer's distinguished name.
+##
+## cert: The X509 certificate opaque handle.
+##
+## hash_alg: the hash algorithm to use, according to the IANA mapping at
+##           https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-18
+##
+## Returns: The hash as a string.
+##
+## .. zeek:see:: x509_subject_name_hash x509_spki_hash
+##              x509_verify sct_verify
+function x509_issuer_name_hash%(cert: opaque of x509, hash_alg: count%): string
+	%{
+	auto* cert_handle = (zeek::file_analysis::detail::X509Val *) cert;
+
+	return x509_entity_hash(cert_handle, hash_alg, 1);
+	%}
+
+## Get the hash of the Subject Public Key Information of the certificate.
+##
+## cert: The X509 certificate opaque handle.
+##
+## hash_alg: the hash algorithm to use, according to the IANA mapping at
+##           https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-18
+##
+## Returns: The hash as a string.
+##
+## .. zeek:see:: x509_subject_name_hash x509_issuer_name_hash
+##              x509_verify sct_verify
+function x509_spki_hash%(cert: opaque of x509, hash_alg: count%): string
+	%{
+	auto* cert_handle = (zeek::file_analysis::detail::X509Val *) cert;
+
+	return x509_entity_hash(cert_handle, hash_alg, 2);
+	%}
+
+## This function can be used to set up certificate caching. It has to be passed a table[string] which
+## can contain any type.
+##
+## After this is set up, for each certificate encountered, the X509 analyzer will check if the entry
+## tbl[sha256 of certificate] is set. If this is the case, the X509 analyzer will skip all further
+## processing, and instead just call the callback that is set with
+## zeek:id:`x509_set_certificate_cache_hit_callback`.
+##
+## tbl: Table to use as the certificate cache.
+##
+## Returns: Always returns true.
+##
+## .. note:: The base scripts use this function to set up certificate caching. You should only change the
+##           cache table if you are sure you will not conflict with the base scripts.
+##
+## .. zeek:see:: x509_set_certificate_cache_hit_callback
+function x509_set_certificate_cache%(tbl: string_any_table%) : bool
+	%{
+	zeek::file_analysis::detail::X509::SetCertificateCache({zeek::NewRef{}, tbl->AsTableVal()});
+
+	return zeek::val_mgr->True();
+	%}
+
+## This function sets up the callback that is called when an entry is matched against the table set
+## by :zeek:id:`x509_set_certificate_cache`.
+##
+## f: The callback that will be called when encountering a certificate in the cache table.
+##
+## Returns: Always returns true.
+##
+## .. note:: The base scripts use this function to set up certificate caching. You should only change the
+##           callback function if you are sure you will not conflict with the base scripts.
+##
+## .. zeek:see:: x509_set_certificate_cache
+function x509_set_certificate_cache_hit_callback%(f: string_any_file_hook%) : bool
+	%{
+	zeek::file_analysis::detail::X509::SetCertificateCacheHitCallback({zeek::NewRef{}, f->AsFunc()});
+
+	return zeek::val_mgr->True();
+	%}

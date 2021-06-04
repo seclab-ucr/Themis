@@ -1,0 +1,52 @@
+# This test verifies that we only canonicalize baselines once, namely
+# when canonicalizing new test output, and that baselines get
+# converted over to our header-tagged format.
+#
+# Test prep: make our canonifier executable
+# %TEST-EXEC: chmod 755 ./diff-double-x
+#
+# Verify that without an existing baseline, we canonify a new one.
+# %TEST-EXEC: btest -U %INPUT
+# %TEST-EXEC: head -1 Baseline/canonifier-conversion/output | grep -q 'Do not edit'
+# %TEST-EXEC: tail -1 Baseline/canonifier-conversion/output | grep xx
+# %TEST-EXEC: cp Baseline/canonifier-conversion/output base.1
+#
+# For testing conversion, first create a "dated" baseline.
+# %TEST-EXEC: echo x >Baseline/canonifier-conversion/output
+#
+# Verify that it succeeds:
+# %TEST-EXEC: btest %INPUT
+#
+# Update the baseline. This should prefix btest-diff's header and canonify:
+# %TEST-EXEC: btest -U %INPUT
+#
+# Verify that these have happened and preserve baseline:
+# %TEST-EXEC: head -1 Baseline/canonifier-conversion/output | grep -q 'Do not edit'
+# %TEST-EXEC: tail -1 Baseline/canonifier-conversion/output | grep xx
+# %TEST-EXEC: cp Baseline/canonifier-conversion/output base.2
+#
+# Verify that it still succeeds:
+# %TEST-EXEC: btest %INPUT
+#
+# Update the baseline again.
+# %TEST-EXEC: btest -U %INPUT
+# %TEST-EXEC: cp Baseline/canonifier-conversion/output base.3
+#
+# Verify the updated baselines remained identical.
+# %TEST-EXEC: test "$(cat base.1)" = "$(cat base.2)" && test "$(cat base.2)" = "$(cat base.3)"
+
+@TEST-EXEC: echo x >output
+@TEST-EXEC: btest-diff output
+
+%TEST-START-FILE btest.cfg
+[btest]
+TmpDir      = .tmp
+
+[environment]
+TEST_DIFF_CANONIFIER=%(testbase)s/diff-double-x
+%TEST-END-FILE
+
+%TEST-START-FILE diff-double-x
+#! /usr/bin/env bash
+sed 's/x/xx/g'
+%TEST-END-FILE

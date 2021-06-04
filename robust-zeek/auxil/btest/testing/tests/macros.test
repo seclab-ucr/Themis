@@ -1,0 +1,7 @@
+# %TEST-EXEC: btest -d %INPUT >output 2>&1
+# %TEST-EXEC: btest-diff output
+
+@TEST-REQUIRES: test -d %DIR
+@TEST-REQUIRES: test -f %INPUT
+@TEST-EXEC: cmp %DIR/macros.test %INPUT
+@TEST-EXEC-FAIL: ! cmp %DIR/macros.test %INPUT

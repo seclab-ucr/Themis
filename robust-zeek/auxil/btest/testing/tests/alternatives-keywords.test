@@ -1,0 +1,25 @@
+# %TEST-EXEC: btest foo1 default1 notfoo1 notdefault1 >>output 2>&1
+# %TEST-EXEC: btest -a - foo1 default1 notfoo1 notdefault1 >>output 2>&1
+# %TEST-EXEC: btest -a foo foo1 default1 notfoo1 notdefault1 >>output 2>&1
+# %TEST-EXEC: btest -a notexist foo1 default1 notfoo1 notdefault1 >>output 2>&1
+# %TEST-EXEC: btest-diff output
+
+%TEST-START-FILE foo1
+@TEST-ALTERNATIVE: foo
+@TEST-EXEC: exit 0
+%TEST-END-FILE
+
+%TEST-START-FILE default1
+@TEST-ALTERNATIVE: default
+@TEST-EXEC: exit 0
+%TEST-END-FILE
+
+%TEST-START-FILE notfoo1
+@TEST-NOT-ALTERNATIVE: foo
+@TEST-EXEC: exit 0
+%TEST-END-FILE
+
+%TEST-START-FILE notdefault1
+@TEST-NOT-ALTERNATIVE: default
+@TEST-EXEC: exit 0
+%TEST-END-FILE

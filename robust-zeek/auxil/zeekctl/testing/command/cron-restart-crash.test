@@ -1,0 +1,44 @@
+# Test that the cron command restarts a crashed node and sends a crash report,
+# unless the "--no-watch" option is specified.
+#
+# @TEST-EXEC: bash %INPUT
+# @TEST-EXEC: TEST_DIFF_CANONIFIER=$SCRIPTS/diff-status-output btest-diff status1.out
+# @TEST-EXEC: TEST_DIFF_CANONIFIER=$SCRIPTS/diff-status-output btest-diff status2.out
+
+. zeekctl-test-setup
+
+while read line; do installfile $line; done << EOF
+etc/zeekctl.cfg__test_sendmail
+etc/node.cfg__cluster
+bin/zeek__test
+bin/sendmail__test --new
+EOF
+
+replaceprefix etc/zeekctl.cfg
+
+cat > $ZEEKCTL_INSTALL_PREFIX/zeekctltest.cfg << EOF
+crash=worker-1
+EOF
+
+zeekctl install
+! zeekctl start
+
+# make sure cron can restart the crashed node
+rm -f $ZEEKCTL_INSTALL_PREFIX/zeekctltest.cfg
+
+# test with the "--no-watch" option
+zeekctl cron --no-watch
+
+! zeekctl status > status1.out
+
+rm $ZEEKCTL_INSTALL_PREFIX/sendmail.out
+
+# test without the "--no-watch" option
+zeekctl cron
+
+# verify that a crash report was sent
+grep -q "Crash report from worker-1" $ZEEKCTL_INSTALL_PREFIX/sendmail.out
+
+zeekctl status > status2.out
+
+zeekctl stop

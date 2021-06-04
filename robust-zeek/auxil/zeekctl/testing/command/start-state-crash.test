@@ -1,0 +1,42 @@
+# Test that the start command writes correct values to state database
+# when a node crashes upon startup, and when a node is already in the
+# crashed state.
+#
+# @TEST-REQUIRES: which sqlite3
+# @TEST-EXEC: bash %INPUT
+# @TEST-EXEC: TEST_DIFF_CANONIFIER=$SCRIPTS/diff-state-db btest-diff out
+# @TEST-EXEC: TEST_DIFF_CANONIFIER=$SCRIPTS/diff-state-db btest-diff out2
+
+. zeekctl-test-setup
+
+while read line; do installfile $line; done << EOF
+etc/zeekctl.cfg__no_email
+bin/zeek__test
+EOF
+
+cat > $ZEEKCTL_INSTALL_PREFIX/zeekctltest.cfg << EOF
+crash=zeek
+EOF
+
+test ! -e $ZEEKCTL_INSTALL_PREFIX/spool/state.db
+
+zeekctl install
+! zeekctl start
+
+sqlite3 $ZEEKCTL_INSTALL_PREFIX/spool/state.db ".dump" > dump.out
+
+# Produce "key = value" output from the database dump.
+awk -F \' '{ if (NF == 5) { print $2, "=", $4 } }' dump.out | sort > out
+
+# Next time we don't want node to crash.
+rm $ZEEKCTL_INSTALL_PREFIX/zeekctltest.cfg
+
+# Node should transition from crashed to running state.
+zeekctl start
+
+sqlite3 $ZEEKCTL_INSTALL_PREFIX/spool/state.db ".dump" > dump.out2
+
+# Produce "key = value" output from the database dump.
+awk -F \' '{ if (NF == 5) { print $2, "=", $4 } }' dump.out2 | sort > out2
+
+zeekctl stop

@@ -1,0 +1,45 @@
+# %TEST-DOC: Check that when using multiple baseline directories we pick up, and update, files in the desired locations.
+#
+# %TEST-EXEC: mkdir -p baseline1/t1 baseline2/t2 baseline3/t3 baseline3/t4
+# %TEST-EXEC: echo 1 >baseline1/t1/output
+# %TEST-EXEC: echo 2 >baseline2/t2/output
+# %TEST-EXEC: echo 3 >baseline3/t3/output
+# %TEST-EXEC: echo XXX >baseline3/t4/output
+#
+# %TEST-EXEC: btest -d t1
+# %TEST-EXEC: btest -d t2
+# %TEST-EXEC: btest -d t3
+#
+# %TEST-EXEC-FAIL: btest -d -f fail.tmp t4
+# %TEST-EXEC: cat fail.tmp | grep -v '\(---\|+++\)' >fail.log
+# %TEST-EXEC: btest-diff fail.log
+# %TEST-EXEC: btest -U t4
+# %TEST-EXEC: test -f baseline1/t4/output
+# %TEST-EXEC: btest t4
+#
+# %TEST-EXEC: test ! -d Baseline
+
+%TEST-START-FILE t1
+@TEST-EXEC: echo 1 >output
+@TEST-EXEC: btest-diff output
+%TEST-END-FILE
+
+%TEST-START-FILE t2
+@TEST-EXEC: echo 2 >output
+@TEST-EXEC: btest-diff output
+%TEST-END-FILE
+
+%TEST-START-FILE t3
+@TEST-EXEC: echo 3 >output
+@TEST-EXEC: btest-diff output
+%TEST-END-FILE
+
+%TEST-START-FILE t4
+@TEST-EXEC: echo 4 >output
+@TEST-EXEC: btest-diff output
+%TEST-END-FILE
+
+%TEST-START-FILE btest.cfg
+[btest]
+BaselineDir = baseline1:baseline2:baseline3
+%TEST-END-FILE

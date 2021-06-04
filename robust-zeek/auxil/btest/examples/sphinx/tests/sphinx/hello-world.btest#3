@@ -1,0 +1,1 @@
+@TEST-EXEC: btest-rst-cmd echo "Hello, world! Again. Again."

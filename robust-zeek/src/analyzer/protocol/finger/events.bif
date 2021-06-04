@@ -1,0 +1,38 @@
+## Generated for Finger requests.
+##
+## See `Wikipedia <http://en.wikipedia.org/wiki/Finger_protocol>`__ for more
+## information about the Finger protocol.
+##
+## c: The connection.
+##
+## full: True if verbose information is requested (``/W`` switch).
+##
+## username: The request's user name.
+##
+## hostname: The request's host name.
+##
+## .. zeek:see:: finger_reply
+##
+## .. todo:: Zeek's current default configuration does not activate the protocol
+##    analyzer that generates this event; the corresponding script has not yet
+##    been ported. To still enable this event, one needs to
+##    register a port for it or add a DPD payload signature.
+event finger_request%(c: connection, full: bool, username: string, hostname: string%);
+
+## Generated for Finger replies.
+##
+## See `Wikipedia <http://en.wikipedia.org/wiki/Finger_protocol>`__ for more
+## information about the Finger protocol.
+##
+## c: The connection.
+##
+## reply_line: The reply as returned by the server
+##
+## .. zeek:see:: finger_request
+##
+## .. todo:: Zeek's current default configuration does not activate the protocol
+##    analyzer that generates this event; the corresponding script has not yet
+##    been ported. To still enable this event, one needs to
+##    register a port for it or add a DPD payload signature.
+event finger_reply%(c: connection, reply_line: string%);
+

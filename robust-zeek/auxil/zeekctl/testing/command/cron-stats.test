@@ -1,0 +1,35 @@
+# Test that the zeekctl cron command logs "top" and "capstats" stats on all
+# nodes in a cluster to the stats.log file, and moves the file to a different
+# directory.
+#
+# @TEST-EXEC: bash %INPUT
+# @TEST-EXEC: TEST_DIFF_CANONIFIER=$SCRIPTS/diff-cron-stats btest-diff stats.out
+
+. zeekctl-test-setup
+
+while read line; do installfile $line; done << EOF
+etc/zeekctl.cfg__no_email
+etc/node.cfg__cluster
+bin/zeek__test
+bin/capstats__test
+EOF
+
+zeekctl install
+
+# verify that we start with no stats.log file
+test ! -e $ZEEKCTL_INSTALL_PREFIX/spool/stats.log
+
+zeekctl start
+
+# verify that we start with no stats.log file in the logs/stats directory
+test ! -e $ZEEKCTL_INSTALL_PREFIX/logs/stats/stats.log
+
+zeekctl cron
+
+# verify that zeekctl cron moved the stats.log file to the logs/stats directory
+test ! -e $ZEEKCTL_INSTALL_PREFIX/spool/stats.log
+test -e $ZEEKCTL_INSTALL_PREFIX/logs/stats/stats.log
+
+cp $ZEEKCTL_INSTALL_PREFIX/logs/stats/stats.log stats.out
+
+zeekctl stop

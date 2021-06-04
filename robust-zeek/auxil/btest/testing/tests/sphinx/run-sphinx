@@ -1,0 +1,8 @@
+# %TEST-REQUIRES: which sphinx-build
+#
+# %TEST-EXEC: cp -r %DIR/../../../examples/sphinx/* .
+# %TEST-EXEC: make clean && make
+# %TEST-EXEC: sed -n '/id=.testing/,/id=.indices/p' _build/html/index.html >output
+# Newer versions of sphinx (~1.7.0+) add notranslate tags to code blocks
+# %TEST-EXEC: cat output | sed 's/ notranslate//g' > tmpout && mv tmpout output
+# %TEST-EXEC: btest-diff output

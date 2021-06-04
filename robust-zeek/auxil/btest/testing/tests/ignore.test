@@ -1,0 +1,50 @@
+# %TEST-EXEC: btest -t 2>&1 | sort >output
+# %TEST-EXEC: btest-diff output
+
+@TEST-EXEC: test -f ../../initialized
+
+%TEST-START-FILE all/t1
+@TEST-EXEC: exit 0
+%TEST-END-FILE
+
+%TEST-START-FILE all/t2
+@TEST-EXEC: exit 0
+%TEST-END-FILE
+
+%TEST-START-FILE all/sub/t3
+@TEST-EXEC: exit 0
+%TEST-END-FILE
+
+%TEST-START-FILE all/not-this-one/t4
+@TEST-EXEC: exit 0
+%TEST-END-FILE
+
+%TEST-START-FILE all/sub/neither-this-one/t5
+@TEST-EXEC: exit 0
+%TEST-END-FILE
+
+%TEST-START-FILE all/not-this-one.txt
+@TEST-EXEC: exit 0
+%TEST-END-FILE
+
+%TEST-START-FILE all/skip
+@TEST-EXEC: exit 0
+@TEST-IGNORE
+%TEST-END-FILE
+
+%TEST-START-FILE all/sub2/.btest-ignore
+%TEST-END-FILE
+
+%TEST-START-FILE all/sub2/skip-this
+@TEST-EXEC: exit 0
+%TEST-END-FILE
+
+
+%TEST-START-FILE btest.cfg
+[btest]
+TmpDir      = .tmp
+BaselineDir = Baseline
+TestDirs = all
+IgnoreDirs = not-this-one sub/neither-this-one
+IgnoreFiles = *.txt
+%TEST-END-FILE

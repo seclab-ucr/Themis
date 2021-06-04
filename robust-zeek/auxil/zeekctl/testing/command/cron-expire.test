@@ -1,0 +1,66 @@
+# Test that the zeekctl cron command does not expire log files by default.
+# Also test that zeekctl cron expires log files when the logexpireinterval
+# option is set to a non-zero value (and that empty log dirs are also removed).
+# Also test that the keeplogs option prevents matching expired logs from being
+# removed.
+#
+# @TEST-EXEC: bash %INPUT
+
+. zeekctl-test-setup
+
+while read line; do installfile $line; done << EOF
+etc/zeekctl.cfg__no_email
+EOF
+
+testlogdir=$ZEEKCTL_INSTALL_PREFIX/logs/2012-10-31
+zeekctl install
+
+# Verify that log expire is off by default
+zeekctl config | sed 's/ //g' | grep '^logexpireinterval=0$'
+
+# Create a log file with a recent timestamp and one with very old timestamp
+mkdir ${testlogdir}
+touch ${testlogdir}/recent.log
+touch -t 201210311030 ${testlogdir}/old.log
+
+zeekctl cron
+
+# Verify that zeekctl cron did not remove any log files
+test -e ${testlogdir}/recent.log
+test -e ${testlogdir}/old.log
+
+# Update the configuration by changing the "logexpireinterval" option
+echo "logexpireinterval=30" >> $ZEEKCTL_INSTALL_PREFIX/etc/zeekctl.cfg
+zeekctl install
+
+zeekctl cron
+
+# Verify that zeekctl cron removed the old log file (and not the recent one)
+test -e ${testlogdir}/recent.log
+test ! -e ${testlogdir}/old.log
+
+# Remove the recent log file and restore the old one
+rm ${testlogdir}/recent.log
+touch -t 201210311030 ${testlogdir}/old.log
+
+zeekctl cron
+
+# Verify that zeekctl cron removed the old log and the empty log dir
+test ! -e ${testlogdir}
+
+# Update the configuration by changing the "keeplogs" option
+echo "keeplogs=old.*" >> $ZEEKCTL_INSTALL_PREFIX/etc/zeekctl.cfg
+zeekctl install
+
+# Create some log files with recent and old timestamps
+mkdir ${testlogdir}
+touch ${testlogdir}/recent.log
+touch -t 201210311030 ${testlogdir}/old.log
+touch -t 201210311030 ${testlogdir}/anotherold.log
+
+zeekctl cron
+
+# Verify that zeekctl cron removed only anotherold.log
+test -e ${testlogdir}/recent.log
+test -e ${testlogdir}/old.log
+test ! -e ${testlogdir}/anotherold.log

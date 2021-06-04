@@ -1,0 +1,22 @@
+# Test that the status command can output status with an alternate time format
+# as specified with the timefmt zeekctl option.
+#
+# @TEST-EXEC: bash %INPUT
+# @TEST-EXEC: TEST_DIFF_CANONIFIER="$SCRIPTS/diff-status-output --time | $SCRIPTS/diff-remove-timestamps-yyyy-mm-dd" btest-diff out
+
+. zeekctl-test-setup
+
+while read line; do installfile $line; done << EOF
+etc/zeekctl.cfg__no_email
+etc/node.cfg__cluster
+bin/zeek__test
+EOF
+
+echo "timefmt=%Y-%m-%d" >> $ZEEKCTL_INSTALL_PREFIX/etc/zeekctl.cfg
+
+zeekctl install
+zeekctl start
+
+zeekctl status > out
+
+zeekctl stop

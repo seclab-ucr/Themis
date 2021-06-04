@@ -1,0 +1,39 @@
+# Test that the stop command can stop a Zeek that does not terminate within
+# "stoptimeout" seconds, and that remaining log files are archived.
+#
+# @TEST-EXEC: bash %INPUT
+# @TEST-EXEC: TEST_DIFF_CANONIFIER=$SCRIPTS/diff-status-output btest-diff status1.out
+# @TEST-EXEC: btest-diff stop.out
+# @TEST-EXEC: btest-diff status2.out
+
+. zeekctl-test-setup
+
+while read line; do installfile $line; done << EOF
+etc/zeekctl.cfg__no_email
+bin/zeek__test
+EOF
+
+echo "stoptimeout=10" >> $ZEEKCTL_INSTALL_PREFIX/etc/zeekctl.cfg
+
+cat > $ZEEKCTL_INSTALL_PREFIX/zeekctltest.cfg << EOF
+slowstop=zeek
+EOF
+
+zeekctl install
+zeekctl start
+
+# verify that zeek is running
+zeekctl status > status1.out
+
+# verify that a log file exists
+test -f $ZEEKCTL_INSTALL_PREFIX/spool/zeek/loaded_scripts.log
+
+zeekctl stop > stop.out
+
+# verify that zeek is stopped
+! zeekctl status > status2.out
+
+# verify that the log file was archived
+test ! -e $ZEEKCTL_INSTALL_PREFIX/spool/zeek/loaded_scripts.log
+find $ZEEKCTL_INSTALL_PREFIX/logs/2* -type f > find.out
+grep -q loaded_scripts find.out

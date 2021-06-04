@@ -1,0 +1,5 @@
+# @TEST-EXEC: cat %INPUT >output
+# @TEST-EXEC: cat output | grep original
+# @TEST-EXEC: set | grep MY >envs
+
+original input

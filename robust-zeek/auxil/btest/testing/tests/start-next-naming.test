@@ -1,0 +1,20 @@
+# %TEST-EXEC: btest -d %INPUT
+#
+# %TEST-START-FILE Baseline/start-next-naming/output
+X 1
+# %TEST-END-FILE
+# %TEST-START-FILE Baseline/start-next-naming-2/output
+X 2
+# %TEST-END-FILE
+# %TEST-START-FILE Baseline/start-next-naming-3/output
+X 3
+# %TEST-END-FILE
+
+@TEST-EXEC: cat %INPUT | grep '^X.[0-9]' >output
+@TEST-EXEC: btest-diff output
+X 1
+# @TEST-START-NEXT
+X 2
+# @TEST-START-NEXT
+X 3
+

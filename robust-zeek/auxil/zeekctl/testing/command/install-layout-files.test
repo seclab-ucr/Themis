@@ -1,0 +1,40 @@
+# Test that the install command installs either the standalone-layout.zeek or
+# cluster-layout.zeek file, and that the contents of the file are correct.
+#
+# @TEST-EXEC: bash %INPUT
+# @TEST-EXEC: btest-diff standalone
+# @TEST-EXEC: TEST_DIFF_CANONIFIER=$SCRIPTS/diff-cluster-layout btest-diff no-logger
+# @TEST-EXEC: TEST_DIFF_CANONIFIER=$SCRIPTS/diff-cluster-layout btest-diff logger
+# @TEST-EXEC: TEST_DIFF_CANONIFIER=$SCRIPTS/diff-cluster-layout btest-diff two-loggers
+
+. zeekctl-test-setup
+
+# Test using a standalone config.
+zeekctl install
+cp $ZEEKCTL_INSTALL_PREFIX/spool/installed-scripts-do-not-touch/auto/standalone-layout.zeek standalone
+
+clusterlayout=$ZEEKCTL_INSTALL_PREFIX/spool/installed-scripts-do-not-touch/auto/cluster-layout.zeek
+
+# Install a cluster config with no logger nodes.
+while read line; do installfile $line; done << EOF
+etc/node.cfg__cluster
+EOF
+
+zeekctl install
+cp ${clusterlayout} no-logger
+
+# Install a cluster config with one logger node.
+while read line; do installfile $line; done << EOF
+etc/node.cfg__logger
+EOF
+
+zeekctl install
+cp ${clusterlayout} logger
+
+# Install a cluster config with two logger nodes.
+while read line; do installfile $line; done << EOF
+etc/node.cfg__two_loggers
+EOF
+
+zeekctl install
+cp ${clusterlayout} two-loggers

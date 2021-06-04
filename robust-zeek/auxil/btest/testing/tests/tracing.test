@@ -1,0 +1,15 @@
+# %TEST-EXEC-FAIL: btest -d --trace-file=trace.json t1 t2 t3
+# %TEST-EXEC: cat trace.json | python -c 'import json, sys; xs = json.load(sys.stdin); print(len(xs)); print(sorted([str(x) for x in xs[0].keys()]))' > output
+# %TEST-EXEC: btest-diff output
+
+%TEST-START-FILE t1
+@TEST-EXEC: exit 0
+%TEST-END-FILE
+
+%TEST-START-FILE t2
+@TEST-EXEC: exit 1
+%TEST-END-FILE
+
+%TEST-START-FILE t3
+@TEST-EXEC: exit 0
+%TEST-END-FILE

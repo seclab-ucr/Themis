@@ -1,0 +1,2 @@
+/* We are on a Linux system */
+#cmakedefine HAVE_LINUX
