@@ -48,7 +48,11 @@ If you are using Debian/Ubuntu, you can use the following apt command, otherwise
 To compile and install Robust Zeek, you can use the following command.
 
     cd robust-zeek && ./configure && make && sudo make install
+    
+Alternatively, to enable debug, you can use the following command.
 
+    cd robust-zeek && ./configure --enable-debug && make && sudo make install
+    
 
 ## Usage
 
@@ -66,7 +70,7 @@ To compile and install Robust Zeek, you can use the following command.
        
        (A notice.log file will be generated in the current folder if the keyword is detected.)
 
-4. To enable detailed logging.
+4. To enable detailed logging (need to build zeek with debug enabled).
 
        ZEEK_DEBUG_LOG_STDERR=1 zeek -B dpd -r <pcap file> effectiveness/detect-bad-keywords.bro -R
 
