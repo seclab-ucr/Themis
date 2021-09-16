@@ -1,0 +1,96 @@
+diff --git a/cpus.c b/cpus.c
+index 7434d53ebe..0934044483 100644
+--- a/cpus.c
++++ b/cpus.c
+@@ -347,8 +347,12 @@ static int64_t cpu_get_clock_locked(void)
+         return timers_state.cpu_clock_offset;
+     } else {
+         /* Compute how much real time elapsed since last request */
+-        int64_t cur_clock = get_clock() + timers_state.cpu_clock_offset;
+-        int64_t increment = cur_clock - timers_state.cpu_clock_prev;
++        int64_t cur_clock;
++        int64_t increment = 0;
++        while (increment == 0) {
++            cur_clock = get_clock() + timers_state.cpu_clock_offset;
++            increment = cur_clock - timers_state.cpu_clock_prev;
++        }
+         assert(increment > 0);
+ 
+         /* Slow the clock down according to the scale */
+diff --git a/hw/net/e1000.c b/hw/net/e1000.c
+index 13a9494a8d..70cec7b749 100644
+--- a/hw/net/e1000.c
++++ b/hw/net/e1000.c
+@@ -847,6 +847,17 @@ static uint64_t rx_desc_base(E1000State *s)
+     return (bah << 32) + bal;
+ }
+ 
++static void set_rxing_flag(char *fpath)
++{
++    FILE *fd = fopen(fpath, "w");
++    fclose(fd);
++}
++
++static void clear_rxing_flag(char *fpath)
++{
++    remove(fpath);
++}
++
+ static ssize_t
+ e1000_receive_iov(NetClientState *nc, const struct iovec *iov, int iovcnt)
+ {
+@@ -871,6 +882,17 @@ e1000_receive_iov(NetClientState *nc, const struct iovec *iov, int iovcnt)
+         return -1;
+     }
+ 
++    char s2e_merging_flag[256];
++    snprintf(s2e_merging_flag, 255, "/tmp/%d_s2e_merging_states", getpid());
++    if (access(s2e_merging_flag, F_OK) == 0) {
++        // S2E is in a merging range. Suspend Rx to avoid memory changes.
++        return -1;
++    }
++
++    char rxing_flag[256];
++    snprintf(rxing_flag, 255, "/tmp/%d_qemu_rxing", getpid());
++    set_rxing_flag(rxing_flag);
++
+     /* Pad to minimum Ethernet frame length */
+     if (size < sizeof(min_buf)) {
+         iov_to_buf(iov, iovcnt, 0, min_buf, size);
+@@ -888,10 +910,12 @@ e1000_receive_iov(NetClientState *nc, const struct iovec *iov, int iovcnt)
+ 
+     /* Discard oversized packets if !LPE and !SBP. */
+     if (e1000x_is_oversized(s->mac_reg, size)) {
++        clear_rxing_flag(rxing_flag);
+         return size;
+     }
+ 
+     if (!receive_filter(s, filter_buf, size)) {
++        clear_rxing_flag(rxing_flag);
+         return size;
+     }
+ 
+@@ -917,6 +941,7 @@ e1000_receive_iov(NetClientState *nc, const struct iovec *iov, int iovcnt)
+     total_size = size + e1000x_fcs_len(s->mac_reg);
+     if (!e1000_has_rxbufs(s, total_size)) {
+             set_ics(s, 0, E1000_ICS_RXO);
++            clear_rxing_flag(rxing_flag);
+             return -1;
+     }
+     do {
+@@ -970,6 +995,7 @@ e1000_receive_iov(NetClientState *nc, const struct iovec *iov, int iovcnt)
+             DBGOUT(RXERR, "RDH wraparound @%x, RDT %x, RDLEN %x\n",
+                    rdh_start, s->mac_reg[RDT], s->mac_reg[RDLEN]);
+             set_ics(s, 0, E1000_ICS_RXO);
++            clear_rxing_flag(rxing_flag);
+             return -1;
+         }
+     } while (desc_offset < total_size);
+@@ -985,6 +1011,7 @@ e1000_receive_iov(NetClientState *nc, const struct iovec *iov, int iovcnt)
+ 
+     set_ics(s, 0, n);
+ 
++    clear_rxing_flag(rxing_flag);
+     return size;
+ }
+ 

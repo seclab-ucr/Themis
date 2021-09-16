@@ -1,0 +1,26 @@
+<!doctype html>
+<title>Addr2Line</title>
+
+<script type="text/javascript" src="/static/jquery-3.4.0.min.js"></script>
+
+<textarea id="log1" rows="25" cols="225">
+</textarea>
+
+<button id="submit">Click</button>
+<input type="radio" name="inner_outter" value="inner">Inner Most
+<input type="radio" name="inner_outter" value="outter">Outter Most
+<br>
+
+<textarea id="log2" rows="25" cols="225">
+</textarea>
+
+<script>
+$("#submit").click(function() {
+    var log_text = $("#log1").val();
+    var inner_outter_val = $('input[name="inner_outter"]:checked').val();
+    $.post("/translate", {log: log_text, inner_outter: inner_outter_val}, function(data) {
+        $("#log2").val(data);
+    });
+});
+</script>
+

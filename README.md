@@ -1,7 +1,5 @@
 # Themis: Ambiguity-Aware Network Intrusion Detection based on Symbolic Model Comparison
 
-_The paper is still in submission to a conference, so please keep the source code confidential. Thanks._
-
 ## Description
 
 Themis is a systematic solution to defend against discrepancy-based NIDS evasion attacks.
@@ -15,9 +13,8 @@ thus can successfully detect all evasion attacks based on those ambiguities.
 
 ## Source Code
 
-Currently we only make the source code of the online phase available.
-Note that, the offline phase requires quite a lot of domain expertise in Linux TCP and symbolic execution. 
-Please contact us for accessing the source code of the offline phase.
+Note that, the offline phase requires quite a lot of domain expertise in Linux TCP and symbolic execution.
+This documentation will focus on the online phase, so you may have a taste of how the ambiguity-aware NIDS works. 
 
 The structure of the repo is as follows:
 
@@ -27,6 +24,7 @@ The structure of the repo is as follows:
 │   ├── composite/               Attacks using multiple discrepancies
 │   └── single/                  Attacks using a single discrepancy 
 ├── effectiveness/               Scripts used for effectiveness evaluation
+├── offline/                     The implementation of the offline phase based on S2E and Z3
 ├── pcaps/                       Packet dump (pcap) files generated from attack scripts
 ├── perf/                        Scripts used for performance evaluation
 ├── robust-zeek/                 Our robust version of Zeek (ambiguities integrated) (based on Zeek 4.0)

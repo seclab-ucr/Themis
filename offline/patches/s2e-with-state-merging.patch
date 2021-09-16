@@ -1,0 +1,845 @@
+diff --git a/klee/lib/Core/Common.cpp b/klee/lib/Core/Common.cpp
+index 6c63d21..9d463b0 100644
+--- a/klee/lib/Core/Common.cpp
++++ b/klee/lib/Core/Common.cpp
+@@ -44,7 +44,7 @@ static void klee_vfmessage(llvm::raw_ostream *os, const char *pfx, const char *m
+     if (pfx)
+         (*os) << pfx << ": ";
+ 
+-    char buf[8192];
++    char buf[16384];
+     vsnprintf(buf, sizeof(buf), msg, ap);
+     (*os) << buf << '\n';
+ }
+diff --git a/klee/lib/Core/Executor.cpp b/klee/lib/Core/Executor.cpp
+index cf8f0b1..491dc9b 100644
+--- a/klee/lib/Core/Executor.cpp
++++ b/klee/lib/Core/Executor.cpp
+@@ -367,14 +367,14 @@ Executor::StatePair Executor::fork(ExecutionState &current, const ref<Expr> &con
+ 
+     if (current.forkDisabled) {
+         if (conditionIsTrue) {
+-            if (!current.addConstraint(condition)) {
+-                abort();
+-            }
++            //if (!current.addConstraint(condition)) {
++            //    abort();
++            //}
+             return StatePair(&current, 0);
+         } else {
+-            if (!current.addConstraint(Expr::createIsZero(condition))) {
+-                abort();
+-            }
++            //if (!current.addConstraint(Expr::createIsZero(condition))) {
++            //    abort();
++            //}
+             return StatePair(0, &current);
+         }
+     }
+diff --git a/libcpu/include/cpu/se_libcpu.h b/libcpu/include/cpu/se_libcpu.h
+index 95c5b48..731c40b 100644
+--- a/libcpu/include/cpu/se_libcpu.h
++++ b/libcpu/include/cpu/se_libcpu.h
+@@ -178,7 +178,7 @@ struct se_libcpu_interface_t {
+         void (*on_page_fault)(uint64_t addr, int is_write, void *retaddr);
+         void (*on_tlb_miss)(uint64_t addr, int is_write, void *retaddr);
+ 
+-        void (*after_memory_access)(uint64_t vaddr, uint64_t value, unsigned size, unsigned flags, uintptr_t retaddr);
++        uint64_t (*after_memory_access)(uint64_t vaddr, uint64_t value, unsigned size, unsigned flags, uintptr_t retaddr);
+ 
+         void (*trace_port_access)(uint64_t port, uint64_t value, unsigned bits, int isWrite, void *retaddr);
+ 
+@@ -243,7 +243,7 @@ target_ulong tcg_llvm_fork_and_concretize(target_ulong value, target_ulong known
+ 
+ void tcg_llvm_before_memory_access(target_ulong vaddr, uint64_t value, unsigned size, unsigned flags);
+ 
+-void tcg_llvm_after_memory_access(target_ulong vaddr, uint64_t value, unsigned size, unsigned flags, uintptr_t retaddr);
++uint64_t tcg_llvm_after_memory_access(target_ulong vaddr, uint64_t value, unsigned size, unsigned flags, uintptr_t retaddr);
+ 
+ // XXX: change bits to bytes
+ uint64_t tcg_llvm_trace_port_access(uint64_t port, uint64_t value, unsigned bits, int isWrite);
+diff --git a/libcpu/src/cpu-exec.c b/libcpu/src/cpu-exec.c
+index 93ffcf2..46a906a 100644
+--- a/libcpu/src/cpu-exec.c
++++ b/libcpu/src/cpu-exec.c
+@@ -428,11 +428,13 @@ static bool execution_loop(CPUArchState *env) {
+ 
+     for (;;) {
+         bool has_interrupt = false;
+-        if (process_interrupt_request(env)) {
+-            // Ensure that no TB jump will be modified as
+-            // the program flow was changed
+-            ltb = NULL;
+-            has_interrupt = true;
++        if (!env->all_apic_interrupts_disabled) {
++            if (process_interrupt_request(env)) {
++                // Ensure that no TB jump will be modified as
++                // the program flow was changed
++                ltb = NULL;
++                has_interrupt = true;
++            }
+         }
+ 
+         if (unlikely(!has_interrupt && env->exit_request)) {
+@@ -472,9 +474,11 @@ static bool execution_loop(CPUArchState *env) {
+             ltb = NULL;
+         }
+ 
+-        if (env->kvm_request_interrupt_window && (env->mflags & IF_MASK)) {
+-            env->kvm_request_interrupt_window = 0;
+-            return true;
++        if (!env->all_apic_interrupts_disabled) {
++            if (env->kvm_request_interrupt_window && (env->mflags & IF_MASK)) {
++                env->kvm_request_interrupt_window = 0;
++                return true;
++            }
+         }
+     }
+ 
+diff --git a/libcpu/src/cpus.c b/libcpu/src/cpus.c
+index 883e322..d198a1c 100644
+--- a/libcpu/src/cpus.c
++++ b/libcpu/src/cpus.c
+@@ -93,8 +93,12 @@ int64_t cpu_get_clock(void) {
+     } else {
+         if (timers_state.cpu_clock_scale_factor > 1) {
+             /* Compute how much real time elapsed since last request */
+-            int64_t cur_clock = get_clock() + timers_state.cpu_clock_offset;
+-            int64_t increment = cur_clock - timers_state.cpu_clock_prev;
++            int64_t cur_clock;
++            int64_t increment = 0;
++            while (increment == 0) {
++                cur_clock = get_clock() + timers_state.cpu_clock_offset;
++                increment = cur_clock - timers_state.cpu_clock_prev;
++            }
+             assert(increment > 0);
+ 
+             /* Slow the clock down according to the scale */
+diff --git a/libcpu/src/softmmu_header.h b/libcpu/src/softmmu_header.h
+index 03afb5f..194f5ac 100644
+--- a/libcpu/src/softmmu_header.h
++++ b/libcpu/src/softmmu_header.h
+@@ -81,7 +81,7 @@
+     #define INSTR_BEFORE_MEMORY_ACCESS(vaddr, value, flags) \
+         if (*g_sqi.events.before_memory_access_signals_count) tcg_llvm_before_memory_access(vaddr, value, sizeof(value), flags);
+     #define INSTR_AFTER_MEMORY_ACCESS(vaddr, value, flags) \
+-        if (*g_sqi.events.after_memory_access_signals_count) tcg_llvm_after_memory_access(vaddr, value, sizeof(value), flags, 0);
++        if (*g_sqi.events.after_memory_access_signals_count) { value = tcg_llvm_after_memory_access(vaddr, value, sizeof(value), flags, 0); }
+     #define INSTR_FORK_AND_CONCRETIZE(val, max) \
+         tcg_llvm_fork_and_concretize(val, 0, max, 0)
+ #else // SYMBEX_LLVM_LIB
+@@ -93,7 +93,7 @@
+         #else
+             #define INSTR_BEFORE_MEMORY_ACCESS(vaddr, value, flags)
+             #define INSTR_AFTER_MEMORY_ACCESS(vaddr, value, flags) \
+-                if (unlikely(*g_sqi.events.after_memory_access_signals_count)) INSTR_AFTER_MEMORY_ACCESS(vaddr, value, sizeof(value), flags, 0);
++                if (unlikely(*g_sqi.events.after_memory_access_signals_count)) { value = INSTR_AFTER_MEMORY_ACCESS(vaddr, value, sizeof(value), flags, 0); }
+         #endif
+     #else
+         #define INSTR_BEFORE_MEMORY_ACCESS(vaddr, value, flags)
+diff --git a/libcpu/src/softmmu_template.h b/libcpu/src/softmmu_template.h
+index e315d29..3f9f42d 100644
+--- a/libcpu/src/softmmu_template.h
++++ b/libcpu/src/softmmu_template.h
+@@ -64,7 +64,7 @@
+     #define INSTR_BEFORE_MEMORY_ACCESS(vaddr, value, flags) \
+         if (*g_sqi.events.before_memory_access_signals_count) tcg_llvm_before_memory_access(vaddr, value, sizeof(value), flags);
+     #define INSTR_AFTER_MEMORY_ACCESS(vaddr, value, flags, retaddr) \
+-        if (*g_sqi.events.after_memory_access_signals_count) tcg_llvm_after_memory_access(vaddr, value, sizeof(value), flags, 0);
++        if (*g_sqi.events.after_memory_access_signals_count) { value = tcg_llvm_after_memory_access(vaddr, value, sizeof(value), flags, 0); }
+     #define INSTR_FORK_AND_CONCRETIZE(val, max) \
+         tcg_llvm_fork_and_concretize(val, 0, max, 0)
+     #define SE_SET_MEM_IO_VADDR(env, addr, reset) \
+@@ -77,7 +77,7 @@
+         #else
+             #define INSTR_BEFORE_MEMORY_ACCESS(vaddr, value, flags)
+             #define INSTR_AFTER_MEMORY_ACCESS(vaddr, value, flags, retaddr) \
+-                if (unlikely(*g_sqi.events.after_memory_access_signals_count)) g_sqi.events.after_memory_access(vaddr, value, sizeof(value), flags, (uintptr_t) 0);
++                if (unlikely(*g_sqi.events.after_memory_access_signals_count)) { value = g_sqi.events.after_memory_access(vaddr, value, sizeof(value), flags, (uintptr_t) 0); }
+         #endif
+     #else
+         #define INSTR_BEFORE_MEMORY_ACCESS(vaddr, value, flags)
+diff --git a/libs2e/src/s2e-kvm-vcpu.cpp b/libs2e/src/s2e-kvm-vcpu.cpp
+index f3aa854..156ca48 100644
+--- a/libs2e/src/s2e-kvm-vcpu.cpp
++++ b/libs2e/src/s2e-kvm-vcpu.cpp
+@@ -333,6 +333,14 @@ int VCPU::run(int vcpu_fd) {
+         return 0;
+     }
+ 
++    // wait for e1000_receive_iov to finish if in merging state
++    char s2e_merging_flag[256], qemu_rxing_flag[256];
++    pid_t pid = getpid();
++    snprintf(s2e_merging_flag, 255, "/tmp/%d_s2e_merging_states", pid);
++    snprintf(qemu_rxing_flag, 255, "/tmp/%d_qemu_rxing", pid);
++    while (access(s2e_merging_flag, F_OK) == 0 && access(qemu_rxing_flag, F_OK) == 0)
++        usleep(10000);
++
+     lock();
+ 
+     m_inKvmRun = true;
+diff --git a/libs2ecore/include/s2e/CorePlugin.h b/libs2ecore/include/s2e/CorePlugin.h
+index 3ac9297..89586e7 100644
+--- a/libs2ecore/include/s2e/CorePlugin.h
++++ b/libs2ecore/include/s2e/CorePlugin.h
+@@ -260,7 +260,7 @@ public:
+     sigc::signal<void,
+                  S2EExecutionState*,
+                  uint64_t /* virtual address */,
+-                 uint64_t /* value */,
++                 uint64_t& /* value */,
+                  uint8_t /* size */,
+                  unsigned /* flags */>
+         onConcreteDataMemoryAccess;
+diff --git a/libs2ecore/include/s2e/s2e_config.h b/libs2ecore/include/s2e/s2e_config.h
+index 27487da..8d4aec9 100644
+--- a/libs2ecore/include/s2e/s2e_config.h
++++ b/libs2ecore/include/s2e/s2e_config.h
+@@ -27,7 +27,7 @@
+ /** How many S2E instances we want to handle.
+     Plugins can use this constant to allocate blocks of shared memory whose size
+     depends on the maximum number of processes (e.g., bitmaps) */
+-#define S2E_MAX_PROCESSES 48
++#define S2E_MAX_PROCESSES 64
+ 
+ #define S2E_USE_FAST_SIGNALS
+ 
+diff --git a/libs2ecore/include/s2e/s2e_libcpu.h b/libs2ecore/include/s2e/s2e_libcpu.h
+index 760359a..e51474f 100644
+--- a/libs2ecore/include/s2e/s2e_libcpu.h
++++ b/libs2ecore/include/s2e/s2e_libcpu.h
+@@ -210,7 +210,7 @@ target_ulong tcg_llvm_fork_and_concretize(target_ulong value, target_ulong known
+ 
+ void tcg_llvm_before_memory_access(target_ulong vaddr, uint64_t value, unsigned size, unsigned flags);
+ 
+-void tcg_llvm_after_memory_access(target_ulong vaddr, uint64_t value, unsigned size, unsigned flags, uintptr_t retaddr);
++uint64_t tcg_llvm_after_memory_access(target_ulong vaddr, uint64_t value, unsigned size, unsigned flags, uintptr_t retaddr);
+ 
+ uint64_t tcg_llvm_trace_port_access(uint64_t port, uint64_t value, unsigned bits, int isWrite);
+ 
+diff --git a/libs2ecore/include/s2e/s2e_libcpu_coreplugin.h b/libs2ecore/include/s2e/s2e_libcpu_coreplugin.h
+index fb00dc1..901e9a0 100644
+--- a/libs2ecore/include/s2e/s2e_libcpu_coreplugin.h
++++ b/libs2ecore/include/s2e/s2e_libcpu_coreplugin.h
+@@ -86,7 +86,7 @@ int s2e_on_call_return_translate(uint64_t pc, int isCall);
+ #define MEM_TRACE_FLAG_PRECISE 4
+ #define MEM_TRACE_FLAG_PLUGIN 8
+ 
+-void s2e_after_memory_access(uint64_t vaddr, uint64_t value, unsigned size, unsigned flags, uintptr_t retaddr);
++uint64_t s2e_after_memory_access(uint64_t vaddr, uint64_t value, unsigned size, unsigned flags, uintptr_t retaddr);
+ 
+ extern unsigned *g_s2e_before_memory_access_signals_count;
+ extern unsigned *g_s2e_after_memory_access_signals_count;
+diff --git a/libs2ecore/src/CorePluginInterface.cpp b/libs2ecore/src/CorePluginInterface.cpp
+index f61945c..17e8ba9 100644
+--- a/libs2ecore/src/CorePluginInterface.cpp
++++ b/libs2ecore/src/CorePluginInterface.cpp
+@@ -360,7 +360,7 @@ void s2e_init_timers() {
+ // XXX: precise exceptions here
+ // The location may be imprecise if called from a helper
+ //(retaddr will be set to null there)
+-void s2e_after_memory_access(uint64_t vaddr, uint64_t value, unsigned size, unsigned flags, uintptr_t retaddr) {
++uint64_t s2e_after_memory_access(uint64_t vaddr, uint64_t value, unsigned size, unsigned flags, uintptr_t retaddr) {
+     if (retaddr && env->se_current_tb) {
+         cpu_restore_state(env, (uintptr_t) retaddr);
+         flags |= MEM_TRACE_FLAG_PRECISE;
+@@ -371,6 +371,7 @@ void s2e_after_memory_access(uint64_t vaddr, uint64_t value, unsigned size, unsi
+     } catch (s2e::CpuExitException &) {
+         longjmp(env->jmp_env, 1);
+     }
++    return value;
+ }
+ 
+ uint8_t __ldb_mmu_trace(uint8_t *host_addr, target_ulong vaddr) {
+diff --git a/libs2ecore/src/FunctionHandlers.cpp b/libs2ecore/src/FunctionHandlers.cpp
+index 56361d9..dde5e5e 100644
+--- a/libs2ecore/src/FunctionHandlers.cpp
++++ b/libs2ecore/src/FunctionHandlers.cpp
+@@ -222,12 +222,17 @@ void handlerAfterMemoryAccess(Executor *executor, ExecutionState *state, klee::K
+     klee::ref<Expr> haddr = klee::ConstantExpr::create(0, klee::Expr::Int64);
+ 
+     if (isa<klee::ConstantExpr>(value) && isa<klee::ConstantExpr>(vaddr)) {
++        uint64_t cvalue = cast<klee::ConstantExpr>(value)->getZExtValue();
+         g_s2e->getCorePlugin()->onConcreteDataMemoryAccess.emit(
+-            s2eState, cast<klee::ConstantExpr>(vaddr)->getZExtValue(), cast<klee::ConstantExpr>(value)->getZExtValue(),
++            s2eState, cast<klee::ConstantExpr>(vaddr)->getZExtValue(), cvalue,
+             klee::Expr::getMinBytesForWidth(width), flags);
++        if (cvalue != cast<klee::ConstantExpr>(value)->getZExtValue()) {
++            args[1] = klee::ConstantExpr::create(cvalue, args[1]->getWidth());
++        }
+     } else {
+         g_s2e->getCorePlugin()->onAfterSymbolicDataMemoryAccess.emit(s2eState, vaddr, haddr, value, flags);
+     }
++    state->bindLocal(target, args[1]);
+ }
+ 
+ // TODO: implement s2e_on_tlb_miss in symbolic mode
+diff --git a/libs2ecore/src/S2EExecutionState.cpp b/libs2ecore/src/S2EExecutionState.cpp
+index 8860e50..0d89632 100644
+--- a/libs2ecore/src/S2EExecutionState.cpp
++++ b/libs2ecore/src/S2EExecutionState.cpp
+@@ -598,17 +598,16 @@ bool S2EExecutionState::merge(const ExecutionState &_b) {
+ 
+     assert(!m_active && !b.m_active);
+ 
+-    llvm::raw_ostream &s = g_s2e->getInfoStream(this);
+-
+     if (DebugLogStateMerge) {
+-        s << "Attempting merge with state " << b.getID() << '\n';
++        g_s2e->getDebugStream(this) << "Attempting merge with state " << b.getID() << '\n';
+     }
+ 
+     // Check CPUX86State
+     {
+         if (m_registers.compareArchitecturalConcreteState(b.m_registers)) {
+             if (DebugLogStateMerge) {
+-                s << "merge failed: different concrete cpu state" << '\n';
++                g_s2e->getDebugStream(this) << "merge failed: different concrete cpu state" << '\n';
++                assert(false);
+             }
+             return false;
+         }
+diff --git a/libs2ecore/src/S2EExecutionStateMemory.cpp b/libs2ecore/src/S2EExecutionStateMemory.cpp
+index 1a2899c..abd7810 100644
+--- a/libs2ecore/src/S2EExecutionStateMemory.cpp
++++ b/libs2ecore/src/S2EExecutionStateMemory.cpp
+@@ -326,7 +326,7 @@ void S2EExecutionStateMemory::transferRamInternal(const klee::ObjectStateConstPt
+                     os = wos = m_addressSpace->getWriteable(os);
+                 }
+ 
+-                buf[i] = m_concretizer->concretize(wos->read8(object_offset + i), "memory access from concrete code");
++                buf[i] = m_concretizer->concretize(wos->read8(object_offset + i), "memory access from concrete code", true);
+                 wos->write8(object_offset + i, buf[i]);
+             }
+         }
+@@ -358,7 +358,10 @@ void S2EExecutionStateMemory::transferRamInternalSymbolic(const klee::ObjectStat
+ 
+ void S2EExecutionStateMemory::transferRam(struct CPUTLBRAMEntry *te, uint64_t hostAddress, void *buf, uint64_t size,
+                                           bool isWrite, bool exitOnSymbolicRead, bool isSymbolic) {
+-    assert(*m_active);
++    //assert(*m_active);
++    if (!*m_active) {
++        return;
++    }
+     uint64_t page_offset = hostAddress & ~SE_RAM_OBJECT_MASK;
+     if (!(page_offset + size <= SE_RAM_OBJECT_SIZE)) {
+         /* Access spans multiple MemoryObject's */
+diff --git a/libs2ecore/src/S2EExecutionStateRegisters.cpp b/libs2ecore/src/S2EExecutionStateRegisters.cpp
+index c9eab6d..c88c0b9 100644
+--- a/libs2ecore/src/S2EExecutionStateRegisters.cpp
++++ b/libs2ecore/src/S2EExecutionStateRegisters.cpp
+@@ -358,12 +358,24 @@ int S2EExecutionStateRegisters::compareArchitecturalConcreteState(const S2EExecu
+     CPUX86State *a = getCpuState();
+     CPUX86State *b = other.getCpuState();
+ 
+-    int ret = memcmp(&a->eip, &b->eip, CPU_OFFSET(se_common_start) - CPU_OFFSET(eip));
++    int ret = memcmp(&a->eip, &b->eip, CPU_OFFSET(return_address) - CPU_OFFSET(eip));
+     if (ret) {
+         return ret;
+     }
+ 
+-    ret = memcmp(&a->se_common_end, &b->se_common_end, sizeof(CPUX86State) - CPU_OFFSET(se_common_end));
++    // wzj: return_address may be different in our case
++    ret = memcmp(&a->segs, &b->segs, CPU_OFFSET(se_common_start) - CPU_OFFSET(segs));
++    if (ret) {
++        return ret;
++    }
++
++    // wzj: do not compare KVM interrupt variables
++    ret = memcmp(&a->se_common_end, &b->se_common_end, CPU_OFFSET(kvm_request_interrupt_window) - CPU_OFFSET(se_common_end));
++    if (ret) {
++        return ret;
++    }
++
++    ret = memcmp(&a->apic_state, &b->apic_state, sizeof(CPUX86State) - CPU_OFFSET(apic_state));
+     return ret;
+ }
+ 
+diff --git a/libs2ecore/src/S2EExecutor.cpp b/libs2ecore/src/S2EExecutor.cpp
+index 8aa74e6..ab6acd5 100644
+--- a/libs2ecore/src/S2EExecutor.cpp
++++ b/libs2ecore/src/S2EExecutor.cpp
+@@ -1429,7 +1429,7 @@ S2EExecutor::StatePair S2EExecutor::fork(ExecutionState &current, const klee::re
+ 
+         g_s2e->getCorePlugin()->onStateForkDecide.emit(currentState, &forkOk);
+         if (!forkOk) {
+-            g_s2e->getDebugStream(currentState) << "fork prevented by request from plugin\n";
++            g_s2e->getDebugStream(currentState) << "fork prevented by request from plugin at " << hexval(currentState->regs()->getPc()) << "\n";
+         }
+     }
+ 
+diff --git a/libs2eplugins/src/CMakeLists.txt b/libs2eplugins/src/CMakeLists.txt
+index 60755b5..aa05b08 100644
+--- a/libs2eplugins/src/CMakeLists.txt
++++ b/libs2eplugins/src/CMakeLists.txt
+@@ -138,6 +138,17 @@ add_library(
+     s2e/Plugins/Lua/LuaExpression.cpp
+     s2e/Plugins/Lua/LuaCoreEvents.cpp
+ 
++    # My plugins
++    s2e/Plugins/MyPlugins/DFSSearcher.cpp
++    s2e/Plugins/MyPlugins/MemRangeDetector.cpp
++    s2e/Plugins/MyPlugins/MyExecutionMonitor.cpp
++    s2e/Plugins/MyPlugins/MyForkLimiter.cpp
++    s2e/Plugins/MyPlugins/MyLuaFunctionInstrumentation.cpp
++    s2e/Plugins/MyPlugins/MyTracer.cpp
++    s2e/Plugins/MyPlugins/MyVariables.cpp
++    s2e/Plugins/MyPlugins/PathMerger.cpp
++    s2e/Plugins/MyPlugins/SymTCP.cpp
++
+     ${PROTO_SRCS} ${PROTO_HDRS}
+ )
+ 
+diff --git a/libs2eplugins/src/s2e/Plugins/ExecutionTracers/MemoryTracer.cpp b/libs2eplugins/src/s2e/Plugins/ExecutionTracers/MemoryTracer.cpp
+index a019450..2b421bb 100644
+--- a/libs2eplugins/src/s2e/Plugins/ExecutionTracers/MemoryTracer.cpp
++++ b/libs2eplugins/src/s2e/Plugins/ExecutionTracers/MemoryTracer.cpp
+@@ -275,7 +275,7 @@ void MemoryTracer::onAfterSymbolicDataMemoryAccess(S2EExecutionState *state, kle
+     traceSymbolicDataMemoryAccess(state, address, hostAddress, value, flags);
+ }
+ 
+-void MemoryTracer::onConcreteDataMemoryAccess(S2EExecutionState *state, uint64_t address, uint64_t value, uint8_t size,
++void MemoryTracer::onConcreteDataMemoryAccess(S2EExecutionState *state, uint64_t address, uint64_t &value, uint8_t size,
+                                               unsigned flags) {
+     DECLARE_PLUGINSTATE(MemoryTracerState, state);
+     if (!plgState->enabled(MemoryTracer::MEMORY)) {
+diff --git a/libs2eplugins/src/s2e/Plugins/ExecutionTracers/MemoryTracer.h b/libs2eplugins/src/s2e/Plugins/ExecutionTracers/MemoryTracer.h
+index daf1a85..4447522 100644
+--- a/libs2eplugins/src/s2e/Plugins/ExecutionTracers/MemoryTracer.h
++++ b/libs2eplugins/src/s2e/Plugins/ExecutionTracers/MemoryTracer.h
+@@ -70,7 +70,7 @@ private:
+                                          klee::ref<klee::Expr> hostAddress, klee::ref<klee::Expr> value,
+                                          unsigned flags);
+ 
+-    void onConcreteDataMemoryAccess(S2EExecutionState *state, uint64_t vaddr, uint64_t value, uint8_t size,
++    void onConcreteDataMemoryAccess(S2EExecutionState *state, uint64_t vaddr, uint64_t &value, uint8_t size,
+                                     unsigned flags);
+ 
+     void onExecuteBlockStart(S2EExecutionState *state, uint64_t pc);
+diff --git a/libs2eplugins/src/s2e/Plugins/OSMonitors/Linux/DecreeMonitor.cpp b/libs2eplugins/src/s2e/Plugins/OSMonitors/Linux/DecreeMonitor.cpp
+index cd41eb1..14a5acc 100644
+--- a/libs2eplugins/src/s2e/Plugins/OSMonitors/Linux/DecreeMonitor.cpp
++++ b/libs2eplugins/src/s2e/Plugins/OSMonitors/Linux/DecreeMonitor.cpp
+@@ -646,8 +646,9 @@ void DecreeMonitor::handleCopyToUser(S2EExecutionState *state, uint64_t pid,
+         }
+ 
+         if (isa<ConstantExpr>(value)) {
++            uint64_t cvalue = cast<klee::ConstantExpr>(value)->getZExtValue();
+             g_s2e->getCorePlugin()->onConcreteDataMemoryAccess.emit(state, d.user_addr + i,
+-                                                                    cast<klee::ConstantExpr>(value)->getZExtValue(), 1,
++                                                                    cvalue, 1,
+                                                                     MEM_TRACE_FLAG_WRITE | MEM_TRACE_FLAG_PLUGIN);
+         } else {
+             g_s2e->getCorePlugin()->onAfterSymbolicDataMemoryAccess.emit(
+diff --git a/libs2eplugins/src/s2e/Plugins/Searchers/MergingSearcher.cpp b/libs2eplugins/src/s2e/Plugins/Searchers/MergingSearcher.cpp
+index b293a7c..fc563e1 100644
+--- a/libs2eplugins/src/s2e/Plugins/Searchers/MergingSearcher.cpp
++++ b/libs2eplugins/src/s2e/Plugins/Searchers/MergingSearcher.cpp
+@@ -40,12 +40,15 @@ using namespace llvm;
+ S2E_DEFINE_PLUGIN(MergingSearcher, "Searcher to be used with state merging", "MergingSearcher");
+ 
+ void MergingSearcher::initialize() {
+-    s2e()->getExecutor()->setSearcher(this);
++    m_searchers = s2e()->getPlugin<MultiSearcher>();
++    m_searchers->registerSearcher("MergingSearcher", this);
+     m_currentState = nullptr;
+     m_nextMergeGroupId = 1;
+     m_selector = nullptr;
+ 
+     m_debug = s2e()->getConfig()->getBool(getConfigKey() + ".debug");
++
++    s2e()->getCorePlugin()->onProcessForkDecide.connect(sigc::mem_fun(*this, &MergingSearcher::onProcessForkDecide));
+ }
+ 
+ klee::ExecutionState &MergingSearcher::selectState() {
+@@ -60,6 +63,23 @@ klee::ExecutionState &MergingSearcher::selectState() {
+         return *state;
+     }
+ 
++    // execute merging states first
++    if (!m_mergingStates.empty()) {
++        //getDebugStream(state) << " select state from m_mergingStates\n";
++        for (auto state : m_mergingStates) {
++            //getDebugStream(state) << "  State " << state->getID() << " (yielded: " << state->isYielded() << ")\n";
++            if (!state->isYielded()) {
++                m_currentState = state;
++                return *state;
++            }
++        }
++        // should not reach here
++        assert(false);
++        state = *m_mergingStates.begin();
++        m_currentState = state;
++        return *state; 
++    }
++
+     assert(!m_activeStates.empty());
+ 
+     state = *m_activeStates.begin();
+@@ -83,6 +103,7 @@ void MergingSearcher::update(klee::ExecutionState *current, const klee::StateSet
+         DECLARE_PLUGINSTATE(MergingSearcherState, state);
+         if (plgState->getGroupId()) {
+             m_mergePools[plgState->getGroupId()].states.erase(state);
++            m_mergingStates.erase(state);
+         }
+ 
+         if (state == m_currentState) {
+@@ -97,6 +118,7 @@ void MergingSearcher::update(klee::ExecutionState *current, const klee::StateSet
+         DECLARE_PLUGINSTATE(MergingSearcherState, state);
+         if (plgState->getGroupId()) {
+             m_mergePools[plgState->getGroupId()].states.insert(state);
++            m_mergingStates.insert(state);
+         }
+     }
+ 
+@@ -111,8 +133,7 @@ bool MergingSearcher::empty() {
+ 
+ void MergingSearcher::suspend(S2EExecutionState *state) {
+     if (m_debug) {
+-        getDebugStream(nullptr) << "MergingSearcher: "
+-                                << "suspending state " << state->getID() << "\n";
++        getDebugStream(state) << "Suspending state " << state->getID() << "\n";
+     }
+ 
+     if (m_currentState == state) {
+@@ -123,62 +144,125 @@ void MergingSearcher::suspend(S2EExecutionState *state) {
+     if (m_selector) {
+         m_selector->setActive(state, false);
+     }
++
++    g_s2e->getExecutor()->suspendState(state);
+ }
+ 
+ void MergingSearcher::resume(S2EExecutionState *state) {
+     if (m_debug) {
+-        getDebugStream(nullptr) << "MergingSearcher: "
+-                                << "resuming state " << state->getID() << "\n";
++        getDebugStream(state) << "Resuming state " << state->getID() << "\n";
+     }
+ 
+     m_activeStates.insert(state);
+     if (m_selector) {
+         m_selector->setActive(state, true);
+     }
++
++    g_s2e->getExecutor()->resumeState(state);
+ }
+ 
+-bool MergingSearcher::mergeStart(S2EExecutionState *state) {
++void MergingSearcher::preMergeStart(S2EExecutionState *state) {
+     DECLARE_PLUGINSTATE(MergingSearcherState, state);
+ 
+-    if (plgState->getGroupId() != 0) {
+-        getWarningsStream(state) << "MergingSearcher: state id already has group id " << plgState->getGroupId() << "\n";
+-        return false;
++    uint64_t groupId = plgState->getGroupId();
++
++    if (groupId != 0) {
++        // already merging, nested merging ranges, save the current state
++        m_groupIdStack.push_back(groupId);
++        m_mergingStatesStack.push_back(m_mergingStates);
++    } else {
++        // start a merging range
++        // disable interrupts and packet receiving
++        //state->regs()->write<uint8_t>(CPU_OFFSET(timer_interrupt_disabled), 1);
++        //state->regs()->write<uint8_t>(CPU_OFFSET(all_apic_interrupts_disabled), 1);
++        disableEthernetRx(state);
++
++        state->setPinned(true);
+     }
++}
++
++bool MergingSearcher::mergeStart(S2EExecutionState *state) {
++    DECLARE_PLUGINSTATE(MergingSearcherState, state);
++
++    preMergeStart(state);
+ 
+     uint64_t id = m_nextMergeGroupId++;
+ 
+     if (m_debug) {
+-        getWarningsStream(state) << "MergingSearcher: starting merge group " << id << "\n";
++        getInfoStream(state) << "Starting merge group " << id << "\n";
+     }
+ 
+     plgState->setGroupId(id);
+     m_mergePools[id].states.insert(state);
+-    state->setPinned(true);
++    m_mergingStates.clear();
++    m_mergingStates.insert(state);
+     return true;
+ }
+ 
++void MergingSearcher::postMergeEnd(S2EExecutionState *state) {
++    DECLARE_PLUGINSTATE(MergingSearcherState, state);
++
++    if (m_groupIdStack.size() > 0) {
++        // go back to the previous merging range, restore saved state
++        /*
++        getDebugStream(state) << "go back to previous merge range.\n";
++        getDebugStream(state) << "m_groupIdStack: \n";
++        for (auto gid : m_groupIdStack) {
++            getDebugStream(state) << "  gid: " << gid << "\n";
++        }
++        */
++        plgState->setGroupId(m_groupIdStack.back());
++        m_groupIdStack.pop_back();
++        /*
++        getDebugStream(state) << "m_mergingStatesStack: \n";
++        int i = 0;
++        for (auto ms : m_mergingStatesStack) {
++            getDebugStream(state) << "[" << ++i << "]\n";
++            for (auto s : ms) {
++                getDebugStream(state) << "  State " << s->getID() << "\n";
++            }
++        }
++        */
++        m_mergingStates = m_mergingStatesStack.back();
++        m_mergingStatesStack.pop_back();
++    } else {
++        //getDebugStream(state) << "merge ended..\n";
++        // no more merging ranges
++        plgState->setGroupId(0);
++
++        // enable interrupts and packet receiving
++        //state->regs()->write<uint8_t>(CPU_OFFSET(timer_interrupt_disabled), 0);
++        //state->regs()->write<uint8_t>(CPU_OFFSET(all_apic_interrupts_disabled), 0);
++        enableEthernetRx(state);
++
++        state->setPinned(false);
++    }
++}
++
+ bool MergingSearcher::mergeEnd(S2EExecutionState *state, bool skipOpcode, bool clearTmpFlags) {
+     DECLARE_PLUGINSTATE(MergingSearcherState, state);
+ 
++    uint64_t groupId = plgState->getGroupId();
+     if (m_debug) {
+-        getWarningsStream(state) << "MergingSearcher: merging state\n";
++        getInfoStream(state) << "Merging state. Group ID: " << groupId << "\n";
+     }
+ 
+-    MergePools::iterator it = m_mergePools.find(plgState->getGroupId());
++    MergePools::iterator it = m_mergePools.find(groupId);
+     if (it == m_mergePools.end()) {
+-        getWarningsStream(state) << "MergingSearcher: state does not belong to a merge group\n";
++        getWarningsStream(state) << "State does not belong to a merge group\n";
+         return false;
+     }
+ 
+     merge_pool_t &mergePool = (*it).second;
+ 
+     mergePool.states.erase(state);
++    m_mergingStates.erase(state);
+     if (mergePool.states.empty() && !mergePool.firstState) {
+         // No states forked in the merge pool when the merge point was reached,
+         // so there is nothing to merge and therefore we return.
+-        plgState->setGroupId(0);
++        getDebugStream(state) << "No states forked\n";
++        postMergeEnd(state);
+         m_mergePools.erase(it);
+-        state->setPinned(false);
+         return true;
+     }
+ 
+@@ -215,10 +299,9 @@ bool MergingSearcher::mergeEnd(S2EExecutionState *state, bool skipOpcode, bool c
+     bool success = g_s2e->getExecutor()->merge(*mergePool.firstState, *state);
+ 
+     if (mergePool.states.empty()) {
++        postMergeEnd(mergePool.firstState);
+         resume(mergePool.firstState);
+-        DECLARE_PLUGINSTATE(MergingSearcherState, mergePool.firstState);
+-        plgState->setGroupId(0);
+-        mergePool.firstState->setPinned(false);
++        m_currentState = mergePool.firstState;
+         m_mergePools.erase(it);
+     }
+ 
+@@ -233,17 +316,31 @@ bool MergingSearcher::mergeEnd(S2EExecutionState *state, bool skipOpcode, bool c
+     throw CpuExitException();
+ }
+ 
++void MergingSearcher::onProcessForkDecide(bool *proceed) {
++    // do not fork process when in merging
++    foreach2 (it, m_mergePools.begin(), m_mergePools.end()) {
++        if (!it->second.states.empty()) {
++            getDebugStream() << "Merge pool " << it->first << " is not empty.\n";
++            for (auto state : it->second.states) {
++                getDebugStream() << "  State " << state->getID() << "\n";
++            }
++            *proceed = false;
++            return;
++        }
++    }
++}
++
+ void MergingSearcher::handleOpcodeInvocation(S2EExecutionState *state, uint64_t guestDataPtr, uint64_t guestDataSize) {
+     merge_desc_t command;
+ 
+     if (guestDataSize != sizeof(command)) {
+-        getWarningsStream(state) << "MergingSearcher: mismatched merge_desc_t size"
++        getWarningsStream(state) << "Mismatched merge_desc_t size"
+                                  << " got " << guestDataSize << " expected " << sizeof(command) << "\n";
+         return;
+     }
+ 
+     if (!state->mem()->read(guestDataPtr, &command, guestDataSize)) {
+-        getWarningsStream(state) << "MergingSearcher: could not read transmitted data\n";
++        getWarningsStream(state) << "Could not read transmitted data\n";
+         return;
+     }
+ 
+@@ -254,6 +351,21 @@ void MergingSearcher::handleOpcodeInvocation(S2EExecutionState *state, uint64_t
+     }
+ }
+ 
++void MergingSearcher::disableEthernetRx(S2EExecutionState *state) {
++    char merging_flag[256];
++    snprintf(merging_flag, 255, "/tmp/%d_s2e_merging_states", getpid());
++    FILE* fd = fopen(merging_flag, "w");
++    fclose(fd);
++    getDebugStream(state) << "Disabling e1000 Rx.\n";
++}
++
++void MergingSearcher::enableEthernetRx(S2EExecutionState *state) {
++    char merging_flag[256];
++    snprintf(merging_flag, 255, "/tmp/%d_s2e_merging_states", getpid());
++    remove(merging_flag);
++    getDebugStream(state) << "Enabling e1000 Rx.\n";
++}
++
+ MergingSearcherState::MergingSearcherState() {
+     m_groupId = 0;
+ }
+diff --git a/libs2eplugins/src/s2e/Plugins/Searchers/MergingSearcher.h b/libs2eplugins/src/s2e/Plugins/Searchers/MergingSearcher.h
+index 9f60f66..d94c0d5 100644
+--- a/libs2eplugins/src/s2e/Plugins/Searchers/MergingSearcher.h
++++ b/libs2eplugins/src/s2e/Plugins/Searchers/MergingSearcher.h
+@@ -28,6 +28,7 @@
+ #include <s2e/Plugin.h>
+ #include <s2e/Plugins/Core/BaseInstructions.h>
+ #include <s2e/Plugins/OSMonitors/Support/ModuleExecutionDetector.h>
++#include <s2e/Plugins/Searchers/MultiSearcher.h>
+ #include <s2e/S2EExecutionState.h>
+ 
+ #include <llvm/ADT/DenseSet.h>
+@@ -76,9 +77,16 @@ private:
+     typedef std::map<uint64_t, merge_pool_t> MergePools;
+ 
+     MergePools m_mergePools;
++
+     States m_activeStates;
++    States m_mergingStates;
+     S2EExecutionState *m_currentState;
+     uint64_t m_nextMergeGroupId;
++    
++    std::vector<uint64_t> m_groupIdStack;
++    std::vector<States> m_mergingStatesStack;
++
++    MultiSearcher *m_searchers;
+ 
+     IMergingSearcher *m_selector;
+ 
+@@ -107,11 +115,19 @@ public:
+     bool mergeStart(S2EExecutionState *state);
+     bool mergeEnd(S2EExecutionState *state, bool skipOpcode, bool clearTmpFlags);
+ 
++    void preMergeStart(S2EExecutionState *state);
++    void postMergeEnd(S2EExecutionState *state);
++
+ private:
+     void suspend(S2EExecutionState *state);
+     void resume(S2EExecutionState *state);
+ 
++    void onProcessForkDecide(bool *proceed);
++
+     virtual void handleOpcodeInvocation(S2EExecutionState *state, uint64_t guestDataPtr, uint64_t guestDataSize);
++
++    void disableEthernetRx(S2EExecutionState *state);
++    void enableEthernetRx(S2EExecutionState *state);
+ };
+ 
+ class MergingSearcherState : public PluginState {
+diff --git a/libs2eplugins/src/s2e/Plugins/Support/WebServiceInterface.cpp b/libs2eplugins/src/s2e/Plugins/Support/WebServiceInterface.cpp
+index 6a4a7d6..da82e42 100644
+--- a/libs2eplugins/src/s2e/Plugins/Support/WebServiceInterface.cpp
++++ b/libs2eplugins/src/s2e/Plugins/Support/WebServiceInterface.cpp
+@@ -44,12 +44,15 @@ void WebServiceInterface::initialize() {
+     m_maxCompletedPathDepth = 0;
+     m_maxPathDepth = 0;
+     m_completedPaths = 0;
++    m_mergedPaths = 0;
+     m_completedSeeds = 0;
+     m_segFaults = 0;
+ 
+     s2e()->getCorePlugin()->onEngineShutdown.connect(sigc::mem_fun(*this, &WebServiceInterface::onEngineShutdown));
+     s2e()->getCorePlugin()->onStateKill.connect(sigc::mem_fun(*this, &WebServiceInterface::onStateKill),
+                                                 fsigc::signal_base::HIGHEST_PRIORITY);
++    s2e()->getCorePlugin()->onStateMerge.connect(sigc::mem_fun(*this, &WebServiceInterface::onStateMerge),
++                                                 fsigc::signal_base::HIGHEST_PRIORITY);
+     s2e()->getCorePlugin()->onTimer.connect(sigc::mem_fun(*this, &WebServiceInterface::onTimer),
+                                             fsigc::signal_base::HIGHEST_PRIORITY);
+     s2e()->getCorePlugin()->onProcessForkComplete.connect(
+@@ -96,6 +99,8 @@ QDict *WebServiceInterface::getGlobalStats() {
+     qdict_put_obj(stats, "state_highest_id", QOBJECT(qint_from_int(s2e()->fetchNextStateId())));
+     qdict_put_obj(stats, "state_completed_count", QOBJECT(qint_from_int(m_completedPaths)));
+     m_completedPaths = 0;
++    qdict_put_obj(stats, "state_merged_count", QOBJECT(qint_from_int(m_mergedPaths)));
++    m_mergedPaths = 0;
+ 
+     // Number of constraints on the deepest completed path
+     qdict_put_obj(stats, "state_max_completed_depth", QOBJECT(qint_from_int(m_maxCompletedPathDepth)));
+@@ -202,6 +207,10 @@ void WebServiceInterface::onStateKill(S2EExecutionState *state) {
+     m_maxCompletedPathDepth = std::max(m_maxCompletedPathDepth, (unsigned) state->constraints().size());
+ }
+ 
++void WebServiceInterface::onStateMerge(S2EExecutionState *dst, S2EExecutionState *src) {
++    ++m_mergedPaths;
++}
++
+ void WebServiceInterface::onSeed(const seeds::Seed &seed, seeds::SeedEvent event) {
+     if (event == seeds::TERMINATED) {
+         getDebugStream() << "Guest terminated seed " << seed.filename << "\n";
+diff --git a/libs2eplugins/src/s2e/Plugins/Support/WebServiceInterface.h b/libs2eplugins/src/s2e/Plugins/Support/WebServiceInterface.h
+index 75263ee..f11b01b 100644
+--- a/libs2eplugins/src/s2e/Plugins/Support/WebServiceInterface.h
++++ b/libs2eplugins/src/s2e/Plugins/Support/WebServiceInterface.h
+@@ -54,6 +54,7 @@ private:
+     uint32_t m_maxPathDepth;
+ 
+     uint32_t m_completedPaths;
++    uint32_t m_mergedPaths;
+     uint32_t m_completedSeeds;
+ 
+     uint32_t m_segFaults;
+@@ -67,6 +68,7 @@ private:
+     void onTimer();
+     void onProcessForkComplete(bool isChild);
+     void onStateKill(S2EExecutionState *state);
++    void onStateMerge(S2EExecutionState *dst, S2EExecutionState *src);
+     void onSeed(const seeds::Seed &seed, seeds::SeedEvent event);
+     void onSegFault(S2EExecutionState *state, uint64_t pid, uint64_t pc);
+ 
+diff --git a/tools/include/Translator/TranslatorWrapperInternal.h b/tools/include/Translator/TranslatorWrapperInternal.h
+index 9c0b3de..ddd5d6d 100644
+--- a/tools/include/Translator/TranslatorWrapperInternal.h
++++ b/tools/include/Translator/TranslatorWrapperInternal.h
+@@ -95,8 +95,8 @@ static void on_tlb_miss(uint64_t addr, int is_write, void *retaddr) {
+     return;
+ }
+ 
+-static void after_memory_access(uint64_t vaddr, uint64_t value, unsigned size, unsigned flags, uintptr_t retaddr) {
+-    return;
++static uint64_t after_memory_access(uint64_t vaddr, uint64_t value, unsigned size, unsigned flags, uintptr_t retaddr) {
++    return value;
+ }
+ 
+ static void trace_port_access(uint64_t port, uint64_t value, unsigned bits, int isWrite, void *retaddr) {
+@@ -372,7 +372,7 @@ void s2e_on_tlb_miss(uint64_t addr, int is_write, void *retaddr) {
+     assert(false && "Not usable statically");
+ }
+ 
+-void s2e_after_memory_access(uint64_t vaddr, uint64_t value, unsigned size, unsigned flags, uintptr_t retaddr) {
++uint64_t s2e_after_memory_access(uint64_t vaddr, uint64_t value, unsigned size, unsigned flags, uintptr_t retaddr) {
+     assert(false && "Not usable statically");
+ }
+ 
