@@ -13,8 +13,8 @@ thus can successfully detect all evasion attacks based on those ambiguities.
 
 ## Source Code
 
-Note that, the offline phase requires quite a lot of domain expertise in Linux TCP and symbolic execution.
-This documentation will focus on the online phase, so you may have a taste of how the ambiguity-aware NIDS works. 
+Note that, the offline phase requires quite a lot of domain expertise in Linux TCP and symbolic execution, and docs can be found [here](offline).
+This README will focus on the online phase, so you may have a taste of how the ambiguity-aware NIDS works. 
 
 The structure of the repo is as follows:
 
