@@ -72,3 +72,20 @@ Alternatively, to enable debug, you can use the following command.
 
        ZEEK_DEBUG_LOG_STDERR=1 zeek -B dpd -r <pcap file> effectiveness/detect-bad-keywords.bro -R
 
+
+## Publication
+
+Please check our CCS'21 paper for more technical details[[PDF](https://zhongjie.me/files/ccs21_themis.pdf)]
+
+Themis: Ambiguity-Aware Network Intrusion Detection based on Symbolic Model Comparison. 
+Zhongjie Wang, Shitong Zhu, Keyu Man, Pengxiong Zhu, Yu Hao, Zhiyun Qian, Srikanth V. Krishnamurthy, Tom La Porta, Michael J. De Lucia. 
+DOI:https://doi.org/10.1145/3460120.3484762
+
+```
+@inproceedings{wang2021themis,
+  title={Themis: Ambiguity-Aware Network Intrusion Detection based on Symbolic Model Comparison},
+  author={Wang, Zhongjie and Zhu, Shitong and Man, Keyu and Zhu, Pengxiong and Hao, Yu and Qian, Zhiyun and Krishnamurthy, Srikanth V and La Porta, Tom and De Lucia, Michael J},
+  booktitle={CCS},
+  year={2021}
+}
+```
