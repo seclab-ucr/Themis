@@ -1382,9 +1382,8 @@ void TCP_Analyzer::DeliverPacket(int len, const u_char* data, bool is_orig,
 	TCP_Endpoint* endpoint = is_orig ? orig : resp;
 	TCP_Endpoint* peer = endpoint->peer;
 
-	// since we refilled truncated payload, the checksum is wrong
-	//if ( ! ValidateChecksum(ip, tp, endpoint, len, caplen) )
-	//	return;
+	if ( ! ValidateChecksum(ip, tp, endpoint, len, caplen) )
+		return;
 
 	endpoint->curr_ts_val = 0xffffffff;
 
